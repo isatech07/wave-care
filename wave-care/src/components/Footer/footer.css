@@ -1,0 +1,57 @@
+.footer {
+  background: #1c1c1c;
+  color: #aaa;
+  padding: 48px 24px 0;
+}
+
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 40px;
+  border-bottom: 1px solid #2e2e2e;
+}
+
+.footer-brand p {
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.footer-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  color: white;
+  font-weight: 400;
+}
+
+.footer-logo em {
+  color: #7aad8e;
+  font-style: normal;
+}
+
+.footer-links {
+  display: flex;
+  gap: 28px;
+}
+
+.footer-links a {
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: white; }
+
+.footer-bottom {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 0;
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  color: #555;
+}
