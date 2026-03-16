@@ -31,6 +31,7 @@
 .nav-links {
   display: flex;
   gap: 32px;
+  align-items: center;
 }
 
 .nav-links a {
@@ -45,6 +46,100 @@
 .nav-links a:hover {
   color: var(--text);
 }
+
+/* ── Dropdown ── */
+
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.dropdown-trigger:hover,
+.dropdown-trigger.active {
+  color: var(--text);
+}
+
+.dropdown-chevron {
+  transition: transform 0.22s ease;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: var(--bg, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10), 0 1.5px 6px rgba(0,0,0,0.06);
+  padding: 10px 0;
+  min-width: 140px;
+
+  display: flex;
+  flex-direction: column;
+
+  /* Animação de entrada suave */
+  animation: dropdownFadeIn 0.18s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.dropdown-item {
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted) !important;
+  letter-spacing: 0.02em;
+  padding: 9px 28px;
+  text-align: center;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.dropdown-item:hover {
+  color: var(--text) !important;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dropdown-item--active {
+  color: var(--green) !important;
+  font-weight: 500;
+}
+
+/* ── Nav actions ── */
 
 .nav-actions {
   display: flex;

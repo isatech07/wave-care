@@ -40,3 +40,23 @@ h1, h2, h3, h4 {
 }
 
 a { text-decoration: none; color: inherit; }
+
+.estacao-section {
+  width: 100%;
+}
+ 
+.estacao-fade-in {
+  animation: estacaoFadeIn 0.45s ease forwards;
+}
+ 
+@keyframes estacaoFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+ 

@@ -1,5 +1,6 @@
 import "./globals.css"
 
+import { Suspense } from "react"
 import Navbar from "@/components/Navbar/Navbar"
 import Footer from "@/components/Footer/Footer"
 
@@ -11,9 +12,9 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body>
-
-        <Navbar />
-
+        <Suspense>
+          <Navbar />
+        </Suspense>
         {children}
 
         <Footer />
