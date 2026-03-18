@@ -1,0 +1,344 @@
+/* ═══════════════════════════════════════════════
+   ProductCarousel.module.css
+   ═══════════════════════════════════════════════ */
+
+/* Variáveis com fallback */
+.carouselWrapper {
+  --c-accent:       var(--accent,       #C2410C);
+  --c-accent-hover: var(--accent-hover, #B33A0A);
+  --c-fg:           var(--fg,           #1C1917);
+  --c-muted:        var(--muted,        #78716C);
+  --c-font-body:    var(--font-body,    sans-serif);
+
+  display: flex;
+  gap: 1.5rem;
+  align-items: stretch;  /* banner e conteúdo com a mesma altura */
+  margin-bottom: 4rem;
+}
+
+/* ── Banner lateral — maior ── */
+.carouselBanner {
+  flex-shrink: 0;
+  width: 340px;          /* era 280px */
+  min-height: 460px;     /* garante altura mínima */
+  border-radius: 16px;
+  overflow: hidden;
+  background: #F3F1EE;
+}
+
+.carouselBanner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.bannerPlaceholder {
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bannerIcon {
+  font-size: 4rem;
+}
+
+/* ── Área direita ── */
+.carouselContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* ── Cabeçalho ── */
+.carouselHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.25rem;
+}
+
+.carouselTitle {
+  font-family: var(--c-font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--c-fg);
+}
+
+.arrowBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(28, 25, 23, 0.2);
+  background: transparent;
+  color: var(--c-fg);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+  line-height: 1;
+}
+
+.arrowBtn:hover:not(:disabled) {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #fff;
+}
+
+.arrowBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ── Grade de cards — mesma altura em toda a linha ── */
+.carouselCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  align-items: stretch;  /* força todos os cards à mesma altura */
+}
+
+/* ── Card — flex column para empurrar footer pro fundo ── */
+.carouselCard {
+  display: flex;
+  flex-direction: column;  /* ← chave para alinhar o footer */
+  background: #fff;
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  transition: transform 260ms ease, box-shadow 260ms ease;
+  cursor: pointer;
+}
+
+.carouselCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+/* ── Imagem do produto ── */
+.cardImage {
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: #F3F1EE;
+  flex-shrink: 0;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+.carouselCard:hover .cardImage img {
+  transform: scale(1.04);
+}
+
+/* Placeholder cinza enquanto não tem imagem */
+.cardImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #F3F1EE 0%, #E8E4DF 100%);
+}
+
+/* ── Info — flex column para empurrar footer ── */
+.cardInfo {
+  flex: 1;               /* ocupa o espaço restante do card */
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.4rem 0.4rem;
+}
+
+/* Avaliação */
+.productRating {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.35rem;
+}
+
+.ratingStar {
+  color: #F59E0B;
+  font-size: 0.7rem;
+}
+
+.ratingValue {
+  font-family: var(--c-font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--c-fg);
+}
+
+.ratingCount {
+  font-family: var(--c-font-body);
+  font-size: 0.65rem;
+  color: var(--c-muted);
+}
+
+/* Nome */
+.cardName {
+  font-family: var(--c-font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--c-fg);
+  margin: 0 0 0.3rem 0;
+  line-height: 1.3;
+}
+
+/* Corpo (desc + kit) — flex: 1 empurra footer pro fundo */
+.cardBody {
+  flex: 1;
+}
+
+/* Descrição */
+.cardDesc {
+  font-family: var(--c-font-body);
+  font-size: 0.7rem;
+  color: var(--c-muted);
+  line-height: 1.5;
+  margin: 0 0 0.4rem 0;
+}
+
+/* Lista do kit */
+.kitList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.4rem 0;
+}
+
+.kitItem {
+  font-family: var(--c-font-body);
+  font-size: 0.65rem;
+  color: var(--c-muted);
+  line-height: 1.7;
+}
+
+.kitDot {
+  color: var(--c-accent);
+  font-weight: 700;
+  margin-right: 0.2rem;
+}
+
+/* ── Footer — sempre no fundo ── */
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  margin-top: auto;      /* ← empurra para o fundo */
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.cardPriceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.cardPrice {
+  font-family: var(--c-font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-fg);
+  line-height: 1;
+}
+
+.cardSize {
+  font-family: var(--c-font-body);
+  font-size: 0.65rem;
+  color: var(--c-muted);
+}
+
+/* Botão Adicionar */
+.addButton {
+  flex-shrink: 0;
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-family: var(--c-font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background: var(--c-accent-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Bolinhas ── */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(28, 25, 23, 0.2);
+  cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease;
+  padding: 0;
+}
+
+.dotActive {
+  background: var(--c-accent);
+  transform: scale(1.3);
+}
+
+/* ── Responsivo ── */
+@media (max-width: 1024px) {
+  .carouselBanner {
+    width: 260px;
+    min-height: 400px;
+  }
+
+  .carouselCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .carouselWrapper {
+    flex-direction: column;
+  }
+
+  .carouselBanner {
+    width: 100%;
+    min-height: 220px;
+    max-height: 280px;
+  }
+
+  .carouselCards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .carouselCards {
+    grid-template-columns: 1fr;
+  }
+}

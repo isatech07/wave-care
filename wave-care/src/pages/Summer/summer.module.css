@@ -50,19 +50,26 @@
   overflow: hidden;
   aspect-ratio: 16 / 7;
   margin-bottom: 4rem;
-
-  /* Remove o border-radius e estica para fora do container */
   width: 100vw;
   left: 50%;
   transform: translateX(-50%);
   border-radius: 0;
 }
 
-.heroBanner img {
+/* ── Imagens do carrossel — sobrepostas, fade entre elas ── */
+.heroBannerImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.heroBannerImgActive {
+  opacity: 1;
 }
 
 .heroOverlay {
@@ -78,6 +85,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 3rem 4rem;
+  z-index: 2;
 }
 
 .heroSun {
@@ -93,6 +101,7 @@
   letter-spacing: -0.02em;
   margin: 0 0 1rem 0;
   text-wrap: balance;
+  font-weight: bold;
 }
 
 .heroSubtitle {
@@ -103,6 +112,79 @@
   margin: 0;
 }
 
+/* ── Setas do hero ── */
+.heroArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(28, 25, 23, 0.45);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms ease, border-color 180ms ease;
+  line-height: 1;
+}
+
+.heroArrow:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.heroArrowLeft  { left: 1.5rem; }
+.heroArrowRight { right: 1.5rem; }
+
+/* ── Bolinhas do hero ── */
+.heroDots {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.45rem;
+  z-index: 10;
+}
+
+.heroDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease;
+  padding: 0;
+}
+
+.heroDotActive {
+  background: #fff;
+  transform: scale(1.4);
+}
+
+/* ── Barra de progresso ── */
+.heroProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  z-index: 10;
+}
+
+.heroProgressFill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.05s linear;
+}
+
 /* Onda SVG na base do banner */
 .heroWave {
   position: absolute;
@@ -110,6 +192,7 @@
   left: 0;
   width: 100%;
   line-height: 0;
+  z-index: 5;
 }
 
 .heroWave svg {
@@ -126,7 +209,7 @@
 
 .sectionTitle {
   font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 400;
+  font-weight: 600;
   color: var(--accent);
   margin: 0 0 1.5rem 0;
   letter-spacing: -0.02em;
@@ -374,6 +457,13 @@
 
   .heroBanner {
     aspect-ratio: 4 / 5;
+  }
+
+  .heroArrowLeft  { left: 0.75rem; }
+  .heroArrowRight { right: 0.75rem; }
+
+  .heroDots {
+    bottom: 2.5rem;
   }
 
   .tipsGrid {

@@ -3,6 +3,7 @@ import "./globals.css"
 import { Suspense } from "react"
 import Navbar from "@/components/Navbar/Navbar"
 import Footer from "@/components/Footer/Footer"
+import ProductCarousel from "@/components/ProductCarousel/ProductCarousel"
 
 export default function RootLayout({
   children,
