@@ -281,7 +281,7 @@ export default function Summer() {
       {/* ── Carrosséis ── */}
       <section className={styles.productsSection}>
         <div className={styles.productsHeader}>
-          <h2 className={styles.sectionTitle}>Linha de Produtos e Kits de Verão</h2>
+          <h2 className={styles.sectionTitle}>Linha de Produtos & Kits de Verão</h2>
         </div>
 
         <ProductCarousel
