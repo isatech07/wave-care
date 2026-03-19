@@ -1,0 +1,235 @@
+.loja-main {
+  min-height: 100vh;
+  background: #f7f5f2;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ── Hero ── */
+.loja-hero {
+  background: #1a1a1a;
+  color: #f5f0ea;
+  padding: 96px 56px 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.loja-hero__badge {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: #c9b99a;
+  color: #1a1a1a;
+  padding: 4px 12px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+.loja-hero__title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.loja-hero__sub {
+  font-size: 0.95rem;
+  color: #9c9087;
+  max-width: 480px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Layout ── */
+.loja-content {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 0;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 56px 96px;
+  align-items: start;
+}
+
+/* ── Filtros ── */
+.loja-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: sticky;
+  top: 90px;
+}
+
+.filtros-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a09890;
+  margin: 0 0 8px;
+}
+
+.filtro-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #5a5550;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s;
+}
+
+.filtro-btn:hover {
+  background: #ede9e4;
+  color: #1a1a1a;
+}
+
+.filtro-btn--active {
+  background: #1a1a1a;
+  color: #f5f0ea;
+  border-color: #1a1a1a;
+}
+
+/* ── Top bar ── */
+.loja-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.loja-count {
+  font-size: 0.82rem;
+  color: #a09890;
+}
+
+.loja-sort {
+  font-size: 0.82rem;
+  border: 1px solid #ddd8d0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #fff;
+  color: #3a3530;
+  cursor: pointer;
+}
+
+/* ── Grid produtos ── */
+.produtos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+/* ── Card ── */
+.produto-card {
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.produto-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.produto-card__badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: #c9b99a;
+  color: #1a1a1a;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-weight: 700;
+  z-index: 1;
+}
+
+.produto-card__img {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(145deg, #ede9e4 0%, #ddd8d0 100%);
+}
+
+.produto-card__info {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.produto-card__cat {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a09890;
+}
+
+.produto-card__nome {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.produto-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.produto-card__preco {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.produto-card__btn {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #1a1a1a;
+  color: #f5f0ea;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.produto-card__btn:hover {
+  background: #3a3530;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1000px) {
+  .produtos-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .loja-content {
+    grid-template-columns: 1fr;
+    padding: 32px 24px 64px;
+  }
+  .loja-hero { padding: 64px 24px 48px; }
+  .loja-filtros {
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .produtos-grid { grid-template-columns: 1fr; }
+}

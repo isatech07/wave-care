@@ -1,9 +1,16 @@
 import "./globals.css"
-
+import type { Metadata } from "next"
 import { Suspense } from "react"
 import Navbar from "@/components/Navbar/Navbar"
 import Footer from "@/components/Footer/Footer"
-import ProductCarousel from "@/components/ProductCarousel/ProductCarousel"
+
+export const metadata: Metadata = {
+  title: {
+    default: "Wave Care",
+    template: "%s – Wave Care",
+  },
+  description: "Cuidados com a pele para cada estação do ano.",
+}
 
 export default function RootLayout({
   children,
@@ -11,15 +18,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-br">
+    <html lang="pt-BR">
       <body>
-        <Suspense>
+        <Suspense fallback={null}>
           <Navbar />
         </Suspense>
+
         {children}
 
         <Footer />
-
       </body>
     </html>
   )

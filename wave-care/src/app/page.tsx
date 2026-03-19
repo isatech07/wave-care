@@ -1,56 +1,649 @@
-import { use } from "react"
-import Seasons from "@/sections/Seasons/Seasons"
-import Products from "@/sections/Products/Products"
-import Quiz from "@/sections/Quiz/Quiz"
-import Blog from "@/sections/Blog/Blog"
-import Summer from "@/pages/Summer/Summer"
-import Autumn from "@/pages/Autumn/Autumn"
-import Winter from "@/pages/Winter/Winter"
+"use client";
 
+import { useState, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowRight,
+  Leaf,
+  Droplet,
+  Wind,
+  Heart,
+  ShoppingBag,
+  Star,
+  Sparkles,
+  X,
+  Plus,
+  Minus,
+  Check,
+  Trash2,
+} from "lucide-react";
 
-interface HomeProps {
-  searchParams: Promise<{ estacao?: string }>
+import Summer from "@/pages/Summer/Summer";
+import Autumn from "@/pages/Autumn/Autumn";
+import Winter from "@/pages/Winter/Winter";
+
+import "./home.css";
+
+// Types
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviews: number;
+  image: string;
+  badge?: string;
+  category: string;
 }
 
-export default function Home({ searchParams }: HomeProps) {
-  const { estacao } = use(searchParams)
+interface CartItem extends Product {
+  quantity: number;
+}
 
+// Data
+const estacoes = [
+  {
+    id: "verao",
+    label: "Verão",
+    description: "Proteção Solar & Hidratação",
+    image: "/products/verao-produtos/Summer kit-2.png",
+  },
+  {
+    id: "outono",
+    label: "Outono",
+    description: "Fortalecimento & Anti-queda",
+    image: "/products/outono-produtos/Autumn-Bloom-kit.png",
+  },
+  {
+    id: "inverno",
+    label: "Inverno",
+    description: "Nutrição Profunda & Anti-ressecamento",
+    image: "/products/inverno-produtos/inverno-kit-2.png",
+  },
+  {
+    id: "primavera",
+    label: "Primavera",
+    description: "Renovação & Revitalização",
+    image: "/products/outono-produtos/outono-gelatina.png",
+  },
+];
+
+const produtos: Product[] = [
+  {
+    id: "1",
+    name: "Shampoo Brisa do Mar",
+    description: "Limpeza suave com minerais marinhos. Remove o excesso de sal sem ressecar, perfeito para o pós-praia.",
+    price: 49.90,
+    rating: 4.8,
+    reviews: 234,
+    image: "/products/verao-produtos/verão-shampoo.png",
+    badge: "Best Seller",
+    category: "Shampoo",
+  },
+  {
+    id: "2",
+    name: "Máscara Nutri Oceano",
+    description: "Nutrição profunda com manteiga de karité e colágeno marinho. Para fios extremamente secos.",
+    price: 79.90,
+    originalPrice: 99.90,
+    rating: 4.9,
+    reviews: 312,
+    image: "/products/outono-produtos/outono-mascara.png",
+    badge: "Best Seller",
+    category: "Máscara",
+  },
+  {
+    id: "3",
+    name: "Leave-in Proteção Litorânea",
+    description: "Protege os fios contra sol, vento e umidade. Hidrata sem pesar com filtro UV.",
+    price: 59.90,
+    rating: 4.8,
+    reviews: 267,
+    image: "/products/verao-produtos/verão-creme.png",
+    badge: "Best Seller",
+    category: "Leave-in",
+  },
+  {
+    id: "4",
+    name: "Óleo Reparador Marítimo",
+    description: "Blend de óleos naturais que sela as cutículas e devolve o brilho natural aos fios.",
+    price: 69.90,
+    rating: 4.7,
+    reviews: 189,
+    image: "/products/verao-produtos/verão-oleo.png",
+    badge: "Novo",
+    category: "Óleo",
+  },
+];
+
+// Helper function
+const formatPrice = (price: number): string => {
+  return price.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+};
+
+export default function Home() {
+  const searchParams = useSearchParams();
+  const estacao = searchParams.get("estacao");
+
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+
+  // Toggle favorite
+  const toggleFavorite = useCallback((productId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(productId)) {
+        newFavorites.delete(productId);
+        showNotification("Removido dos favoritos");
+      } else {
+        newFavorites.add(productId);
+        showNotification("Adicionado aos favoritos");
+      }
+      return newFavorites;
+    });
+  }, []);
+
+  // Add to cart
+  const addToCart = useCallback((product: Product) => {
+    setCart((prev) => {
+      const existingItem = prev.find((item) => item.id === product.id);
+      if (existingItem) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+    showNotification(`${product.name} adicionado à sacola`);
+  }, []);
+
+  // Update cart quantity
+  const updateQuantity = useCallback((productId: string, delta: number) => {
+    setCart((prev) => {
+      return prev
+        .map((item) => {
+          if (item.id === productId) {
+            const newQuantity = item.quantity + delta;
+            return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+          }
+          return item;
+        })
+        .filter((item): item is CartItem => item !== null);
+    });
+  }, []);
+
+  // Remove from cart
+  const removeFromCart = useCallback((productId: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+    showNotification("Item removido da sacola");
+  }, []);
+
+  // Show notification
+  const showNotification = (message: string) => {
+    setNotification(message);
+    setTimeout(() => setNotification(null), 2500);
+  };
+
+  // Calculate cart total
+  const cartTotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // Se tiver uma estação selecionada, mostra a página específica
   if (estacao === "verao") {
     return (
-      <main>
+      <main className="home-main">
         <section className="estacao-section estacao-fade-in">
           <Summer />
         </section>
       </main>
-    )
+    );
   }
 
   if (estacao === "outono") {
     return (
-      <main>
+      <main className="home-main">
         <section className="estacao-section estacao-fade-in">
           <Autumn />
         </section>
       </main>
-    )
+    );
   }
 
-    if (estacao === "inverno") {
+  if (estacao === "inverno") {
     return (
-      <main>
+      <main className="home-main">
         <section className="estacao-section estacao-fade-in">
           <Winter />
         </section>
       </main>
-    )
+    );
   }
 
+  if (estacao === "primavera") {
+    return (
+      <main className="home-main">
+        <section className="estacao-section estacao-fade-in">
+          <div style={{ 
+            minHeight: "60vh", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            color: "#aaa",
+            fontFamily: "Jost, sans-serif",
+            textAlign: "center",
+            padding: "2rem"
+          }}>
+            <div>
+              <h2 style={{ fontFamily: "Cormorant Garamond, serif", fontSize: "3rem", color: "white", marginBottom: "1rem" }}>
+                Primavera
+              </h2>
+              <p>Em breve - Conteúdo sendo preparado</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // Home page padrão com carrinho e produtos
   return (
-    <main>
-      <Seasons />
-      <Products />
-      <Quiz />
-      <Blog />
+    <main className="home-main">
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            className="notification"
+            initial={{ opacity: 0, y: -20, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -20, x: "-50%" }}
+          >
+            <Check size={16} />
+            <span>{notification}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Cart Button */}
+      <button
+        className="floating-cart-button"
+        onClick={() => setIsCartOpen(true)}
+        aria-label="Abrir sacola"
+      >
+        <ShoppingBag size={22} />
+        {cartItemsCount > 0 && (
+          <span className="cart-badge">{cartItemsCount}</span>
+        )}
+      </button>
+
+      {/* Cart Sidebar */}
+      <AnimatePresence>
+        {isCartOpen && (
+          <>
+            <motion.div
+              className="cart-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCartOpen(false)}
+            />
+            <motion.aside
+              className="cart-sidebar"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            >
+              <div className="cart-header">
+                <h2>Sua Sacola</h2>
+                <button
+                  className="cart-close"
+                  onClick={() => setIsCartOpen(false)}
+                  aria-label="Fechar sacola"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="cart-content">
+                {cart.length === 0 ? (
+                  <div className="cart-empty">
+                    <ShoppingBag size={48} strokeWidth={1} />
+                    <p>Sua sacola está vazia</p>
+                    <span>Adicione produtos para continuar</span>
+                  </div>
+                ) : (
+                  <ul className="cart-items">
+                    {cart.map((item) => (
+                      <motion.li
+                        key={item.id}
+                        className="cart-item"
+                        layout
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                      >
+                        <div className="cart-item-image">
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            width={80}
+                            height={80}
+                            style={{ objectFit: "cover" }}
+                          />
+                        </div>
+                        <div className="cart-item-details">
+                          <h4>{item.name}</h4>
+                          <span className="cart-item-price">
+                            {formatPrice(item.price)}
+                          </span>
+                          <div className="cart-item-quantity">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              aria-label="Diminuir quantidade"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span>{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              aria-label="Aumentar quantidade"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <button
+                          className="cart-item-remove"
+                          onClick={() => removeFromCart(item.id)}
+                          aria-label="Remover item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </motion.li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {cart.length > 0 && (
+                <div className="cart-footer">
+                  <div className="cart-total">
+                    <span>Total</span>
+                    <strong>{formatPrice(cartTotal)}</strong>
+                  </div>
+                  <button className="cart-checkout-button">
+                    Finalizar Compra
+                  </button>
+                </div>
+              )}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Hero Section */}
+      <section className="home-hero">
+        <div className="home-hero-content">
+          <motion.span
+            className="home-hero-badge"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            Cuidados sazonais
+          </motion.span>
+          <motion.h1
+            className="home-hero-title"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            Cabelos saudáveis
+            <br />
+            <span>em cada estação</span>
+          </motion.h1>
+          <motion.p
+            className="home-hero-description"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            Descubra a rotina perfeita para seu tipo de cabelo, adaptada para
+            cada época do ano com produtos que promovem saúde, beleza e
+            autoestima.
+          </motion.p>
+          <motion.div
+            className="home-hero-actions"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Link href="/quiz" className="home-button home-button-primary">
+              Descobrir rotina
+            </Link>
+            <Link href="#produtos" className="home-button home-button-secondary">
+              Conhecer produtos
+            </Link>
+          </motion.div>
+        </div>
+        <div className="home-hero-image">
+          <motion.div
+            className="home-product-rotating"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+          >
+            <Image
+              src="/products/autumn-shampoo.png"
+              alt="Produto em destaque"
+              width={400}
+              height={400}
+              className="rotating-product"
+              priority
+            />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Quiz Section */}
+      <section className="quiz-section" id="quiz">
+        <div className="quiz-card">
+          <Sparkles className="quiz-icon" size={32} />
+          <h2 className="quiz-title">Descubra seu tipo de cabelo</h2>
+          <p className="quiz-description">
+            Faça nosso quiz inteligente e receba recomendações personalizadas
+            para seu tipo de fio, cidade e estação.
+          </p>
+          <Link href="/quiz" className="quiz-button">
+            <Sparkles size={18} />
+            Fazer o Quiz
+          </Link>
+        </div>
+      </section>
+
+      {/* Estações Section */}
+      <section className="home-estacoes">
+        <div className="home-estacoes-header">
+          <h2 className="home-estacoes-title">Kits por Estação</h2>
+          <p className="home-estacoes-description">
+            Cada estação pede um cuidado diferente. Encontre o ideal para seus
+            fios.
+          </p>
+        </div>
+
+        <div className="home-estacoes-grid">
+          {estacoes.map(({ id, label, description, image }, index) => (
+            <motion.div
+              key={id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Link href={`/?estacao=${id}`} className="home-estacao-card">
+                <div className="estacao-image-wrapper">
+                  <Image
+                    src={image}
+                    alt={label}
+                    width={300}
+                    height={200}
+                    className="estacao-image"
+                  />
+                </div>
+                <div className="home-estacao-card-content">
+                  <h3 className="home-estacao-label">{label}</h3>
+                  <p className="home-estacao-description">{description}</p>
+                  <span className="home-estacao-link">
+                    Ver produtos <ArrowRight size={14} />
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Produtos Section */}
+      <section className="home-produtos" id="produtos">
+        <div className="home-produtos-header">
+          <h2 className="home-produtos-title">Produtos em Destaque</h2>
+          <p className="home-produtos-description">
+            Os mais amados pela comunidade Wave Care
+          </p>
+        </div>
+
+        <div className="home-produtos-grid">
+          {produtos.map((product, index) => (
+            <motion.article
+              key={product.id}
+              className="product-card"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="product-image-wrapper">
+                {product.badge && (
+                  <span className="product-badge">{product.badge}</span>
+                )}
+                <button
+                  className={`product-favorite ${favorites.has(product.id) ? "active" : ""}`}
+                  onClick={() => toggleFavorite(product.id)}
+                  aria-label={
+                    favorites.has(product.id)
+                      ? "Remover dos favoritos"
+                      : "Adicionar aos favoritos"
+                  }
+                >
+                  <Heart
+                    size={20}
+                    fill={favorites.has(product.id) ? "currentColor" : "none"}
+                  />
+                </button>
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  width={300}
+                  height={380}
+                  className="product-image"
+                />
+              </div>
+
+              <div className="product-info">
+                <div className="product-rating">
+                  <Star size={14} fill="currentColor" />
+                  <span>{product.rating}</span>
+                  <span className="product-reviews">({product.reviews})</span>
+                </div>
+
+                <h3 className="product-name">{product.name}</h3>
+                <p className="product-description">{product.description}</p>
+
+                <div className="product-footer">
+                  <div className="product-price">
+                    <span className="price-current">
+                      {formatPrice(product.price)}
+                    </span>
+                    {product.originalPrice && (
+                      <span className="price-original">
+                        {formatPrice(product.originalPrice)}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className="product-add-button"
+                    onClick={() => addToCart(product)}
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
+      {/* Benefícios Section */}
+      <section className="home-beneficios">
+        <div className="home-beneficios-grid">
+          <motion.div
+            className="home-beneficio"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            <Leaf className="home-beneficio-icon" size={32} />
+            <h3 className="home-beneficio-title">Ingredientes naturais</h3>
+            <p className="home-beneficio-description">
+              Fórmulas com ativos naturais que respeitam seus cabelos e o meio
+              ambiente.
+            </p>
+          </motion.div>
+          <motion.div
+            className="home-beneficio"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <Droplet className="home-beneficio-icon" size={32} />
+            <h3 className="home-beneficio-title">Hidratação inteligente</h3>
+            <p className="home-beneficio-description">
+              Tecnologia que se adapta às necessidades específicas de cada
+              estação.
+            </p>
+          </motion.div>
+          <motion.div
+            className="home-beneficio"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            <Wind className="home-beneficio-icon" size={32} />
+            <h3 className="home-beneficio-title">Proteção completa</h3>
+            <p className="home-beneficio-description">
+              Cuidados que protegem contra agressores climáticos de cada época.
+            </p>
+          </motion.div>
+        </div>
+      </section>
     </main>
-  )
+  );
 }
