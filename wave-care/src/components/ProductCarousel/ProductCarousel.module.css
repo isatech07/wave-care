@@ -12,15 +12,15 @@
 
   display: flex;
   gap: 1.5rem;
-  align-items: stretch;  /* banner e conteúdo com a mesma altura */
+  align-items: stretch;
   margin-bottom: 4rem;
 }
 
-/* ── Banner lateral — maior ── */
+/* ── Banner lateral — mais largo ── */
 .carouselBanner {
   flex-shrink: 0;
-  width: 340px;          /* era 280px */
-  min-height: 460px;     /* garante altura mínima */
+  width: 420px;
+  min-height: 460px;
   border-radius: 16px;
   overflow: hidden;
   background: #F3F1EE;
@@ -56,11 +56,11 @@
   min-width: 0;
 }
 
-/* ── Cabeçalho ── */
+/* ── Título centralizado ── */
 .carouselHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 0 0.25rem;
 }
 
@@ -73,7 +73,17 @@
   color: var(--c-fg);
 }
 
+/* ── Linha com setas flanqueando os cards ── */
+.carouselRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+/* ── Botões de seta ── */
 .arrowBtn {
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -100,18 +110,20 @@
   cursor: default;
 }
 
-/* ── Grade de cards — mesma altura em toda a linha ── */
+/* ── Grade de cards ── */
 .carouselCards {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  align-items: stretch;  /* força todos os cards à mesma altura */
+  align-items: stretch;
+  min-width: 0;
 }
 
-/* ── Card — flex column para empurrar footer pro fundo ── */
+/* ── Card ── */
 .carouselCard {
   display: flex;
-  flex-direction: column;  /* ← chave para alinhar o footer */
+  flex-direction: column;
   background: #fff;
   border-radius: 14px;
   padding: 8px;
@@ -146,22 +158,20 @@
   transform: scale(1.04);
 }
 
-/* Placeholder cinza enquanto não tem imagem */
 .cardImagePlaceholder {
   width: 100%;
   height: 100%;
   background: linear-gradient(145deg, #F3F1EE 0%, #E8E4DF 100%);
 }
 
-/* ── Info — flex column para empurrar footer ── */
+/* ── Info ── */
 .cardInfo {
-  flex: 1;               /* ocupa o espaço restante do card */
+  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 0.6rem 0.4rem 0.4rem;
 }
 
-/* Avaliação */
 .productRating {
   display: flex;
   align-items: center;
@@ -187,7 +197,6 @@
   color: var(--c-muted);
 }
 
-/* Nome */
 .cardName {
   font-family: var(--c-font-body);
   font-size: 0.8rem;
@@ -197,12 +206,10 @@
   line-height: 1.3;
 }
 
-/* Corpo (desc + kit) — flex: 1 empurra footer pro fundo */
 .cardBody {
   flex: 1;
 }
 
-/* Descrição */
 .cardDesc {
   font-family: var(--c-font-body);
   font-size: 0.7rem;
@@ -211,7 +218,6 @@
   margin: 0 0 0.4rem 0;
 }
 
-/* Lista do kit */
 .kitList {
   list-style: none;
   padding: 0;
@@ -231,14 +237,14 @@
   margin-right: 0.2rem;
 }
 
-/* ── Footer — sempre no fundo ── */
+/* ── Footer ── */
 .cardFooter {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
   padding-top: 0.6rem;
-  margin-top: auto;      /* ← empurra para o fundo */
+  margin-top: auto;
   border-top: 1px solid rgba(0,0,0,0.05);
 }
 
@@ -262,7 +268,6 @@
   color: var(--c-muted);
 }
 
-/* Botão Adicionar */
 .addButton {
   flex-shrink: 0;
   background: var(--c-accent);
@@ -312,7 +317,7 @@
 /* ── Responsivo ── */
 @media (max-width: 1024px) {
   .carouselBanner {
-    width: 260px;
+    width: 320px;
     min-height: 400px;
   }
 

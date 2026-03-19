@@ -1,0 +1,499 @@
+/* ═══════════════════════════════════════════════
+   Spring Series — Wave Care Primavera Bloom
+   CSS Modules · No Tailwind
+   Paleta: Rosa Magenta · Rosé Suave · Branco Floral
+   ═══════════════════════════════════════════════ */
+
+.container {
+  --bg: #FDF5F8;
+  --fg: #2D1220;
+  --accent: #9D1A52;
+  --accent-hover: #821545;
+  --accent-light: #F3D6E4;
+  --muted: #8C5A6E;
+  --card-bg: #FFFFFF;
+  --shadow: 0 2px 16px rgba(157, 26, 82, 0.08);
+  --radius-outer: 16px;
+  --radius-inner: 10px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--fg);
+
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Títulos */
+.logo,
+.heroTitle,
+.sectionTitle,
+.bloomTitle {
+  font-family: var(--font-title);
+}
+
+/* Texto */
+.heroSubtitle,
+.productDesc,
+.productName,
+.productPrice,
+.ratingValue,
+.ratingCount,
+.tipCard,
+.footer {
+  font-family: var(--font-body);
+}
+
+
+/* ── Hero Section ── */
+.hero {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.heroBanner {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 7;
+  margin-bottom: 4rem;
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 0;
+}
+
+/* ── Imagens do carrossel — sobrepostas, fade entre elas ── */
+.heroBannerImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.heroBannerImgActive {
+  opacity: 1;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(45, 18, 32, 0.65) 0%,
+    rgba(45, 18, 32, 0.1) 60%,
+    transparent 100%
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 4rem;
+  z-index: 2;
+}
+
+.heroFlower {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.heroTitle {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem 0;
+  text-wrap: balance;
+}
+
+.heroSubtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 40ch;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Setas do hero ── */
+.heroArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(45, 18, 32, 0.45);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms ease, border-color 180ms ease;
+  line-height: 1;
+}
+
+.heroArrow:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.heroArrowLeft  { left: 1.5rem; }
+.heroArrowRight { right: 1.5rem; }
+
+/* ── Bolinhas do hero ── */
+.heroDots {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.45rem;
+  z-index: 10;
+}
+
+.heroDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease;
+  padding: 0;
+}
+
+.heroDotActive {
+  background: #fff;
+  transform: scale(1.4);
+}
+
+/* Onda SVG na base do banner */
+.heroWave {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  line-height: 0;
+  z-index: 5;
+}
+
+.heroWave svg {
+  display: block;
+  width: 100%;
+}
+
+/* ── Tips Section ── */
+.tipsSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.tipsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.tipCard {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-inner);
+  box-shadow: var(--shadow);
+  font-size: 0.875rem;
+  color: var(--fg);
+  transition: transform 300ms var(--ease);
+  border-left: 3px solid var(--accent-light);
+}
+
+.tipCard:hover {
+  transform: translateY(-2px);
+  border-left-color: var(--accent);
+}
+
+.tipIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(157, 26, 82, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+/* ── Primavera Bloom Banner ── */
+.bloomSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.bloomBanner {
+  position: relative;
+  border-radius: var(--radius-outer);
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    #9D1A52 0%,
+    #C2185B 50%,
+    #AD1457 100%
+  );
+  min-height: 420px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bloomBanner img {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  display: block;
+}
+
+.bloomOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(45, 18, 32, 0.75) 0%,
+    rgba(45, 18, 32, 0.2) 50%,
+    transparent 100%
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem;
+}
+
+.bloomTitle {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 400;
+  color: #fff;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.02em;
+}
+
+.bloomDesc {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 45ch;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Products Section ── */
+.productsSection {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 6rem;
+}
+
+.productsHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.productCard {
+  background: var(--card-bg);
+  border-radius: var(--radius-outer);
+  padding: 8px;
+  box-shadow: var(--shadow);
+  transition: transform 300ms var(--ease);
+  cursor: pointer;
+}
+
+.productCard:hover {
+  transform: translateY(-4px);
+}
+
+.productImage {
+  border-radius: var(--radius-inner);
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--accent-light);
+}
+
+.productImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.productInfo {
+  padding: 0.75rem 0.5rem 0.5rem;
+}
+
+.productRating {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.ratingStar {
+  color: #E91E8C;
+  font-size: 0.75rem;
+}
+
+.ratingValue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.ratingCount {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.productName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--fg);
+}
+
+.productDesc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 0.75rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.productFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.productPrice {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.addButton {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 200ms var(--ease), transform 200ms var(--ease);
+}
+
+.addButton:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Footer ── */
+.footer {
+  padding: 3rem 2rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border-top: 1px solid rgba(157, 26, 82, 0.08);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .nav {
+    padding: 1rem 1.5rem;
+  }
+
+  .navLinks a {
+    display: none;
+  }
+
+  .hero {
+    padding: 1rem 1.5rem 3rem;
+  }
+
+  .heroOverlay {
+    padding: 2rem;
+  }
+
+  .heroBanner {
+    aspect-ratio: 4 / 5;
+  }
+
+  .heroArrowLeft  { left: 0.75rem; }
+  .heroArrowRight { right: 0.75rem; }
+
+  .heroDots {
+    bottom: 2.5rem;
+  }
+
+  .tipsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tipsSection,
+  .bloomSection,
+  .productsSection {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .productsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .bloomBanner {
+    min-height: 300px;
+  }
+
+  .bloomBanner img {
+    height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .productsGrid {
+    grid-template-columns: 1fr;
+  }
+}

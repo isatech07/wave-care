@@ -24,6 +24,7 @@ import {
 import Summer from "@/pages/Summer/Summer";
 import Autumn from "@/pages/Autumn/Autumn";
 import Winter from "@/pages/Winter/Winter";
+import Spring from "@/pages/Spring/Spring";
 
 import "./home.css";
 
@@ -69,16 +70,17 @@ const estacoes = [
     id: "primavera",
     label: "Primavera",
     description: "Renovação & Revitalização",
-    image: "/products/outono-produtos/outono-gelatina.png",
+    image: "/products/primavera-produtos/primavera-kit-completo.png",
   },
 ];
 
 const produtos: Product[] = [
   {
     id: "1",
-    name: "Shampoo Brisa do Mar",
-    description: "Limpeza suave com minerais marinhos. Remove o excesso de sal sem ressecar, perfeito para o pós-praia.",
-    price: 49.90,
+    name: "SunShield Shampoo",
+    description: "Limpeza suave com proteção UV para cabelos expostos ao sol e maresia.",
+    price: 29.90,
+    originalPrice: 39.90,
     rating: 4.8,
     reviews: 234,
     image: "/products/verao-produtos/verão-shampoo.png",
@@ -87,10 +89,10 @@ const produtos: Product[] = [
   },
   {
     id: "2",
-    name: "Máscara Nutri Oceano",
-    description: "Nutrição profunda com manteiga de karité e colágeno marinho. Para fios extremamente secos.",
-    price: 79.90,
-    originalPrice: 99.90,
+    name: "Autumn Repair Mask",
+    description: "Tratamento intensivo para recuperar fios danificados e ressecados pela queda de temperatura.",
+    price: 44.90,
+    originalPrice: 54.90,
     rating: 4.9,
     reviews: 312,
     image: "/products/outono-produtos/outono-mascara.png",
@@ -99,23 +101,25 @@ const produtos: Product[] = [
   },
   {
     id: "3",
-    name: "Leave-in Proteção Litorânea",
-    description: "Protege os fios contra sol, vento e umidade. Hidrata sem pesar com filtro UV.",
-    price: 59.90,
+    name: "Winter Protective Leave-in Cream",
+    description: "Cria um escudo protetor contra o frio e o vento, mantendo a hidratação e a definição dos fios.",
+    price: 32.90,
+    originalPrice: 42.90,
     rating: 4.8,
     reviews: 267,
-    image: "/products/verao-produtos/verão-creme.png",
+    image: "/products/inverno-produtos/inverno-creme.png",
     badge: "Best Seller",
     category: "Leave-in",
   },
   {
     id: "4",
-    name: "Óleo Reparador Marítimo",
-    description: "Blend de óleos naturais que sela as cutículas e devolve o brilho natural aos fios.",
-    price: 69.90,
+    name: " Primavera Bloom Styling Gelatin",
+    description: "Gelatina modeladora que ajuda a definir cachos e ondas com efeito natural.",
+    price: 38.90,
+    originalPrice: 48.90,
     rating: 4.7,
     reviews: 189,
-    image: "/products/verao-produtos/verão-oleo.png",
+    image: "/products/primavera-produtos/primavera-gelatina.png",
     badge: "Novo",
     category: "Óleo",
   },
@@ -238,28 +242,11 @@ export default function Home() {
     return (
       <main className="home-main">
         <section className="estacao-section estacao-fade-in">
-          <div style={{ 
-            minHeight: "60vh", 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "center",
-            color: "#aaa",
-            fontFamily: "Jost, sans-serif",
-            textAlign: "center",
-            padding: "2rem"
-          }}>
-            <div>
-              <h2 style={{ fontFamily: "Cormorant Garamond, serif", fontSize: "3rem", color: "white", marginBottom: "1rem" }}>
-                Primavera
-              </h2>
-              <p>Em breve - Conteúdo sendo preparado</p>
-            </div>
-          </div>
+          <Spring />
         </section>
       </main>
     );
   }
-
   // Home page padrão com carrinho e produtos
   return (
     <main className="home-main">
