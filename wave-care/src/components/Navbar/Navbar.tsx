@@ -282,7 +282,7 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            <Link href="/conta" className="navbar-action">
+            <Link href="/auth" className="navbar-action">
               <User size={18} />
             </Link>
 
