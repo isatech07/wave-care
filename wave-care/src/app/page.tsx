@@ -113,7 +113,7 @@ const produtos: Product[] = [
   },
   {
     id: "4",
-    name: " Primavera Bloom Styling Gelatin",
+    name: "Primavera Bloom Styling Gelatin",
     description: "Gelatina modeladora que ajuda a definir cachos e ondas com efeito natural.",
     price: 38.90,
     originalPrice: 48.90,
@@ -247,6 +247,7 @@ export default function Home() {
       </main>
     );
   }
+  
   // Home page padrão com carrinho e produtos
   return (
     <main className="home-main">
@@ -435,14 +436,19 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            <Image
-              src="/products/autumn-shampoo.png"
-              alt="Produto em destaque"
-              width={400}
-              height={400}
-              className="rotating-product"
-              priority
-            />
+            {/* Círculo atrás do produto */}
+            <div className="hero-product-circle"></div>
+            <div className="rotating-product-wrapper">
+              <Image
+                src="/products/autumn-shampoo.png"
+                alt="Produto em destaque"
+                width={380}
+                height={380}
+                className="rotating-product"
+                priority
+                style={{ objectFit: "contain" }}
+              />
+            </div>
           </motion.div>
         </div>
       </section>
