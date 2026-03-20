@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Poppins, Playfair_Display } from 'next/font/google';
 import styles from './auth.module.css';
 
@@ -42,10 +43,15 @@ export default function AuthPage() {
 
         {/* Lado esquerdo: imagem */}
         <div className={styles.imagePanel}>
-          <div className={styles.imagePlaceholder} aria-hidden="true" />
+          <Image
+            src="/login-cadastro.png"
+            alt="Wave Care"
+            fill
+            className={styles.photo}
+            priority
+          />
           <div className={styles.imageOverlay} />
         </div>
-
         {/* Lado direito: formulário */}
         <div className={styles.formPanel}>
           <div className={styles.formInner}>
