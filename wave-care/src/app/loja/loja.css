@@ -342,7 +342,7 @@
    ============================================ */
 
 .loja-hero {
-  background: var(--loja-hero-bg);
+  background:#023c33;
   color: var(--loja-hero-text);
   padding: 80px 56px 64px;
   display: flex;
