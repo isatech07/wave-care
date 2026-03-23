@@ -6,76 +6,79 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Menu, X, ChevronDown } from "lucide-react";
 import "./navbar.css";
+import { useUser } from "@/contexts/UserContext";
 
 const estacoes = [
-  { label: "Verão", param: "verao" },
-  { label: "Outono", param: "outono" },
-  { label: "Inverno", param: "inverno" },
-  { label: "Primavera", param: "primavera" },
+  { label: "Verão",      param: "verao"     },
+  { label: "Outono",     param: "outono"    },
+  { label: "Inverno",    param: "inverno"   },
+  { label: "Primavera",  param: "primavera" },
 ];
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/loja", label: "Loja" },
+  { href: "/",     label: "Home"         },
+  { href: "/loja", label: "Loja"         },
   { href: "/quiz", label: "Quiz Capilar" },
-  { href: "/blog", label: "Blog" },
+  { href: "/blog", label: "Blog"         },
 ];
 
-// Dados de exemplo para busca
 const searchData = [
-  { id: "1", name: "Shampoo Brisa do Mar", category: "Shampoo", href: "/#produtos" },
-  { id: "2", name: "Máscara Nutri Oceano", category: "Máscara", href: "/#produtos" },
-  { id: "3", name: "Leave-in Proteção Litorânea", category: "Leave-in", href: "/#produtos" },
-  { id: "4", name: "Óleo Reparador Marítimo", category: "Óleo", href: "/#produtos" },
-  { id: "5", name: "Kit Verão Completo", category: "Kit", href: "/?estacao=verao" },
-  { id: "6", name: "Kit Inverno Nutritivo", category: "Kit", href: "/?estacao=inverno" },
-  { id: "7", name: "Quiz Capilar", category: "Página", href: "/quiz" },
+  { id: "1", name: "Shampoo Brisa do Mar",        category: "Shampoo",  href: "/#produtos"        },
+  { id: "2", name: "Máscara Nutri Oceano",         category: "Máscara",  href: "/#produtos"        },
+  { id: "3", name: "Leave-in Proteção Litorânea",  category: "Leave-in", href: "/#produtos"        },
+  { id: "4", name: "Óleo Reparador Marítimo",      category: "Óleo",     href: "/#produtos"        },
+  { id: "5", name: "Kit Verão Completo",           category: "Kit",      href: "/?estacao=verao"   },
+  { id: "6", name: "Kit Inverno Nutritivo",        category: "Kit",      href: "/?estacao=inverno" },
+  { id: "7", name: "Quiz Capilar",                 category: "Página",   href: "/quiz"             },
 ];
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeEstacao, setActiveEstacao] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<typeof searchData>([]);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-  const pathname = usePathname();
+  const { user, isLoggedIn } = useUser();
 
-  // Detectar estação ativa
+  // ── Fix de hydration ──────────────────────────────────────────────────────
+  // O servidor renderiza sem acesso ao localStorage (sempre deslogado).
+  // O cliente pode estar logado. Para evitar a divergência entre SSR e
+  // cliente, usamos `mounted` para só exibir o estado real após a montagem.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const [isScrolled,       setIsScrolled]       = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeEstacao,    setActiveEstacao]    = useState<string | null>(null);
+  const [dropdownOpen,     setDropdownOpen]     = useState(false);
+  const [searchOpen,       setSearchOpen]       = useState(false);
+  const [searchQuery,      setSearchQuery]      = useState("");
+  const [searchResults,    setSearchResults]    = useState<typeof searchData>([]);
+
+  const dropdownRef    = useRef<HTMLDivElement>(null);
+  const searchRef      = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const router         = useRouter();
+  const pathname       = usePathname();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setActiveEstacao(params.get("estacao"));
   }, [pathname]);
 
-  // Scroll handler
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Click outside handlers
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
         setDropdownOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node))
         setSearchOpen(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fechar menus ao mudar de página
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setDropdownOpen(false);
@@ -83,35 +86,25 @@ export default function Navbar() {
     setSearchQuery("");
   }, [pathname]);
 
-  // Focar no input quando abrir a busca
   useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
+    if (searchOpen && searchInputRef.current) searchInputRef.current.focus();
   }, [searchOpen]);
 
-  // Keyboard shortcut para busca (Ctrl/Cmd + K)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
       }
-      if (e.key === "Escape") {
-        setSearchOpen(false);
-      }
+      if (e.key === "Escape") setSearchOpen(false);
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Função de busca
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    if (query.trim() === "") {
-      setSearchResults([]);
-      return;
-    }
+    if (query.trim() === "") { setSearchResults([]); return; }
     const filtered = searchData.filter(
       (item) =>
         item.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -120,7 +113,6 @@ export default function Navbar() {
     setSearchResults(filtered);
   }, []);
 
-  // Navegar para resultado da busca
   const handleSearchResultClick = (href: string) => {
     setSearchOpen(false);
     setSearchQuery("");
@@ -128,17 +120,23 @@ export default function Navbar() {
     router.push(href);
   };
 
-  // Handle estação click
   function handleEstacaoClick(param: string) {
     setDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    const next = activeEstacao === param ? "/" : `/?estacao=${param}`;
-    router.push(next);
+    router.push(activeEstacao === param ? "/" : `/?estacao=${param}`);
   }
 
   function isActive(href: string) {
     if (href === "/") return pathname === href && !activeEstacao;
     return pathname.startsWith(href);
+  }
+
+  // Só usa isLoggedIn após montagem para evitar divergência SSR x cliente
+  const loggedIn    = mounted && isLoggedIn;
+  const userInitial = mounted ? (user?.nome?.[0]?.toUpperCase() ?? "U") : "";
+
+  function handleProfileClick() {
+    router.push(loggedIn ? "/perfil" : "/auth");
   }
 
   return (
@@ -150,11 +148,10 @@ export default function Navbar() {
         transition={{ duration: 0.6 }}
       >
         <nav className="navbar-container">
+
           {/* Logo */}
           <Link href="/" className="navbar-logo" onClick={() => setIsMobileMenuOpen(false)}>
-            <span className="navbar-logo-text">
-              Wave<span>Care</span>
-            </span>
+            <span className="navbar-logo-text">Wave<span>Care</span></span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -208,6 +205,7 @@ export default function Navbar() {
 
           {/* Right Actions */}
           <div className="navbar-actions">
+
             {/* Search */}
             <div className="navbar-search-wrapper" ref={searchRef}>
               <button
@@ -282,9 +280,18 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            <Link href="/auth" className="navbar-action">
-              <User size={18} />
-            </Link>
+            {/* Ícone de perfil */}
+            <button
+              className="navbar-action navbar-profile-btn"
+              onClick={handleProfileClick}
+              aria-label={loggedIn ? "Minha conta" : "Entrar"}
+            >
+              {loggedIn ? (
+                <span className="navbar-avatar">{userInitial}</span>
+              ) : (
+                <User size={18} />
+              )}
+            </button>
 
             <button
               className="navbar-mobile-toggle"
@@ -375,6 +382,18 @@ export default function Navbar() {
                     {label}
                   </button>
                 ))}
+
+                <div className="navbar-mobile-divider" />
+
+                <button
+                  className="navbar-mobile-link"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    router.push(loggedIn ? "/perfil" : "/auth");
+                  }}
+                >
+                  {loggedIn ? `Minha conta (${user?.nome})` : "Entrar / Cadastrar"}
+                </button>
               </nav>
             </motion.div>
           </motion.div>

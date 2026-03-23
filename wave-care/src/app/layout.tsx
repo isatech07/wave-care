@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import Navbar from "@/components/Navbar/Navbar"
 import Footer from "@/components/Footer/Footer"
+import { UserProvider } from "@/contexts/UserContext"
 
 export const metadata: Metadata = {
   title: {
@@ -20,13 +21,15 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <Suspense fallback={null}>
-          <Navbar />
-        </Suspense>
+        <UserProvider>
+          <Suspense fallback={null}>
+            <Navbar />
+          </Suspense>
 
-        {children}
+          {children}
 
-        <Footer />
+          <Footer />
+        </UserProvider>
       </body>
     </html>
   )

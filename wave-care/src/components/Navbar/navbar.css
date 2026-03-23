@@ -187,6 +187,33 @@
   font-weight: 500;
 }
 
+.navbar-profile-btn {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+ 
+/* Avatar com inicial do usuário */
+.navbar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #2d7a78;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+ 
+.navbar-profile-btn:hover .navbar-avatar {
+  opacity: 0.85;
+}
+
 /* Right Actions */
 .navbar-actions {
   display: flex;

@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Poppins, Playfair_Display } from 'next/font/google';
 import styles from './auth.module.css';
+import { useUser } from '@/contexts/UserContext';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -19,6 +21,9 @@ const playfair = Playfair_Display({
 });
 
 export default function AuthPage() {
+  const { login } = useUser();
+  const router = useRouter();
+
   const [mode, setMode] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
@@ -33,8 +38,20 @@ export default function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+
+    // Simulação de requisição — substitua por sua chamada de API quando tiver backend
     await new Promise((r) => setTimeout(r, 1200));
+
+    login({
+      nome: formData.name || formData.email.split('@')[0],
+      email: formData.email,
+      telefone: '',
+      cidade: '',
+      capilar: null,
+    });
+
     setLoading(false);
+    router.push('/perfil');
   }
 
   return (
@@ -52,6 +69,7 @@ export default function AuthPage() {
           />
           <div className={styles.imageOverlay} />
         </div>
+
         {/* Lado direito: formulário */}
         <div className={styles.formPanel}>
           <div className={styles.formInner}>
@@ -62,7 +80,11 @@ export default function AuthPage() {
             </h2>
 
             {/* Botão Google */}
-            <button type="button" className={styles.googleBtn} onClick={() => console.log('Google OAuth')}>
+            <button
+              type="button"
+              className={styles.googleBtn}
+              onClick={() => console.log('Google OAuth')}
+            >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                 <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
                 <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
@@ -124,9 +146,16 @@ export default function AuthPage() {
                   aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 >
                   {showPassword ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
                   ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
                   )}
                 </button>
               </div>
@@ -149,7 +178,9 @@ export default function AuthPage() {
                 ) : (
                   <>
                     {isLogin ? 'Entrar' : 'Continuar com o e-mail'}
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
                   </>
                 )}
               </button>
@@ -157,9 +188,19 @@ export default function AuthPage() {
 
             <p className={styles.toggleText}>
               {isLogin ? (
-                <>Não tem uma conta?{' '}<button className={styles.toggleBtn} onClick={() => setMode('cadastro')}>Criar conta grátis</button></>
+                <>
+                  Não tem uma conta?{' '}
+                  <button className={styles.toggleBtn} onClick={() => setMode('cadastro')}>
+                    Criar conta grátis
+                  </button>
+                </>
               ) : (
-                <>Já tem uma conta?{' '}<button className={styles.toggleBtn} onClick={() => setMode('login')}>entrar</button></>
+                <>
+                  Já tem uma conta?{' '}
+                  <button className={styles.toggleBtn} onClick={() => setMode('login')}>
+                    entrar
+                  </button>
+                </>
               )}
             </p>
 
