@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -19,6 +19,8 @@ import {
   Minus,
   Check,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import Summer from "@/pages/Summer/Summer";
@@ -46,7 +48,71 @@ interface CartItem extends Product {
   quantity: number;
 }
 
+interface GelatinSlide {
+  id: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  bgColor: string;
+  blobColor1: string;
+  blobColor2: string;
+  textColor: string;
+  season: string;
+}
+
 // Data
+const gelatinSlides: GelatinSlide[] = [
+  {
+    id: "verao",
+    name: "Summer Protection",
+    subtitle: "Gelatina Estilizadora",
+    description: "Definição e hidratação para cabelos ondulados e cacheados durante o verão",
+    image: "/products/gelatina-verao.png",
+    bgColor: "#f5e6d3",
+    blobColor1: "#d4a574",
+    blobColor2: "#c4956a",
+    textColor: "#8b5a2b",
+    season: "Verão",
+  },
+  {
+    id: "outono",
+    name: "Gelatin Outono",
+    subtitle: "Regeneration & Strength",
+    description: "Cachos definidos e brilho intenso para os dias mais frios do outono",
+    image: "/products/gelatina-outono.png",
+    bgColor: "#d4dcc6",
+    blobColor1: "#6b7f3a",
+    blobColor2: "#8fa055",
+    textColor: "#4a5828",
+    season: "Outono",
+  },
+  {
+    id: "inverno",
+    name: "Winter Complete Kit",
+    subtitle: "Gelatin",
+    description: "Nutrição profunda e proteção contra o ressecamento do inverno",
+    image: "/products/gelatina-inverno.png",
+    bgColor: "#b8c4d4",
+    blobColor1: "#7a8fa8",
+    blobColor2: "#5a7090",
+    textColor: "#2c3e50",
+    season: "Inverno",
+  },
+  {
+    id: "primavera",
+    name: "Primavera Bloom",
+    subtitle: "Styling Gelatin",
+    description: "Definição e hidratação para renovar seus cabelos na primavera",
+    image: "/products/gelatina-primavera.png",
+    bgColor: "#c25a7c",
+    blobColor1: "#a14466",
+    blobColor2: "#d47a98",
+    textColor: "#ffffff",
+    season: "Primavera",
+  },
+];
+
 const estacoes = [
   {
     id: "verao",
@@ -125,6 +191,17 @@ const produtos: Product[] = [
   },
 ];
 
+const marqueeTexts = [
+  "Ingredientes Naturais",
+  "Fórmulas Sazonais",
+  "Cabelos Saudáveis",
+  "Hidratação Profunda",
+  "Proteção UV",
+  "Cruelty Free",
+  "Sustentável",
+  "Nutrição Intensa",
+];
+
 // Helper function
 const formatPrice = (price: number): string => {
   return price.toLocaleString("pt-BR", {
@@ -141,6 +218,32 @@ export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Auto-play carousel
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % gelatinSlides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isAutoPlaying]);
+
+  // Navigate carousel
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
+  const nextSlide = () => {
+    goToSlide((currentSlide + 1) % gelatinSlides.length);
+  };
+
+  const prevSlide = () => {
+    goToSlide((currentSlide - 1 + gelatinSlides.length) % gelatinSlides.length);
+  };
 
   // Toggle favorite
   const toggleFavorite = useCallback((productId: string) => {
@@ -206,6 +309,8 @@ export default function Home() {
     0
   );
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+  const currentGelatina = gelatinSlides[currentSlide];
 
   // Se tiver uma estação selecionada, mostra a página específica
   if (estacao === "verao") {
@@ -436,20 +541,139 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            {/* Círculo atrás do produto */}
-            <div className="hero-product-circle"></div>
-            <div className="rotating-product-wrapper">
-              <Image
-                src="/products/autumn-shampoo.png"
-                alt="Produto em destaque"
-                width={380}
-                height={380}
-                className="rotating-product"
-                priority
-                style={{ objectFit: "contain" }}
-              />
-            </div>
+            
           </motion.div>
+        </div>
+      </section>
+
+      {/* Gelatin Carousel Section */}
+      <section className="gelatin-carousel-section">
+        <div className="gelatin-carousel-header">
+          <h2 className="gelatin-carousel-title">Novos Produtos</h2>
+          <p className="gelatin-carousel-subtitle">
+            Definição e cuidado especial para cada época do ano
+          </p>
+        </div>
+
+        <div 
+          className="gelatin-carousel"
+          style={{ 
+            "--bg-color": currentGelatina.bgColor,
+            "--blob-color-1": currentGelatina.blobColor1,
+            "--blob-color-2": currentGelatina.blobColor2,
+            "--text-color": currentGelatina.textColor,
+          } as React.CSSProperties}
+        >
+          {/* Animated Background Blobs */}
+          <div className="gelatin-blobs">
+            <motion.div 
+              className="blob blob-1"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 10, 0],
+              }}
+              transition={{ 
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div 
+              className="blob blob-2"
+              animate={{ 
+                scale: [1, 1.15, 1],
+                rotate: [0, -15, 0],
+              }}
+              transition={{ 
+                duration: 10,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div 
+              className="blob blob-3"
+              animate={{ 
+                scale: [1, 1.08, 1],
+                rotate: [0, 8, 0],
+              }}
+              transition={{ 
+                duration: 7,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </div>
+
+          {/* Carousel Content */}
+          <div className="gelatin-carousel-content">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                className="gelatin-slide"
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="gelatin-info">
+                  <span className="gelatin-season-badge">{currentGelatina.season}</span>
+                  <h3 className="gelatin-name">{currentGelatina.name}</h3>
+                  <p className="gelatin-subtitle">{currentGelatina.subtitle}</p>
+                  <p className="gelatin-description">{currentGelatina.description}</p>
+                  <Link 
+                    href={`/?estacao=${currentGelatina.id}`} 
+                    className="gelatin-cta"
+                  >
+                    Ver Produtos da Estação
+                    <ArrowRight size={18} />
+                  </Link>
+                </div>
+                <div className="gelatin-image-wrapper">
+                  <motion.div
+                    animate={{ y: [0, -15, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Image
+                      src={currentGelatina.image}
+                      alt={currentGelatina.name}
+                      width={450}
+                      height={450}
+                      className="gelatin-image"
+                      priority
+                    />
+                  </motion.div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Navigation */}
+          <div className="gelatin-nav">
+            <button 
+              className="gelatin-nav-btn" 
+              onClick={prevSlide}
+              aria-label="Slide anterior"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <div className="gelatin-dots">
+              {gelatinSlides.map((_, index) => (
+                <button
+                  key={index}
+                  className={`gelatin-dot ${index === currentSlide ? "active" : ""}`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Ir para slide ${index + 1}`}
+                />
+              ))}
+            </div>
+            <button 
+              className="gelatin-nav-btn" 
+              onClick={nextSlide}
+              aria-label="Próximo slide"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
         </div>
       </section>
 
@@ -510,6 +734,29 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Marquee Section */}
+      <section className="marquee-section">
+        <div className="marquee-wrapper">
+          <div className="marquee-track">
+            {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
+              <span key={index} className="marquee-item">
+                {text}
+                <span className="marquee-separator">•</span>
+              </span>
+            ))}
+          </div>
+          <div className="marquee-track marquee-track-reverse">
+            {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
+              <span key={index} className="marquee-item">
+                {text}
+                <span className="marquee-separator">•</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+    
 
       {/* Produtos Section */}
       <section className="home-produtos" id="produtos">
@@ -590,53 +837,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
-      {/* Benefícios Section */}
-      <section className="home-beneficios">
-        <div className="home-beneficios-grid">
-          <motion.div
-            className="home-beneficio"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            <Leaf className="home-beneficio-icon" size={32} />
-            <h3 className="home-beneficio-title">Ingredientes naturais</h3>
-            <p className="home-beneficio-description">
-              Fórmulas com ativos naturais que respeitam seus cabelos e o meio
-              ambiente.
-            </p>
-          </motion.div>
-          <motion.div
-            className="home-beneficio"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <Droplet className="home-beneficio-icon" size={32} />
-            <h3 className="home-beneficio-title">Hidratação inteligente</h3>
-            <p className="home-beneficio-description">
-              Tecnologia que se adapta às necessidades específicas de cada
-              estação.
-            </p>
-          </motion.div>
-          <motion.div
-            className="home-beneficio"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-          >
-            <Wind className="home-beneficio-icon" size={32} />
-            <h3 className="home-beneficio-title">Proteção completa</h3>
-            <p className="home-beneficio-description">
-              Cuidados que protegem contra agressores climáticos de cada época.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-    </main>
+      </main>
   );
 }
