@@ -4,11 +4,14 @@
   font-family: "Georgia", "Times New Roman", serif;
 }
 
+
+
 /* ── Hero ── */
 .blog-hero {
   padding: 96px 48px 64px;
-  max-width: 900px;
+  max-width: 1200px;        /* ← igual ao grid */
   margin: 0 auto;
+  text-align: left;         /* ← garante alinhamento */
   border-bottom: 1px solid #e8e4df;
 }
 
@@ -26,18 +29,18 @@
   font-weight: 400;
   line-height: 1.1;
   color: #1a1a1a;
-  margin: 0 0 20px;
   letter-spacing: -0.02em;
 }
 
 .blog-hero__sub {
+  font-family: var(--font-poppins), sans-serif;
   font-size: 1.05rem;
+  font-weight: 400;
   color: #6b6460;
-  max-width: 500px;
+  max-width: 600px;   /* ← era 500px, pode aumentar ou remover */
   line-height: 1.7;
   margin: 0;
 }
-
 /* ── Grid ── */
 .blog-grid-section {
   max-width: 1200px;
@@ -65,14 +68,39 @@
   transform: translateY(-4px);
 }
 
-.blog-card__image-placeholder {
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: linear-gradient(135deg, #e8dfd8 0%, #d6cfc9 100%);
-  border-radius: 4px;
-  margin-bottom: 18px;
+/* ── Imagem ── */
+
+/*
+  Wrapper com proporção fixa 16:9.
+  O next/image com fill preenche este container.
+  Para usar uma imagem real, adicione o caminho em `image`
+  dentro do array `posts` no arquivo page.tsx.
+*/
+.blog-card__image-wrapper {
   position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, #e8dfd8 0%, #d6cfc9 100%);
+}
+
+/* Imagem real (next/image com fill) */
+.blog-card__image {
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.blog-card:hover .blog-card__image {
+  transform: scale(1.04);
+}
+
+/* Placeholder exibido enquanto não há imagem */
+.blog-card__image-placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #e8dfd8 0%, #d6cfc9 100%);
 }
 
 .blog-card__image-placeholder::after {
@@ -88,6 +116,7 @@
   );
 }
 
+/* ── Corpo do card ── */
 .blog-card__body {
   display: flex;
   flex-direction: column;
@@ -110,11 +139,11 @@
   font-weight: 600;
 }
 
-.tag--verao   { background: #fff3cd; color: #8a6200; }
-.tag--inverno { background: #d9eaf7; color: #1a4e7a; }
-.tag--outono  { background: #fde8d0; color: #7a3a00; }
+.tag--verao     { background: #fff3cd; color: #8a6200; }
+.tag--inverno   { background: #d9eaf7; color: #1a4e7a; }
+.tag--outono    { background: #fde8d0; color: #7a3a00; }
 .tag--primavera { background: #e0f5e9; color: #1a6632; }
-.tag--guia    { background: #ede9fe; color: #4c2a85; }
+.tag--guia      { background: #ede9fe; color: #4c2a85; }
 
 .blog-card__date {
   font-size: 11px;
@@ -149,7 +178,7 @@
   color: #1a1a1a;
 }
 
-/* ── Responsive ── */
+/* ── Responsivo ── */
 @media (max-width: 900px) {
   .blog-grid { grid-template-columns: repeat(2, 1fr); }
   .blog-hero { padding: 72px 28px 48px; }

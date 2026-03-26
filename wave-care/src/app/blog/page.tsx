@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import "./blog.css"
 
 const posts = [
@@ -11,16 +12,19 @@ const posts = [
     excerpt:
       "O sol intenso pede atenção redobrada. Descubra rotinas, protetores e hidratantes que mantêm sua pele saudável mesmo nos dias mais quentes.",
     readTime: "5 min",
+    // Coloque o caminho da imagem aqui, ex: "/images/blog/cuidados-verao.jpg"
+    image:"/blog/blog-1.png",
   },
   {
     slug: "hidratacao-inverno",
-    tag: "Inverno",
-    tagColor: "tag--inverno",
-    date: "28 Fev 2025",
-    title: "Como hidratar a pele nos dias frios",
+    tag: "Primavera",
+    tagColor: "tag--primavera",
+    date: "1 Set 2025",
+    title: "Renovação capilar: prepare-se para a primavera",
     excerpt:
-      "O frio resseca. Conheça os ingredientes ativos que fazem a diferença e como montar uma rotina noturna de dar inveja.",
+      "Dicas para revitalizar seus fios após o inverno e começar a estação com tudo.",
     readTime: "4 min",
+    image: "/blog/blog-2.png",
   },
   {
     slug: "rotina-outono",
@@ -31,6 +35,7 @@ const posts = [
     excerpt:
       "Entre o calor e o frio, a pele oscila. Saiba como ajustar sua rotina para enfrentar o outono sem ressecamento nem oleosidade.",
     readTime: "6 min",
+    image: "/blog/blog-3.png",
   },
   {
     slug: "spf-guia",
@@ -41,6 +46,7 @@ const posts = [
     excerpt:
       "FPS 30, 50 ou 100? Protetor físico ou químico? Este guia completo responde as dúvidas mais comuns sobre filtro solar.",
     readTime: "8 min",
+    image:"/blog/blog-4.png",
   },
   {
     slug: "vitamina-c-pele",
@@ -51,16 +57,18 @@ const posts = [
     excerpt:
       "Um dos ativos mais populares do universo beauty. Descubra como usar corretamente e potencializar seus resultados.",
     readTime: "5 min",
+    image:"/blog/blog-5.jpg",
   },
   {
-    slug: "primavera-alergias",
-    tag: "Primavera",
-    tagColor: "tag--primavera",
+    slug: "Cronograma",
+    tag: "Cuidado",
+    tagColor: "tag--guia",
     date: "05 Jan 2025",
-    title: "Pele sensível na primavera: como lidar com alergias",
+    title: "Cronograma capilar: o guia completo",
     excerpt:
-      "O florescimento da natureza pode despertar reações na pele. Veja quais produtos evitar e quais ingredientes calmantes usar.",
+      "Aprenda a montar seu conograma de hidratação, nutrição e recontrução perfeito.",
     readTime: "4 min",
+    image: "/blog/blog-6.png",
   },
 ]
 
@@ -88,7 +96,22 @@ export default function BlogPage() {
         <div className="blog-grid">
           {posts.map((post) => (
             <Link href={`/blog/${post.slug}`} key={post.slug} className="blog-card">
-              <div className="blog-card__image-placeholder" />
+              {/* Área da imagem */}
+              <div className="blog-card__image-wrapper">
+                {post.image ? (
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 580px) 100vw, (max-width: 900px) 50vw, 33vw"
+                    className="blog-card__image"
+                  />
+                ) : (
+                  // Placeholder exibido enquanto não há imagem real
+                  <div className="blog-card__image-placeholder" aria-hidden="true" />
+                )}
+              </div>
+
               <div className="blog-card__body">
                 <div className="blog-card__meta">
                   <span className={`blog-card__tag ${post.tagColor}`}>{post.tag}</span>
