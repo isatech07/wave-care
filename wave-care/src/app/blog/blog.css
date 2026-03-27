@@ -178,6 +178,253 @@
   color: #1a1a1a;
 }
 
+/* =========================================================
+   Adicione isso no final do seu blog.css existente
+   ========================================================= */
+
+/* ── Página individual do post ── */
+.post-main {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+}
+
+/* Breadcrumb */
+.post-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.post-breadcrumb__back {
+  font-size: 0.85rem;
+  color: #666;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.post-breadcrumb__back:hover {
+  color: #111;
+}
+
+/* Header */
+.post-header {
+  margin-bottom: 1.75rem;
+}
+
+.post-header__title {
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #111;
+  margin-bottom: 1rem;
+}
+
+.post-header__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #888;
+  flex-wrap: wrap;
+}
+
+.post-header__dot {
+  color: #ccc;
+}
+
+/* Imagem hero do post */
+.post-hero-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+
+.post-hero-image__img {
+  object-fit: cover;
+}
+
+/* Lead / subtítulo */
+.post-lead {
+  font-size: 1.1rem;
+  color: #444;
+  line-height: 1.7;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+/* Corpo do texto */
+.post-body {
+  margin-bottom: 3rem;
+}
+
+.post-body__paragraph {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.85;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Produtos recomendados ── */
+.post-products {
+  border-top: 1px solid #eee;
+  padding-top: 2.5rem;
+}
+
+.post-products__title {
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 1.5rem;
+}
+
+.post-products__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Card de produto */
+.product-card {
+  background: var(--loja-card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* Imagem */
+.product-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(145deg, #ede9e4 0%, #ddd8d0 100%);
+  overflow: hidden;
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-card__image {
+  transform: scale(1.05);
+}
+
+/* Info */
+.product-card__info {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Rating */
+.product-card__rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f5a623;
+  font-size: 0.85rem;
+}
+
+.product-card__stars {
+  font-weight: 500;
+  color: var(--loja-text-primary);
+}
+
+.product-card__reviews {
+  color: var(--loja-text-muted);
+  font-size: 0.8rem;
+}
+
+/* Nome */
+.product-card__name {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--loja-text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Descrição */
+.product-card__description {
+  font-size: 0.85rem;
+  color: var(--loja-text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Footer */
+.product-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--loja-border);
+}
+
+/* Preço */
+.product-card__price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--loja-text-primary);
+}
+
+/* Botão */
+.product-card__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--loja-accent);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.product-card__btn:hover {
+  background: #245850;
+  transform: translateY(-1px);
+}
+
+/* ── Responsivo ── */
+@media (max-width: 600px) {
+  .post-main {
+    padding: 1.25rem 1rem 4rem;
+  }
+
+  .post-header__title {
+    font-size: 1.5rem;
+  }
+
+  .post-products__grid {
+    grid-template-columns: 1fr;
+  }
+}
 /* ── Responsivo ── */
 @media (max-width: 900px) {
   .blog-grid { grid-template-columns: repeat(2, 1fr); }
