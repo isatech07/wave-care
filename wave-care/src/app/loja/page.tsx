@@ -695,7 +695,7 @@ export default function LojaPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          Cuide da sua pele
+          Cuide do seu cabelo
           <br />
           em cada estação
         </motion.h1>
