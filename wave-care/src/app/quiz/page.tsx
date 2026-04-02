@@ -476,7 +476,7 @@ export default function QuizCapilar() {
         </span>
       </div>
 
-      <a href="/login" className="res-save-btn">
+      <a href="/auth" className="res-save-btn">
         Criar conta / Entrar
       </a>
     </>
