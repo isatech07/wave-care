@@ -2,7 +2,6 @@ import "./globals.css"
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { Inter, Cormorant_Garamond, Jost } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import Navbar from "@/components/Navbar/Navbar"
 import Footer from "@/components/Footer/Footer"
 import { UserProvider } from "@/contexts/UserContext"
@@ -68,7 +67,6 @@ export default function RootLayout({
           {children}
 
           <Footer />
-          <Analytics />
         </UserProvider>
       </body>
     </html>
