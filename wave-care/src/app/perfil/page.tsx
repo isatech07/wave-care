@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
+import { apiUpdateUser } from "@/lib/api";
 
 // ─── Paleta Wave Care ────────────────────────────────────────────
 const C = {
@@ -127,8 +128,16 @@ export default function PerfilPage() {
 
   const initials = user!.nome.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 
-  function handleSave() {
-    updateUser(form);
+  async function handleSave() {
+    if (user?.id) {
+      await apiUpdateUser(user.id, {
+        name: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        cidade: form.cidade,
+      });
+    }
+    updateUser({ ...form });
     setEditing(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
