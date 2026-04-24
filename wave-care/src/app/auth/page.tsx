@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Poppins, Playfair_Display } from 'next/font/google';
 import styles from './auth.module.css';
 import { useUser } from '@/contexts/UserContext';
+import { apiLogin, apiRegister } from '@/lib/api';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -28,30 +29,53 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const isLogin = mode === 'login';
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
-    // Simulação de requisição — substitua por sua chamada de API quando tiver backend
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      if (isLogin) {
+        // ── LOGIN real ──────────────────────────────
+        const userData = await apiLogin(formData.email, formData.password);
+        login({
+          nome: userData.nome || userData.name,
+          email: userData.email,
+          telefone: userData.telefone || '',
+          cidade: userData.cidade || '',
+          capilar: null,
+          id: userData.id,
+        });
+      } else {
+        // ── CADASTRO real ───────────────────────────
+        await apiRegister(formData.name, formData.email, formData.password);
+        // Após cadastrar, faz login automático
+        const userData = await apiLogin(formData.email, formData.password);
+        login({
+          nome: userData.nome || userData.name,
+          email: userData.email,
+          telefone: userData.telefone || '',
+          cidade: userData.cidade || '',
+          capilar: null,
+          id: userData.id,
+        });
+      }
 
-    login({
-      nome: formData.name || formData.email.split('@')[0],
-      email: formData.email,
-      telefone: '',
-      cidade: '',
-      capilar: null,
-    });
-
-    setLoading(false);
-    router.push('/perfil');
+      router.push('/perfil');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro inesperado');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -159,6 +183,13 @@ export default function AuthPage() {
                   )}
                 </button>
               </div>
+
+              {/* Mensagem de erro da API */}
+              {error && (
+                <p style={{ color: '#ef4444', fontSize: '0.82rem', margin: '0.25rem 0 0', fontWeight: 500 }}>
+                  {error}
+                </p>
+              )}
 
               {isLogin && (
                 <div className={styles.forgotRow}>

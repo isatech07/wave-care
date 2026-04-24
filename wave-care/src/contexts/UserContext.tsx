@@ -2,9 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-// ─────────────────────────────────────────────
-
-// ─────────────────────────────────────────────
 export interface CapilarProfile {
   tipo: string;
   preocupacao: string;
@@ -38,6 +35,7 @@ export interface Order {
 }
 
 export interface UserData {
+  id?: number;
   nome: string;
   email: string;
   telefone: string;
@@ -45,30 +43,37 @@ export interface UserData {
   capilar: CapilarProfile | null;
   favorites: Product[];
   orders: Order[];
-  isAdmin?: boolean; 
+  isAdmin?: boolean;
 }
+
+// Tipo aceito pelo login: campos vindos da API
+type LoginData = {
+  id?: number;
+  nome: string;
+  email: string;
+  telefone: string;
+  cidade: string;
+  capilar: CapilarProfile | null;
+};
 
 interface UserContextType {
   user: UserData | null;
   isLoggedIn: boolean;
   updateUser: (data: Partial<UserData>) => void;
   updateCapilar: (capilar: CapilarProfile) => void;
-  login: (data: Omit<UserData, "favorites" | "orders" | "isAdmin">) => void;
+  login: (data: LoginData) => void;
   logout: () => void;
   addFavorite: (product: Product) => void;
   removeFavorite: (productId: string) => void;
   isFavorite: (productId: string) => boolean;
   addOrder: (order: Order) => void;
-  isAdmin: boolean;  
+  isAdmin: boolean;
 }
 
-// ─────────────────────────────────────────────
-
-// ─────────────────────────────────────────────
 const STORAGE_KEY = "wavecare_user";
 
 function loadUser(): UserData | null {
-  if (typeof window === "undefined") return null;  
+  if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as UserData) : null;
@@ -85,9 +90,6 @@ function removeUser(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-// ─────────────────────────────────────────────
-// admin)
-// ─────────────────────────────────────────────
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -98,12 +100,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (stored) setUser(stored);
   }, []);
 
-  const login = (data: Omit<UserData, "favorites" | "orders" | "isAdmin">) => {
-    const full: UserData = { 
-      ...data, 
-      favorites: [], 
+  const login = (data: LoginData) => {
+    const full: UserData = {
+      ...data,
+      favorites: [],
       orders: [],
-      isAdmin: data.email === 'admin@wavecare.com'  // ← ADMIN
+      isAdmin: data.email === 'admin@wavecare.com',
     };
     setUser(full);
     saveUser(full);
@@ -154,22 +156,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  //  verifica se é admin
-  const isAdminUser = !!user?.isAdmin;
-
   return (
     <UserContext.Provider value={{
-      user, 
+      user,
       isLoggedIn: !!user,
-      updateUser, 
-      updateCapilar, 
-      login, 
+      updateUser,
+      updateCapilar,
+      login,
       logout,
-      addFavorite, 
-      removeFavorite, 
-      isFavorite, 
+      addFavorite,
+      removeFavorite,
+      isFavorite,
       addOrder,
-      isAdmin: isAdminUser 
+      isAdmin: !!user?.isAdmin,
     }}>
       {children}
     </UserContext.Provider>
