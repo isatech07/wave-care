@@ -677,22 +677,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quiz Section */}
-      <section className="quiz-section" id="quiz">
-        <div className="quiz-card">
-          <Sparkles className="quiz-icon" size={32} />
-          <h2 className="quiz-title">Descubra seu tipo de cabelo</h2>
-          <p className="quiz-description">
-            Faça nosso quiz inteligente e receba recomendações personalizadas
-            para seu tipo de fio, cidade e estação.
-          </p>
-          <Link href="/quiz" className="quiz-button">
-            <Sparkles size={18} />
-            Fazer o Quiz
-          </Link>
-        </div>
-      </section>
-
       {/* Estações Section */}
       <section className="home-estacoes">
         <div className="home-estacoes-header">
@@ -734,6 +718,24 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Quiz Section */}
+      <section className="quiz-section" id="quiz">
+        <div className="quiz-card">
+          <Sparkles className="quiz-icon" size={32} />
+          <h2 className="quiz-title">Descubra seu tipo de cabelo</h2>
+          <p className="quiz-description">
+            Faça nosso quiz inteligente e receba recomendações personalizadas
+            para seu tipo de fio, cidade e estação.
+          </p>
+          <Link href="/quiz" className="quiz-button">
+            <Sparkles size={18} />
+            Fazer o Quiz
+          </Link>
+        </div>
+      </section>
+
+      
 
       {/* Marquee Section */}
       <section className="marquee-section">

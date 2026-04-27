@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
+// ─────────────────────────────────────────────
+
 export interface CapilarProfile {
   tipo: string;
   preocupacao: string;
@@ -40,6 +42,7 @@ export interface UserData {
   email: string;
   telefone: string;
   cidade: string;
+  avatar?: string; // base64 JPEG comprimido
   capilar: CapilarProfile | null;
   favorites: Product[];
   orders: Order[];
@@ -60,6 +63,7 @@ interface UserContextType {
   user: UserData | null;
   isLoggedIn: boolean;
   updateUser: (data: Partial<UserData>) => void;
+  updateAvatar: (rawBase64OrEmpty: string) => void;
   updateCapilar: (capilar: CapilarProfile) => void;
   login: (data: LoginData) => void;
   logout: () => void;
@@ -67,8 +71,11 @@ interface UserContextType {
   removeFavorite: (productId: string) => void;
   isFavorite: (productId: string) => boolean;
   addOrder: (order: Order) => void;
+  deleteAccount: () => Promise<void>;
   isAdmin: boolean;
 }
+
+// ─────────────────────────────────────────────
 
 const STORAGE_KEY = "wavecare_user";
 
@@ -82,13 +89,19 @@ function loadUser(): UserData | null {
 
 function saveUser(data: UserData): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn("Erro ao salvar usuário (localStorage cheio?):", e);
+  }
 }
 
 function removeUser(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
 }
+
+// ─────────────────────────────────────────────
 
 const UserContext = createContext<UserContextType | null>(null);
 
@@ -100,12 +113,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (stored) setUser(stored);
   }, []);
 
+  // Mantém LoginData (tipagem da API) e preserva dados ao fazer re-login com mesmo e-mail
   const login = (data: LoginData) => {
+    const existing = loadUser();
     const full: UserData = {
       ...data,
-      favorites: [],
-      orders: [],
-      isAdmin: data.email === 'admin@wavecare.com',
+      avatar: existing?.email === data.email ? existing?.avatar : undefined,
+      favorites: existing?.email === data.email ? (existing?.favorites ?? []) : [],
+      orders: existing?.email === data.email ? (existing?.orders ?? []) : [],
+      isAdmin: data.email === "admin@wavecare.com",
     };
     setUser(full);
     saveUser(full);
@@ -122,13 +138,48 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  // Recebe base64 bruto, comprime para 200px JPEG e salva
+  const updateAvatar = (rawBase64: string) => {
+    if (!rawBase64) {
+      setUser((prev) => {
+        if (!prev) return null;
+        const updated = { ...prev, avatar: undefined };
+        saveUser(updated);
+        return updated;
+      });
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const MAX = 200;
+      let { width, height } = img;
+      if (width > height) {
+        if (width > MAX) { height = Math.round((height * MAX) / width); width = MAX; }
+      } else {
+        if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL("image/jpeg", 0.82);
+      setUser((prev) => {
+        if (!prev) return null;
+        const updated = { ...prev, avatar: compressed };
+        saveUser(updated);
+        return updated;
+      });
+    };
+    img.src = rawBase64;
+  };
+
   const updateCapilar = (capilar: CapilarProfile) => updateUser({ capilar });
 
   const addFavorite = (product: Product) => {
     setUser((prev) => {
       if (!prev) return null;
-      const already = prev.favorites.some((f) => f.id === product.id);
-      if (already) return prev;
+      if (prev.favorites.some((f) => f.id === product.id)) return prev;
       const updated = { ...prev, favorites: [...prev.favorites, product] };
       saveUser(updated);
       return updated;
@@ -156,11 +207,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const deleteAccount = async (): Promise<void> => {
+    await new Promise((r) => setTimeout(r, 700));
+    setUser(null);
+    removeUser();
+  };
+
   return (
     <UserContext.Provider value={{
       user,
       isLoggedIn: !!user,
       updateUser,
+      updateAvatar,
       updateCapilar,
       login,
       logout,
@@ -168,6 +226,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       removeFavorite,
       isFavorite,
       addOrder,
+      deleteAccount,
       isAdmin: !!user?.isAdmin,
     }}>
       {children}
