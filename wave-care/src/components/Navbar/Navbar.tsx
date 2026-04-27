@@ -7,12 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Menu, X, ChevronDown } from "lucide-react";
 import "./navbar.css";
 import { useUser } from "@/contexts/UserContext";
+import { AvatarDisplay } from "@/components/AvatarUpload/AvatarUpload"; // 
 
 const estacoes = [
-  { label: "Verão",      param: "verao"     },
-  { label: "Outono",     param: "outono"    },
-  { label: "Inverno",    param: "inverno"   },
-  { label: "Primavera",  param: "primavera" },
+  { label: "Verão",     param: "verao"     },
+  { label: "Outono",    param: "outono"    },
+  { label: "Inverno",   param: "inverno"   },
+  { label: "Primavera", param: "primavera" },
 ];
 
 const navLinks = [
@@ -23,25 +24,21 @@ const navLinks = [
 ];
 
 const searchData = [
-  { id: "1", name: "Shampoo Brisa do Mar",        category: "Shampoo",  href: "/#produtos"        },
-  { id: "2", name: "Máscara Nutri Oceano",         category: "Máscara",  href: "/#produtos"        },
-  { id: "3", name: "Leave-in Proteção Litorânea",  category: "Leave-in", href: "/#produtos"        },
-  { id: "4", name: "Óleo Reparador Marítimo",      category: "Óleo",     href: "/#produtos"        },
-  { id: "5", name: "Kit Verão Completo",           category: "Kit",      href: "/?estacao=verao"   },
-  { id: "6", name: "Kit Inverno Nutritivo",        category: "Kit",      href: "/?estacao=inverno" },
-  { id: "7", name: "Quiz Capilar",                 category: "Página",   href: "/quiz"             },
+  { id: "1", name: "Shampoo Brisa do Mar",       category: "Shampoo",  href: "/#produtos"        },
+  { id: "2", name: "Máscara Nutri Oceano",        category: "Máscara",  href: "/#produtos"        },
+  { id: "3", name: "Leave-in Proteção Litorânea", category: "Leave-in", href: "/#produtos"        },
+  { id: "4", name: "Óleo Reparador Marítimo",     category: "Óleo",     href: "/#produtos"        },
+  { id: "5", name: "Kit Verão Completo",          category: "Kit",      href: "/?estacao=verao"   },
+  { id: "6", name: "Kit Inverno Nutritivo",       category: "Kit",      href: "/?estacao=inverno" },
+  { id: "7", name: "Quiz Capilar",                category: "Página",   href: "/quiz"             },
 ];
 
 export default function Navbar() {
   const { user, isLoggedIn } = useUser();
 
-  // ── Fix de hydration ──────────────────────────────────────────────────────
-  // O servidor renderiza sem acesso ao localStorage (sempre deslogado).
-  // O cliente pode estar logado. Para evitar a divergência entre SSR e
-  // cliente, usamos `mounted` para só exibir o estado real após a montagem.
+  // Fix de hydration — só renderiza estado real após montagem no cliente
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
-  // ─────────────────────────────────────────────────────────────────────────
 
   const [isScrolled,       setIsScrolled]       = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -92,10 +89,7 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setSearchOpen((prev) => !prev);
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setSearchOpen((p) => !p); }
       if (e.key === "Escape") setSearchOpen(false);
     }
     document.addEventListener("keydown", handleKeyDown);
@@ -104,25 +98,23 @@ export default function Navbar() {
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    if (query.trim() === "") { setSearchResults([]); return; }
-    const filtered = searchData.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query.toLowerCase()) ||
-        item.category.toLowerCase().includes(query.toLowerCase())
+    if (!query.trim()) { setSearchResults([]); return; }
+    setSearchResults(
+      searchData.filter(
+        (item) =>
+          item.name.toLowerCase().includes(query.toLowerCase()) ||
+          item.category.toLowerCase().includes(query.toLowerCase())
+      )
     );
-    setSearchResults(filtered);
   }, []);
 
   const handleSearchResultClick = (href: string) => {
-    setSearchOpen(false);
-    setSearchQuery("");
-    setSearchResults([]);
+    setSearchOpen(false); setSearchQuery(""); setSearchResults([]);
     router.push(href);
   };
 
   function handleEstacaoClick(param: string) {
-    setDropdownOpen(false);
-    setIsMobileMenuOpen(false);
+    setDropdownOpen(false); setIsMobileMenuOpen(false);
     router.push(activeEstacao === param ? "/" : `/?estacao=${param}`);
   }
 
@@ -131,9 +123,7 @@ export default function Navbar() {
     return pathname.startsWith(href);
   }
 
-  // Só usa isLoggedIn após montagem para evitar divergência SSR x cliente
-  const loggedIn    = mounted && isLoggedIn;
-  const userInitial = mounted ? (user?.nome?.[0]?.toUpperCase() ?? "U") : "";
+  const loggedIn = mounted && isLoggedIn;
 
   function handleProfileClick() {
     router.push(loggedIn ? "/perfil" : "/auth");
@@ -280,14 +270,17 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Ícone de perfil */}
+            {/* ─── Botão de perfil ──────────────────────────────────────
+                Antes: mostrava letra inicial (userInitial)
+                Agora: usa <AvatarDisplay> — foto ou initials automático  */}
             <button
               className="navbar-action navbar-profile-btn"
               onClick={handleProfileClick}
               aria-label={loggedIn ? "Minha conta" : "Entrar"}
+              style={{ padding: loggedIn && mounted ? "2px" : undefined }}
             >
-              {loggedIn ? (
-                <span className="navbar-avatar">{userInitial}</span>
+              {mounted && loggedIn ? (
+                <AvatarDisplay size={30} />
               ) : (
                 <User size={18} />
               )}
@@ -328,6 +321,17 @@ export default function Navbar() {
                 </button>
               </div>
 
+              {/* Avatar no mobile menu */}
+              {mounted && loggedIn && (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1.25rem", borderBottom: "1px solid #e5e7eb" }}>
+                  <AvatarDisplay size={40} />
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: "0.9rem" }}>{user?.nome}</p>
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: "#6b7280" }}>{user?.email}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Mobile Search */}
               <div className="navbar-mobile-search">
                 <Search size={18} />
@@ -345,10 +349,7 @@ export default function Navbar() {
                     <li key={result.id}>
                       <button
                         className="navbar-mobile-search-result"
-                        onClick={() => {
-                          handleSearchResultClick(result.href);
-                          setIsMobileMenuOpen(false);
-                        }}
+                        onClick={() => { handleSearchResultClick(result.href); setIsMobileMenuOpen(false); }}
                       >
                         <span>{result.name}</span>
                         <span className="result-cat">{result.category}</span>
@@ -387,12 +388,9 @@ export default function Navbar() {
 
                 <button
                   className="navbar-mobile-link"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    router.push(loggedIn ? "/perfil" : "/auth");
-                  }}
+                  onClick={() => { setIsMobileMenuOpen(false); router.push(loggedIn ? "/perfil" : "/auth"); }}
                 >
-                  {loggedIn ? `Minha conta (${user?.nome})` : "Entrar / Cadastrar"}
+                  {loggedIn ? "Minha conta" : "Entrar / Cadastrar"}
                 </button>
               </nav>
             </motion.div>
