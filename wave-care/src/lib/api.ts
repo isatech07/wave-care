@@ -32,3 +32,17 @@ export async function apiUpdateUser(id: number, fields: { name?: string; email?:
   if (!res.ok) throw new Error(data.message || 'Erro ao atualizar');
   return data;
 }
+
+export async function apiDeleteUser(id: number) {
+  const res = await fetch(`${API_URL}/users/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.message || 'Erro ao deletar conta');
+  }
+
+  return true;
+}

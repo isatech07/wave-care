@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { apiDeleteUser } from "@/lib/api";
 
 // ─────────────────────────────────────────────
 
@@ -138,7 +139,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // Recebe base64 bruto, comprime para 200px JPEG e salva
+
   const updateAvatar = (rawBase64: string) => {
     if (!rawBase64) {
       setUser((prev) => {
@@ -208,7 +209,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteAccount = async (): Promise<void> => {
-    await new Promise((r) => setTimeout(r, 700));
+    if (user?.id) await apiDeleteUser(user.id);
     setUser(null);
     removeUser();
   };
@@ -233,6 +234,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     </UserContext.Provider>
   );
 }
+
 
 export function useUser(): UserContextType {
   const ctx = useContext(UserContext);
