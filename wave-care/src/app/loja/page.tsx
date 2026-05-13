@@ -349,7 +349,7 @@ export default function LojaPage() {
           Cuide do seu cabelo<br />em cada estação
         </motion.h1>
         <motion.p className="loja-hero-sub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          Produtos formulados para as necessidades reais de cada clima — do verão intenso ao inverno seco.
+          Produtos formulados para as necessidades reais de cada clima do verão intenso ao inverno seco.
         </motion.p>
       </section>
 

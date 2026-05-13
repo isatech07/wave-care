@@ -135,7 +135,7 @@ const ESTACOES: Record<EstacaoKey, {
     nome: "Verão",
     bg: "#FFF6EE",
     kitNome: "Summer Protection",
-    kitImagem: "/products/verao-produtos/Summer-Protection - kit.png",
+    kitImagem: "/products/verao-produtos/verao-kit-completo.png",
     tagline: "Proteção total contra sol e sal",
     produtos: [
       { nome: "Shampoo Summer Protection", descricao: "Remove sal e cloro sem agredir os fios" },
@@ -153,7 +153,7 @@ const ESTACOES: Record<EstacaoKey, {
     nome: "Outono",
     bg: "#F6F2E8",
     kitNome: "Autumn Bloom",
-    kitImagem: "/products/outono-produtos/Autumn-Bloom-kit.png",
+    kitImagem: "/products/outono-produtos/Autumn-kit-completo.png",
     tagline: "Nutrição para a transição de estação",
     produtos: [
       { nome: "Shampoo Autumn Bloom", descricao: "Limpeza nutritiva para o outono" },
@@ -171,7 +171,7 @@ const ESTACOES: Record<EstacaoKey, {
     nome: "Inverno",
     bg: "#EEF3FA",
     kitNome: "Winter Complete",
-    kitImagem: "/products/inverno-produtos/inverno-kit-completo.png",
+    kitImagem: "/products/inverno-produtos/inverno-kitcompleto.png",
     tagline: "Hidratação profunda contra o frio",
     produtos: [
       { nome: "Shampoo Winter Complete", descricao: "Limpeza hidratante para dias frios" },
@@ -189,7 +189,7 @@ const ESTACOES: Record<EstacaoKey, {
     nome: "Primavera",
     bg: "#FBF0F5",
     kitNome: "Primavera Bloom",
-    kitImagem: "/products/primavera-produtos/bloom-kit-2.png",
+    kitImagem: "/products/primavera-produtos/primavera-kit-completo.png",
     tagline: "Leveza e definição para os cachos",
     produtos: [
       { nome: "Shampoo Primavera Bloom", descricao: "Limpeza leve e revigorante" },

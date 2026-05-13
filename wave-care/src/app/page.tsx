@@ -118,7 +118,7 @@ const estacoes = [
     id: "verao",
     label: "Verão",
     description: "Proteção Solar & Hidratação",
-    image: "/products/verao-produtos/Summer kit-2.png",
+    image: "/products/verao-produtos/Summerkit-2.png",
   },
   {
     id: "outono",
@@ -130,7 +130,7 @@ const estacoes = [
     id: "inverno",
     label: "Inverno",
     description: "Nutrição Profunda & Anti-ressecamento",
-    image: "/products/inverno-produtos/inverno-kit-2.png",
+    image: "/products/inverno-produtos/inverno-kit2.png",
   },
   {
     id: "primavera",
@@ -149,7 +149,7 @@ const produtos: Product[] = [
     originalPrice: 39.90,
     rating: 4.8,
     reviews: 234,
-    image: "/products/verao-produtos/verão-shampoo.png",
+    image: "/products/verao-produtos/verao-shampoo.png",
     badge: "Best Seller",
     category: "Shampoo",
   },

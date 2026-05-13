@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import styles from "./ProductModal.module.css";
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 interface Product {
   id: number;
@@ -32,71 +30,48 @@ interface ProductModalProps {
   isFavorite: boolean;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type TabKey = "description" | "howToUse" | "benefits";
 
 const formatPrice = (price: number): string =>
   price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/**
- * Remove acentos, espaços e barras duplicadas do caminho da imagem
- * para garantir que o path no banco bata com o arquivo físico em /public.
- */
 const normalizeImagePath = (path: string): string => {
   if (!path) return "/products/placeholder.jpg";
-  let normalized = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
-  normalized = normalized.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (!normalized.startsWith("/")) normalized = "/" + normalized;
-  return normalized;
+  let n = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
+  n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!n.startsWith("/")) n = "/" + n;
+  return n;
 };
 
-const renderStars = (rating: number = 0) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+const HOW_TO_USE: Record<string, string> = {
+  kit: "1. Shampoo: Aplique nos cabelos molhados, massageie e enxágue.\n2. Condicionador: Aplique nos comprimentos e pontas, deixe agir 3 min.\n3. Máscara: Use 1× por semana, deixe agir 5–10 min e enxágue.\n4. Finalize com leave-in ou óleo capilar.",
+  default:
+    "1. Aplique nos cabelos limpos e úmidos.\n2. Distribua uniformemente mecha por mecha.\n3. Deixe agir por 3–5 minutos.\n4. Enxágue abundantemente.\n5. Use diariamente para melhores resultados.",
+};
 
+const BENEFITS: Record<string, string> = {
+  verao:
+    "• Proteção contra raios UV\n• Hidratação leve e duradoura\n• Controle do frizz\n• Brilho intenso\n• Toque seco sem oleosidade",
+  inverno:
+    "• Hidratação profunda\n• Reparação de pontas\n• Proteção contra o frio\n• Nutrição intensa\n• Anti-frizz prolongado",
+  outono:
+    "• Nutrição equilibrada\n• Reposição de nutrientes\n• Maciez duradoura\n• Brilho saudável\n• Controle do volume",
+  primavera:
+    "• Leveza e frescor\n• Proteção contra umidade\n• Definição de cachos\n• Fragrância floral\n• Brilho natural",
+};
+
+function Stars({ rating }: { rating: number }) {
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.5;
+  const empty = 5 - full - (half ? 1 : 0);
   return (
-    <div className={styles.stars}>
-      <span className={styles.starFilled}>{"★".repeat(fullStars)}</span>
-      {hasHalfStar && <span className={styles.starHalf}>½</span>}
-      <span className={styles.starEmpty}>{"☆".repeat(emptyStars)}</span>
-      <span className={styles.ratingValue}>{rating.toFixed(1)}</span>
-    </div>
+    <span className={styles.stars} aria-label={`${rating} de 5 estrelas`}>
+      {"★".repeat(full)}
+      {half ? "½" : ""}
+      <span className={styles.starsEmpty}>{"☆".repeat(empty)}</span>
+    </span>
   );
-};
-
-// ─── Conteúdos dinâmicos ──────────────────────────────────────────────────────
-
-const getHowToUse = (category: string): string => {
-  if (category === "kit") {
-    return `1. Shampoo: Aplique nos cabelos molhados, massageie e enxágue.\n2. Condicionador: Aplique nos comprimentos e pontas, deixe agir 3 minutos e enxágue.\n3. Máscara: Aplique 1x por semana, deixe agir 5–10 minutos.\n4. Finalize com leave-in ou óleo para melhores resultados.`;
-  }
-  return `1. Aplique nos cabelos limpos e úmidos.\n2. Distribua uniformemente mecha por mecha.\n3. Deixe agir por 3–5 minutos.\n4. Enxágue abundantemente.\n5. Use diariamente para melhores resultados.`;
-};
-
-const getBenefits = (season: string): string => {
-  const map: Record<string, string> = {
-    verao:
-      "• Proteção contra raios UV\n• Hidratação leve\n• Controle do frizz\n• Brilho intenso\n• Toque seco sem oleosidade",
-    inverno:
-      "• Hidratação profunda\n• Reparação de pontas\n• Proteção contra frio\n• Nutrição intensa\n• Anti-frizz prolongado",
-    outono:
-      "• Nutrição equilibrada\n• Reposição de nutrientes\n• Maciez duradoura\n• Brilho saudável\n• Controle do volume",
-    primavera:
-      "• Leveza e frescor\n• Proteção contra umidade\n• Definição de cachos\n• Fragrância floral\n• Brilho natural",
-  };
-  return map[season] ?? map.verao;
-};
-
-const getStockInfo = (
-  stock: number,
-  styles: Record<string, string>
-): { text: string; className: string } => {
-  if (stock === 0) return { text: "Esgotado", className: styles.outOfStock };
-  if (stock < 10) return { text: `Últimas ${stock} unidades!`, className: styles.lowStock };
-  return { text: "Em estoque", className: styles.inStock };
-};
-
-// ─── Componente ───────────────────────────────────────────────────────────────
+}
 
 export default function ProductModal({
   product,
@@ -106,237 +81,315 @@ export default function ProductModal({
   onToggleFavorite,
   isFavorite,
 }: ProductModalProps) {
-  const [activeTab, setActiveTab] = useState<"description" | "howToUse" | "benefits">(
-    "description"
-  );
+  const [tab, setTab] = useState<TabKey>("description");
   const [cep, setCep] = useState("");
-  const [shippingPrice, setShippingPrice] = useState<number | null>(null);
+  const [shipping, setShipping] = useState<number | null>(null);
   const [calculating, setCalculating] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fecha com ESC
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) onClose();
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose]);
+  const triggerClose = useCallback(() => {
+    setClosing(true);
+    timeoutRef.current = setTimeout(() => {
+      onClose();
+    }, 240);
+  }, [onClose]);
 
-  // Bloqueia scroll do body quando o modal está aberto
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
-      document.body.style.overflow = "unset";
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setClosing(false);
+      return;
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") triggerClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, triggerClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
-  // Reseta estado de erro de imagem ao trocar de produto
   useEffect(() => {
-    setImgError(false);
-    setActiveTab("description");
-    setCep("");
-    setShippingPrice(null);
+    if (product?.id) {
+      setImgError(false);
+      setTab("description");
+      setCep("");
+      setShipping(null);
+    }
   }, [product?.id]);
+
+  const calcShipping = useCallback(() => {
+    if (cep.length < 8) return;
+    setCalculating(true);
+    setTimeout(() => {
+      setShipping(parseFloat((Math.random() * 30).toFixed(2)));
+      setCalculating(false);
+    }, 900);
+  }, [cep]);
 
   if (!product || !isOpen) return null;
 
-  const maxInstallments = 12;
-  const installmentValue = product.price / maxInstallments;
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  const stockInfo = getStockInfo(product.stock, styles);
-  const imageSrc = imgError
+  const installment = product.price / 12;
+
+  const stockStatus =
+    product.stock === 0
+      ? { label: "Esgotado", mod: styles.stockOut }
+      : product.stock < 10
+      ? { label: `Últimas ${product.stock} unidades`, mod: styles.stockLow }
+      : { label: "Em estoque", mod: styles.stockIn };
+
+  const imgSrc = imgError
     ? "/products/placeholder.jpg"
     : normalizeImagePath(product.image);
 
-  const calculateShipping = () => {
-    if (!cep || cep.length < 8) return;
-    setCalculating(true);
-    setTimeout(() => {
-      setShippingPrice(parseFloat((Math.random() * 30).toFixed(2)));
-      setCalculating(false);
-    }, 1000);
+  const tabContent: Record<TabKey, string> = {
+    description: product.description,
+    howToUse: HOW_TO_USE[product.category] ?? HOW_TO_USE.default,
+    benefits: BENEFITS[product.season] ?? BENEFITS.verao,
   };
 
-  const seasonLabel =
-    product.season.charAt(0).toUpperCase() + product.season.slice(1);
-
-  const categoryLabel =
-    product.category === "produto" ? "Produto Individual" : "Kit Completo";
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: "description", label: "Descrição" },
+    { key: "howToUse", label: "Como usar" },
+    { key: "benefits", label: "Benefícios" },
+  ];
 
   return (
     <>
-      {/* Overlay */}
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-
-      {/* Modal */}
       <div
-        className={styles.modal}
+        className={`${styles.overlay} ${closing ? styles.overlayOut : ""}`}
+        onClick={triggerClose}
+        aria-hidden="true"
+      />
+
+      <div
+        className={`${styles.modal} ${closing ? styles.modalOut : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={product.name}
       >
-        <button
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label="Fechar modal"
-        >
-          ✕
-        </button>
+        <div className={styles.header}>
+          <button
+            className={styles.closeBtn}
+            onClick={triggerClose}
+            aria-label="Fechar"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M1 1l12 12M13 1L1 13"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
 
-        <div className={styles.modalContent}>
-
-          {/* ── Coluna da imagem ── */}
-          <div className={styles.imageColumn}>
-            <div className={styles.mainImage}>
+        <div className={styles.body}>
+          <div className={styles.imageCol}>
+            <div className={styles.imageWrap}>
               <Image
-                src={imageSrc}
+                src={imgSrc}
                 alt={product.name}
-                width={400}
-                height={400}
+                fill
                 style={{ objectFit: "cover" }}
                 onError={() => setImgError(true)}
                 unoptimized
+                priority
               />
+              {discount > 0 && (
+                <span className={styles.discountPill}>−{discount}%</span>
+              )}
+              {product.badge && (
+                <span className={styles.badgePill}>{product.badge}</span>
+              )}
             </div>
-
-            {discount > 0 && (
-              <div className={styles.discountBadge}>-{discount}%</div>
-            )}
-            {product.badge && (
-              <div className={styles.badge}>{product.badge}</div>
-            )}
           </div>
 
-          {/* ── Coluna de informações ── */}
-          <div className={styles.infoColumn}>
-            <h1 className={styles.title}>{product.name}</h1>
-
-            <div className={styles.rating}>
-              {renderStars(product.rating ?? 4.5)}
-              <span className={styles.reviews}>
-                ({product.reviews ?? 0} avaliações)
-              </span>
+          <div className={styles.infoCol}>
+            <div className={styles.infoTop}>
+              <p className={styles.categoryTag}>
+                {product.category === "kit" ? "Kit Completo" : "Produto Individual"}{" "}
+                ·{" "}
+                {product.season.charAt(0).toUpperCase() + product.season.slice(1)}
+              </p>
+              <h1 className={styles.title}>{product.name}</h1>
+              <div className={styles.ratingRow}>
+                <Stars rating={product.rating ?? 4.5} />
+                <span className={styles.ratingNum}>
+                  {(product.rating ?? 4.5).toFixed(1)}
+                </span>
+                <span className={styles.ratingCount}>
+                  ({product.reviews ?? 0} avaliações)
+                </span>
+              </div>
             </div>
 
-            <div className={styles.priceSection}>
+            <div className={styles.priceBlock}>
               {product.originalPrice && (
-                <span className={styles.originalPrice}>
+                <span className={styles.priceOld}>
                   {formatPrice(product.originalPrice)}
                 </span>
               )}
-              <span className={styles.currentPrice}>
-                {formatPrice(product.price)}
+              <div className={styles.priceRow}>
+                <span className={styles.priceCurrent}>
+                  {formatPrice(product.price)}
+                </span>
+                {discount > 0 && (
+                  <span className={styles.discountTag}>{discount}% OFF</span>
+                )}
+              </div>
+              <p className={styles.installment}>
+                em até 12× de{" "}
+                <strong>{formatPrice(installment)}</strong> sem juros
+              </p>
+            </div>
+
+            <div className={styles.stockRow}>
+              <span className={`${styles.stockDot} ${stockStatus.mod}`} />
+              <span className={`${styles.stockLabel} ${stockStatus.mod}`}>
+                {stockStatus.label}
               </span>
-              {discount > 0 && (
-                <span className={styles.discountPercent}>{discount}% OFF</span>
-              )}
             </div>
-
-            <div className={styles.installments}>
-              em até {maxInstallments}x de {formatPrice(installmentValue)} sem juros
-            </div>
-
-            <div className={styles.stock}>
-              <span className={stockInfo.className}>✓ {stockInfo.text}</span>
-            </div>
-
-            <p className={styles.shortDescription}>{product.description}</p>
 
             <div className={styles.actions}>
               <button
-                className={styles.addToCartBtn}
+                className={styles.btnCart}
                 onClick={() => onAddToCart(product)}
                 disabled={product.stock === 0}
               >
-                🛒 {product.stock === 0 ? "Esgotado" : "Adicionar ao carrinho"}
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                {product.stock === 0 ? "Esgotado" : "Adicionar ao carrinho"}
               </button>
               <button
-                className={`${styles.favoriteBtn} ${isFavorite ? styles.active : ""}`}
+                className={`${styles.btnFav} ${isFavorite ? styles.btnFavActive : ""}`}
                 onClick={() => onToggleFavorite(product.id)}
-                aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                aria-label={isFavorite ? "Remover dos favoritos" : "Favoritar"}
               >
-                {isFavorite ? "❤️" : "♡"} Favoritar
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill={isFavorite ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
               </button>
             </div>
 
-            {/* Calcular frete */}
-            <div className={styles.shipping}>
-              <h4>Calcular frete</h4>
-              <div className={styles.cepInput}>
+            <div className={styles.shippingBox}>
+              <p className={styles.shippingTitle}>Calcular frete</p>
+              <div className={styles.shippingRow}>
                 <input
+                  className={styles.cepField}
                   type="text"
-                  placeholder="Digite seu CEP"
+                  inputMode="numeric"
+                  placeholder="00000-000"
+                  maxLength={8}
                   value={cep}
                   onChange={(e) =>
                     setCep(e.target.value.replace(/\D/g, "").slice(0, 8))
                   }
-                  maxLength={8}
-                  inputMode="numeric"
+                  onKeyDown={(e) => e.key === "Enter" && calcShipping()}
                 />
                 <button
-                  onClick={calculateShipping}
+                  className={styles.cepBtn}
+                  onClick={calcShipping}
                   disabled={calculating || cep.length < 8}
                 >
-                  {calculating ? "Calculando..." : "OK"}
+                  {calculating ? "…" : "Calcular"}
                 </button>
               </div>
-              {shippingPrice !== null && (
-                <div className={styles.shippingResult}>
-                  {shippingPrice === 0 ? (
-                    <span>🎉 Frete Grátis!</span>
-                  ) : (
-                    <span>Frete: {formatPrice(shippingPrice)}</span>
-                  )}
-                </div>
+              {shipping !== null && (
+                <p className={styles.shippingResult}>
+                  {shipping === 0
+                    ? "🎉 Frete Grátis!"
+                    : `Frete: ${formatPrice(shipping)}`}
+                </p>
               )}
             </div>
           </div>
 
-          {/* ── Coluna de detalhes ── */}
-          <div className={styles.detailsColumn}>
+          <div className={styles.detailsCol}>
             <div className={styles.tabs} role="tablist">
-              {(
-                [
-                  { key: "description", label: "Descrição" },
-                  { key: "howToUse", label: "Como usar" },
-                  { key: "benefits", label: "Benefícios" },
-                ] as const
-              ).map(({ key, label }) => (
+              {tabs.map(({ key, label }) => (
                 <button
                   key={key}
                   role="tab"
-                  aria-selected={activeTab === key}
-                  className={`${styles.tabBtn} ${activeTab === key ? styles.active : ""}`}
-                  onClick={() => setActiveTab(key)}
+                  aria-selected={tab === key}
+                  className={`${styles.tabBtn} ${
+                    tab === key ? styles.tabActive : ""
+                  }`}
+                  onClick={() => setTab(key)}
                 >
                   {label}
                 </button>
               ))}
             </div>
 
-            <div className={styles.tabContent} role="tabpanel">
-              {activeTab === "description" && (
-                <p>{product.description}</p>
-              )}
-              {activeTab === "howToUse" && (
-                <pre className={styles.pre}>{getHowToUse(product.category)}</pre>
-              )}
-              {activeTab === "benefits" && (
-                <pre className={styles.pre}>{getBenefits(product.season)}</pre>
-              )}
+            <div className={styles.tabPanel} role="tabpanel">
+              <pre className={styles.tabText}>{tabContent[tab]}</pre>
             </div>
 
-            <div className={styles.productMeta}>
-              <p><strong>Categoria:</strong> {categoryLabel}</p>
-              <p><strong>Estação:</strong> {seasonLabel}</p>
-              <p><strong>Código:</strong> #{product.id}</p>
-            </div>
+            <dl className={styles.meta}>
+              <div className={styles.metaRow}>
+                <dt>Categoria</dt>
+                <dd>
+                  {product.category === "kit"
+                    ? "Kit Completo"
+                    : "Produto Individual"}
+                </dd>
+              </div>
+              <div className={styles.metaRow}>
+                <dt>Estação</dt>
+                <dd>
+                  {product.season.charAt(0).toUpperCase() +
+                    product.season.slice(1)}
+                </dd>
+              </div>
+              <div className={styles.metaRow}>
+                <dt>Código</dt>
+                <dd>#{String(product.id).padStart(5, "0")}</dd>
+              </div>
+            </dl>
           </div>
-
         </div>
       </div>
     </>
