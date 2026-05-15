@@ -130,7 +130,7 @@ const estacoes = [
     id: "inverno",
     label: "Inverno",
     description: "Nutrição Profunda & Anti-ressecamento",
-    image: "/products/inverno-produtos/inverno-kit2.png",
+    image: "/products/inverno-produtos/inverno-kit-2.png",
   },
   {
     id: "primavera",
