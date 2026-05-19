@@ -50,13 +50,13 @@ export interface UserData {
   isAdmin?: boolean;
 }
 
-// Tipo aceito pelo login: campos vindos da API
 type LoginData = {
   id?: number;
   nome: string;
   email: string;
   telefone: string;
   cidade: string;
+  avatar?: string;
   capilar: CapilarProfile | null;
 };
 
@@ -79,6 +79,9 @@ interface UserContextType {
 // ─────────────────────────────────────────────
 
 const STORAGE_KEY = "wavecare_user";
+const AVATARS_KEY = "wavecare_avatars";
+
+type AvatarStore = Record<string, string>;
 
 function loadUser(): UserData | null {
   if (typeof window === "undefined") return null;
@@ -102,7 +105,35 @@ function removeUser(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-// ─────────────────────────────────────────────
+function loadAvatarStore(): AvatarStore {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(AVATARS_KEY);
+    return raw ? (JSON.parse(raw) as AvatarStore) : {};
+  } catch { return {}; }
+}
+
+function saveAvatarForEmail(email: string, base64: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const store = loadAvatarStore();
+    store[email] = base64;
+    localStorage.setItem(AVATARS_KEY, JSON.stringify(store));
+  } catch (e) {
+    console.warn("Erro ao salvar avatar (localStorage cheio?):", e);
+  }
+}
+
+function loadAvatarForEmail(email: string): string | undefined {
+  return loadAvatarStore()[email];
+}
+
+function removeAvatarForEmail(email: string): void {
+  if (typeof window === "undefined") return;
+  const store = loadAvatarStore();
+  delete store[email];
+  localStorage.setItem(AVATARS_KEY, JSON.stringify(store));
+}
 
 const UserContext = createContext<UserContextType | null>(null);
 
@@ -111,17 +142,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = loadUser();
-    if (stored) setUser(stored);
+    if (stored) {
+      const avatar = stored.avatar ?? loadAvatarForEmail(stored.email);
+      setUser({ ...stored, avatar });
+    }
   }, []);
 
-  // Mantém LoginData (tipagem da API) e preserva dados ao fazer re-login com mesmo e-mail
   const login = (data: LoginData) => {
     const existing = loadUser();
+    const sameAccount = existing?.email === data.email;
     const full: UserData = {
       ...data,
-      avatar: existing?.email === data.email ? existing?.avatar : undefined,
-      favorites: existing?.email === data.email ? (existing?.favorites ?? []) : [],
-      orders: existing?.email === data.email ? (existing?.orders ?? []) : [],
+      // Foto só no localStorage (base64), independente do backend
+      avatar: loadAvatarForEmail(data.email),
+      favorites: sameAccount ? (existing?.favorites ?? []) : [],
+      orders: sameAccount ? (existing?.orders ?? []) : [],
       isAdmin: data.email === "admin@wavecare.com",
     };
     setUser(full);
@@ -144,6 +179,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (!rawBase64) {
       setUser((prev) => {
         if (!prev) return null;
+        if (prev.email) removeAvatarForEmail(prev.email);
         const updated = { ...prev, avatar: undefined };
         saveUser(updated);
         return updated;
@@ -167,6 +203,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const compressed = canvas.toDataURL("image/jpeg", 0.82);
       setUser((prev) => {
         if (!prev) return null;
+        if (prev.email) saveAvatarForEmail(prev.email, compressed);
         const updated = { ...prev, avatar: compressed };
         saveUser(updated);
         return updated;

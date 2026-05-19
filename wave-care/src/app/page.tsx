@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -22,11 +22,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-import Summer from "@/pages/Summer/Summer";
-import Autumn from "@/pages/Autumn/Autumn";
-import Winter from "@/pages/Winter/Winter";
-import Spring from "@/pages/Spring/Spring";
 
 import "./home.css";
 
@@ -212,7 +207,8 @@ const formatPrice = (price: number): string => {
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const estacao = searchParams.get("estacao");
+  const router = useRouter();
+  const estacao = searchParams?.get("estacao");
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -220,6 +216,19 @@ export default function Home() {
   const [notification, setNotification] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Redirect to new App Router routes for season pages
+  useEffect(() => {
+    if (estacao === "verao") {
+      router.push("/estacoes/verao");
+    } else if (estacao === "outono") {
+      router.push("/estacoes/outono");
+    } else if (estacao === "inverno") {
+      router.push("/estacoes/inverno");
+    } else if (estacao === "primavera") {
+      router.push("/estacoes/primavera");
+    }
+  }, [estacao, router]);
 
   // Auto-play carousel
   useEffect(() => {
@@ -312,47 +321,6 @@ export default function Home() {
 
   const currentGelatina = gelatinSlides[currentSlide];
 
-  // Se tiver uma estação selecionada, mostra a página específica
-  if (estacao === "verao") {
-    return (
-      <main className="home-main">
-        <section className="estacao-section estacao-fade-in">
-          <Summer />
-        </section>
-      </main>
-    );
-  }
-
-  if (estacao === "outono") {
-    return (
-      <main className="home-main">
-        <section className="estacao-section estacao-fade-in">
-          <Autumn />
-        </section>
-      </main>
-    );
-  }
-
-  if (estacao === "inverno") {
-    return (
-      <main className="home-main">
-        <section className="estacao-section estacao-fade-in">
-          <Winter />
-        </section>
-      </main>
-    );
-  }
-
-  if (estacao === "primavera") {
-    return (
-      <main className="home-main">
-        <section className="estacao-section estacao-fade-in">
-          <Spring />
-        </section>
-      </main>
-    );
-  }
-  
   // Home page padrão com carrinho e produtos
   return (
     <main className="home-main">
@@ -620,8 +588,8 @@ export default function Home() {
                   <h3 className="gelatin-name">{currentGelatina.name}</h3>
                   <p className="gelatin-subtitle">{currentGelatina.subtitle}</p>
                   <p className="gelatin-description">{currentGelatina.description}</p>
-                  <Link 
-                    href={`/?estacao=${currentGelatina.id}`} 
+                  <Link
+                    href={`/estacoes/${currentGelatina.id}`}
                     className="gelatin-cta"
                   >
                     Ver Produtos da Estação
@@ -696,7 +664,7 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
             >
-              <Link href={`/?estacao=${id}`} className="home-estacao-card">
+              <Link href={`/estacoes/${id}`} className="home-estacao-card">
                 <div className="estacao-image-wrapper">
                   <Image
                     src={image}

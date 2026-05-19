@@ -45,28 +45,25 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        // ── LOGIN real ──────────────────────────────
         const userData = await apiLogin(formData.email, formData.password);
         login({
-          nome: userData.nome || userData.name,
-          email: userData.email,
+          id: userData.id,
+          nome: userData.nome ?? '',
+          email: userData.email ?? '',
           telefone: userData.telefone || '',
           cidade: userData.cidade || '',
           capilar: null,
-          id: userData.id,
         });
       } else {
-        // ── CADASTRO real ───────────────────────────
         await apiRegister(formData.name, formData.email, formData.password);
-        // Após cadastrar, faz login automático
         const userData = await apiLogin(formData.email, formData.password);
         login({
-          nome: userData.nome || userData.name,
-          email: userData.email,
+          id: userData.id,
+          nome: userData.nome ?? '',
+          email: userData.email ?? '',
           telefone: userData.telefone || '',
           cidade: userData.cidade || '',
           capilar: null,
-          id: userData.id,
         });
       }
 

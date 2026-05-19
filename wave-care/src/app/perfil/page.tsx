@@ -228,20 +228,28 @@ export default function PerfilPage() {
     );
   }
 
-  // ── handleSave com integração ao backend
   async function handleSave() {
-    if (user?.id) {
+    if (!user?.id) return;
+    try {
       await apiUpdateUser(user.id, {
         name: form.nome,
         email: form.email,
         telefone: form.telefone,
         cidade: form.cidade,
       });
+      // Persiste no localStorage com os valores do formulário (fonte de verdade)
+      updateUser({
+        nome: form.nome,
+        email: form.email,
+        telefone: form.telefone,
+        cidade: form.cidade,
+      });
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      alert("Erro ao salvar dados. Tente novamente.");
     }
-    updateUser({ ...form });
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   }
 
   // ── estilos base

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import styles from "./summer.module.css";
+import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
 import ProductCarousel from "@/components/ProductCarousel/ProductCarousel";
 
@@ -224,7 +224,6 @@ export default function Summer() {
           ))}
 
           <div className={styles.heroOverlay}>
-            <span className={styles.heroSun}>{slide.icon}</span>
             <h1 className={styles.heroTitle}>{slide.title}</h1>
             <p className={styles.heroSubtitle}>{slide.subtitle}</p>
           </div>

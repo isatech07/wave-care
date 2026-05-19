@@ -93,7 +93,7 @@ export default function Footer() {
 
       {/* Footer Bottom */}
       <div className="footer-bottom">
-        <p>© 2025 Wave Care. Todos os direitos reservados.</p>
+        <p>© 2026 Wave Care. Todos os direitos reservados.</p>
       </div>
     </footer>
   );
