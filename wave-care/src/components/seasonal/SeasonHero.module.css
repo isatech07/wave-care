@@ -1,0 +1,67 @@
+.wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+.enter {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.enterVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Ondas SVG — verão */
+.waves {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+.wavePath {
+  animation: waveDrift 12s ease-in-out infinite alternate;
+}
+
+@keyframes waveDrift {
+  from {
+    transform: translateX(-2%);
+  }
+  to {
+    transform: translateX(2%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wavePath {
+    animation: none;
+  }
+}

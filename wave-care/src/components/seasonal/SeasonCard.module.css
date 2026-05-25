@@ -1,0 +1,81 @@
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+  transition:
+    transform 500ms ease-out,
+    box-shadow 500ms ease-out,
+    border 500ms ease-out,
+    backdrop-filter 500ms ease-out;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.revealVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Verão — lift, sombra coral/dourada, shimmer */
+.verao:hover,
+.verao:focus-within {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(194, 65, 12, 0.22), 0 4px 12px rgba(251, 191, 36, 0.15);
+}
+
+.verao::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 220, 150, 0.35) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.verao:hover::after,
+.verao:focus-within::after {
+  opacity: 1;
+  animation: shimmer 1.2s ease;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verao::after {
+    display: none;
+  }
+  .verao:hover,
+  .verao:focus-within {
+    transform: none;
+  }
+}
+
+/* Touch em mobile — :focus-within cobre toque após interação */
+@media (hover: none) {
+  .verao:active {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(194, 65, 12, 0.18);
+  }
+}

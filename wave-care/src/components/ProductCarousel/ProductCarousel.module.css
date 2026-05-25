@@ -120,6 +120,19 @@
   min-width: 0;
 }
 
+/* Wrapper do SeasonCard — ocupa a célula do grid */
+.carouselCardWrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  border-radius: 14px;
+}
+
+.carouselCardWrap .carouselCard:hover {
+  transform: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
 /* ── Card ── */
 .carouselCard {
   display: flex;

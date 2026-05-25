@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
-import ProductCarousel from "@/components/ProductCarousel/ProductCarousel";
+import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
+import { useOutonoProducts } from "./outono.service";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -47,130 +48,11 @@ const tips = [
   "Aposte em óleos capilares para selar as cutículas",
 ];
 
-const products = [
-  {
-    name: "Autumn Nourish Shampoo",
-    desc: "Limpeza suave com nutrição profunda para cabelos ressecados pela mudança de estação.",
-    price: "R$ 39,90",
-    size: "400ml",
-    rating: 4.8,
-    reviews: 204,
-    img: "/products/outono-produtos/outono-shampoo.png",
-  },
-  {
-    name: "Autumn Nourish Conditioner",
-    desc: "Restaura a hidratação dos fios após exposição ao frio e ao vento, devolvendo maciez.",
-    price: "R$ 42,80",
-    size: "400ml",
-    rating: 4.6,
-    reviews: 156,
-    img: "/products/outono-produtos/outono-condicionador.png",
-  },
-  {
-    name: "Autumn Repair Mask",
-    desc: "Tratamento intensivo para recuperar fios danificados e ressecados pela queda de temperatura.",
-    price: "R$ 54,90",
-    size: "500g",
-    rating: 4.3,
-    reviews: 116,
-    img: "/products/outono-produtos/outono-mascara.png",
-  },
-  {
-    name: "Autumn Leave-In Cream",
-    desc: "Forma uma barreira protetora contra o ressecamento, mantendo a definição e o brilho dos fios.",
-    price: "R$ 49,90",
-    size: "500ml",
-    rating: 4.7,
-    reviews: 205,
-    img: "/products/outono-produtos/outono-creme.png",
-  },
-  {
-    name: "Autumn Curl Styling Jelly",
-    desc: "Definição duradoura com efeito natural e toque leve para os dias de outono.",
-    price: "R$ 46,90",
-    size: "500g",
-    rating: 4.8,
-    reviews: 250,
-    img: "/products/outono-produtos/outono-gelatina.png",
-  },
-  {
-    name: "Autumn Shine Hair Oil",
-    desc: "Óleo nutritivo com brilho âmbar instantâneo. Controla o frizz, sela pontas e realça os cachos.",
-    price: "R$ 34,90",
-    size: "100ml",
-    rating: 4.2,
-    reviews: 98,
-    img: "/products/outono-produtos/outono-oleo.png",
-  },
-];
-
-const kits = [
-  {
-    name: "Autumn Essential Care Kit",
-    desc: "O combo ideal para manter os fios protegidos, hidratados e luminosos durante o outono.",
-    price: "R$ 119,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Autumn Nourish Shampoo", "Autumn Nourish Conditioner", "Autumn Repair Mask"],
-    img: "/products/outono-produtos/autumn-kit-1.png",
-  },
-  {
-    name: "Autumn Full Nutrition",
-    desc: "Tratamento completo com nutrição profunda e proteção contra o frio e a secura da estação.",
-    price: "R$ 159,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Autumn Nourish Shampoo", "Autumn Nourish Conditioner", "Autumn Repair Mask", "Autumn Leave-In Cream"],
-    img: "/products/outono-produtos/autumn-kit-2.png",
-  },
-  {
-    name: "Autumn Definition Duo",
-    desc: "A dupla perfeita para definição duradoura e controle do frizz no outono.",
-    price: "R$ 89,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Autumn Leave-In Cream", "Autumn Curl Styling Jelly"],
-    img: "/products/outono-produtos/autumn-kit-3.png",
-  },
-  {
-    name: "Autumn Finishing Trio",
-    desc: "O trio indispensável para finalizar os fios durante o outono.",
-    price: "R$ 109,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Autumn Leave-In Cream", "Autumn Curl Styling Jelly", "Autumn Shine Hair Oil"],
-    img: "/products/outono-produtos/autumn-kit-4.png",
-  },
-  {
-    name: "Autumn Styling Duo",
-    desc: "A combinação ideal para modelar e nutrir os fios no outono.",
-    price: "R$ 74,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Autumn Definition Cream", "Autumn Shine Hair Oil"],
-    img: "/products/outono-produtos/autumn-kit-5.png",
-  },
-  {
-    name: "Autumn Total Nutrition",
-    desc: "A experiência completa de cuidado e nutrição para o outono.",
-    price: "R$ 249,90",
-    rating: 4.9,
-    reviews: 300,
-    includes: [
-      "Autumn Nourish Shampoo",
-      "Autumn Nourish Conditioner",
-      "Autumn Repair Mask",
-      "Autumn Leave-In Cream",
-      "Autumn Curl Styling Jelly",
-      "Autumn Shine Hair Oil",
-    ],
-    img: "/products/outono-produtos/autumn-kit-completo.png",
-  },
-];
-
 const AUTO_PLAY_INTERVAL = 5000;
 
 export default function Autumn() {
+  const seasonData = useOutonoProducts();
+
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const total = heroSlides.length;
@@ -286,20 +168,14 @@ export default function Autumn() {
           <h2 className={styles.sectionTitle}>Linha de Produtos & Kits de Outono</h2>
         </div>
 
-        <ProductCarousel
-          title="Linha Autumn Bloom"
-          products={products}
-          bannerSrc="/products/outono-produtos/propaganda-outono.png"
-          bannerAlt="Linha Autumn Bloom"
-          visibleCount={3}
-        />
-
-        <ProductCarousel
-          title="Kits de Outono"
-          products={kits}
-          bannerSrc="/products/outono-produtos/propaganda-kit-outono.png"
-          bannerAlt="Kits de Outono"
-          visibleCount={3}
+        <SeasonProductsSection
+          seasonData={seasonData}
+          lineTitle="Linha Autumn Bloom"
+          kitsTitle="Kits de Outono"
+          lineBannerSrc="/products/outono-produtos/propaganda-outono.png"
+          lineBannerAlt="Linha Autumn Bloom"
+          kitsBannerSrc="/products/outono-produtos/propaganda-kit-outono.png"
+          kitsBannerAlt="Kits de Outono"
         />
       </section>
 

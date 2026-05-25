@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import SeasonCard from "@/components/seasonal/SeasonCard";
 import styles from "./ProductCarousel.module.css";
 
 // ── Tipagens ──────────────────────────────────────
 interface Product {
+  id?: number;
   name: string;
   desc: string;
   price: string;
@@ -22,6 +24,9 @@ interface ProductCarouselProps {
   bannerAlt?: string;
   visibleCount?: number;
   className?: string;
+  seasonId?: "verao" | "outono" | "inverno" | "primavera";
+  onProductClick?: (productId: number) => void;
+  cardIndexOffset?: number;
 }
 
 // ── Componente ────────────────────────────────────
@@ -32,6 +37,9 @@ export default function ProductCarousel({
   bannerAlt = "Banner",
   visibleCount = 3,
   className = "",
+  seasonId,
+  onProductClick,
+  cardIndexOffset = 0,
 }: ProductCarouselProps) {
   const [index, setIndex] = useState<number>(0);
   const maxIndex = Math.max(0, products.length - visibleCount);
@@ -75,8 +83,20 @@ export default function ProductCarousel({
 
           {/* Cards */}
           <div className={styles.carouselCards}>
-            {visibleProducts.map((product: Product, i: number) => (
-              <div key={`${index}-${i}`} className={styles.carouselCard}>
+            {visibleProducts.map((product: Product, i: number) => {
+              const cardInner = (
+              <div
+                className={styles.carouselCard}
+                role={onProductClick && product.id ? "button" : undefined}
+                tabIndex={onProductClick && product.id ? 0 : undefined}
+                onClick={() => product.id && onProductClick?.(product.id)}
+                onKeyDown={(e) => {
+                  if (product.id && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    onProductClick?.(product.id);
+                  }
+                }}
+              >
 
                 <div className={styles.cardImage}>
                   {product.img ? (
@@ -117,12 +137,39 @@ export default function ProductCarousel({
                         <span className={styles.cardSize}>{product.size}</span>
                       )}
                     </div>
-                    <button className={styles.addButton}>Adicionar</button>
+                    <button
+                      type="button"
+                      className={styles.addButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (product.id) onProductClick?.(product.id);
+                      }}
+                    >
+                      Adicionar
+                    </button>
                   </div>
 
                 </div>
               </div>
-            ))}
+              );
+
+              const cardKey = `${index}-${i}-${product.id ?? product.name}`;
+
+              if (seasonId) {
+                return (
+                  <SeasonCard
+                    key={cardKey}
+                    seasonId={seasonId}
+                    index={cardIndexOffset + index + i}
+                    className={styles.carouselCardWrap}
+                  >
+                    {cardInner}
+                  </SeasonCard>
+                );
+              }
+
+              return <div key={cardKey}>{cardInner}</div>;
+            })}
           </div>
 
           <button

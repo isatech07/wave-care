@@ -21,6 +21,11 @@ interface Product {
   createdAt: string;
 }
 
+interface SeasonThemeProp {
+  primary: string;
+  background: string;
+}
+
 interface ProductModalProps {
   product: Product | null;
   isOpen: boolean;
@@ -28,6 +33,8 @@ interface ProductModalProps {
   onAddToCart: (product: Product) => void;
   onToggleFavorite: (productId: number) => void;
   isFavorite: boolean;
+  /** Tema sazonal opcional — CSS vars no modal; omitir = cores originais */
+  seasonTheme?: SeasonThemeProp;
 }
 
 type TabKey = "description" | "howToUse" | "benefits";
@@ -80,6 +87,7 @@ export default function ProductModal({
   onAddToCart,
   onToggleFavorite,
   isFavorite,
+  seasonTheme,
 }: ProductModalProps) {
   const [tab, setTab] = useState<TabKey>("description");
   const [cep, setCep] = useState("");
@@ -183,10 +191,18 @@ export default function ProductModal({
       />
 
       <div
-        className={`${styles.modal} ${closing ? styles.modalOut : ""}`}
+        className={`${styles.modal} ${closing ? styles.modalOut : ""} ${seasonTheme ? styles.modalThemed : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={product.name}
+        style={
+          seasonTheme
+            ? ({
+                ["--modal-accent" as string]: seasonTheme.primary,
+                ["--modal-bg" as string]: seasonTheme.background,
+              } as React.CSSProperties)
+            : undefined
+        }
       >
         <div className={styles.header}>
           <button

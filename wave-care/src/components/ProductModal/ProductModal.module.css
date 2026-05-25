@@ -274,13 +274,26 @@
   gap: 8px;
 }
 
+.modalThemed {
+  border: 1px solid var(--modal-accent, transparent);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 24px -4px rgba(0, 0, 0, 0.08),
+    0 32px 80px -8px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px color-mix(in srgb, var(--modal-accent) 25%, transparent);
+}
+
+.modalThemed .imageCol {
+  border-right-color: color-mix(in srgb, var(--modal-accent) 35%, rgba(0, 0, 0, 0.07));
+}
+
 .btnCart {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #245850;
+  background: var(--modal-accent, #245850);
   color: #fff;
   border: none;
   padding: 0 22px;

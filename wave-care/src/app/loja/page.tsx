@@ -20,32 +20,22 @@ import {
   Sparkles,
   AlertCircle,
   RefreshCw,
+  Search,
 } from "lucide-react";
 import ProductModal from "@/components/ProductModal/ProductModal";
+import { getProducts, type ApiProduct } from "@/lib/api";
 import "./loja.css";
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
+type Product = ApiProduct & {
   stock: number;
-  category: string;
-  season: string;
-  rating?: number;
-  reviews?: number;
+  originalPrice?: number;
   badge?: string;
   featured?: boolean;
-  createdAt: string;
-}
+};
 
 interface CartItem extends Product {
   quantity: number;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
 const SORT_OPTIONS = [
   { value: "relevantes", label: "Mais relevantes" },
@@ -110,17 +100,19 @@ export default function LojaPage() {
   const [notification, setNotification] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const response = await fetch(`${API_URL}/products`, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error(`Erro ${response.status}: ${response.statusText}`);
-      const data: Product[] = await response.json();
-      setProducts(data);
+      const data = await getProducts();
+      setProducts(
+        data.map((p) => ({
+          ...p,
+          stock: p.stock ?? 0,
+        }))
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido ao carregar produtos";
       setError(message);
@@ -145,6 +137,14 @@ export default function LojaPage() {
 
   const produtosFiltrados = useMemo(() => {
     let result = [...products];
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q)
+      );
+    }
     if (filtroEstacao !== "Todos") result = result.filter((p) => p.season === filtroEstacao);
     if (filtroCategoria !== "Todos") result = result.filter((p) => p.category === filtroCategoria);
     switch (ordenacao) {
@@ -155,7 +155,7 @@ export default function LojaPage() {
       default: result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     }
     return result;
-  }, [products, filtroEstacao, filtroCategoria, ordenacao]);
+  }, [products, searchQuery, filtroEstacao, filtroCategoria, ordenacao]);
 
   const showNotification = useCallback((message: string) => {
     setNotification(message);
@@ -209,6 +209,7 @@ export default function LojaPage() {
     setFiltroEstacao("Todos");
     setFiltroCategoria("Todos");
     setOrdenacao("relevantes");
+    setSearchQuery("");
   }, []);
 
   const openProductModal = useCallback((product: Product) => {
@@ -223,7 +224,8 @@ export default function LojaPage() {
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const cartItemsCount = cart.reduce((sum, i) => sum + i.quantity, 0);
-  const hasActiveFilters = filtroEstacao !== "Todos" || filtroCategoria !== "Todos";
+  const hasActiveFilters =
+    filtroEstacao !== "Todos" || filtroCategoria !== "Todos" || searchQuery.trim() !== "";
 
   return (
     <main className="loja-main">
@@ -420,6 +422,21 @@ export default function LojaPage() {
               )}
             </div>
             <div className="loja-top-right">
+              <div
+                className="loja-sort-wrapper"
+                style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 12, paddingRight: 12 }}
+              >
+                <Search size={18} style={{ color: "var(--loja-text-muted)", flexShrink: 0 }} />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por nome ou categoria..."
+                  aria-label="Buscar produtos"
+                  className="loja-sort"
+                  style={{ border: "none", minWidth: 200, paddingLeft: 0, paddingRight: 0, background: "transparent" }}
+                />
+              </div>
               <div className="loja-view-toggle">
                 <button className={viewMode === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} aria-label="Visualização em grade">
                   <LayoutGrid size={18} />

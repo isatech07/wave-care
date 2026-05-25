@@ -1,0 +1,78 @@
+.pageShell {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Verão — fade + slide de baixo */
+.enterVerao {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.enterVeraoActive {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+/* Outono — cortina terracota */
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #698609;
+  transform: translateX(0);
+}
+
+.curtainDone {
+  transform: translateX(100%);
+  transition: transform 600ms ease-in-out;
+}
+
+/* Inverno — flash branco */
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #fff;
+  opacity: 1;
+}
+
+.flashDone {
+  opacity: 0;
+  transition: opacity 600ms ease-out;
+}
+
+/* Primavera — círculo expandindo */
+.circleReveal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #FDF5F8;
+  clip-path: circle(0% at 50% 50%);
+}
+
+.circleRevealDone {
+  clip-path: circle(150% at 50% 50%);
+  transition: clip-path 600ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enterVerao,
+  .enterVeraoActive,
+  .curtain,
+  .curtainDone,
+  .flash,
+  .flashDone,
+  .circleReveal,
+  .circleRevealDone {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    transition: none !important;
+    display: none;
+  }
+}

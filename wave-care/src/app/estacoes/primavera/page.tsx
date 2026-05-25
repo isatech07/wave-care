@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
-import ProductCarousel from "@/components/ProductCarousel/ProductCarousel";
+import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
+import { usePrimaveraProducts } from "./primavera.service";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -48,130 +49,11 @@ const tips = [
   "Finalize com óleo floral para selar a cutícula e dar brilho",
 ];
 
-const products = [
-  {
-    name: "Bloom Shampoo",
-    desc: "Limpeza suave com extrato de flores e proteção contra umidade excessiva da primavera.",
-    price: "R$ 42,90",
-    size: "400ml",
-    rating: 4.8,
-    reviews: 198,
-    img: "/products/primavera-produtos/primavera-shampoo.png",
-  },
-  {
-    name: "Bloom Conditioner",
-    desc: "Restaura a maciez e o brilho dos fios com fragrância floral suave e duradoura.",
-    price: "R$ 45,80",
-    size: "400ml",
-    rating: 4.7,
-    reviews: 162,
-    img: "/products/primavera-produtos/primavera-condicionador.png",
-  },
-  {
-    name: "Bloom Repair Mask",
-    desc: "Tratamento botânico intensivo para revitalizar fios ressecados pelo inverno com nutrição floral.",
-    price: "R$ 56,90",
-    size: "500g",
-    rating: 4.5,
-    reviews: 134,
-    img: "/products/primavera-produtos/primavera-mascara.png",
-  },
-  {
-    name: "Floral Bloom Leave-In",
-    desc: "Forma um véu protetor leve com essências florais, controlando o frizz e devolvendo a definição.",
-    price: "R$ 49,90",
-    size: "500ml",
-    rating: 4.7,
-    reviews: 211,
-    img: "/products/primavera-produtos/primavera-creme.png",
-  },
-  {
-    name: "Bloom Definition Jelly",
-    desc: "Definição duradoura com fixação leve e perfume floral que dura o dia todo.",
-    price: "R$ 48,90",
-    size: "500g",
-    rating: 4.8,
-    reviews: 243,
-    img: "/products/primavera-produtos/primavera-gelatina.png",
-  },
-  {
-    name: "Bloom Hair Oil",
-    desc: "Óleo floral ultraleve com brilho instantâneo. Sela as pontas, controla o frizz e realça os cachos.",
-    price: "R$ 41,90",
-    size: "100ml",
-    rating: 4.3,
-    reviews: 107,
-    img: "/products/primavera-produtos/primavera-oleo.png",
-  },
-];
-
-const kits = [
-  {
-    name: "Spring Essential Kit",
-    desc: "O combo ideal para renovar os fios na primavera, com limpeza, condicionamento e tratamento floral.",
-    price: "R$ 129,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Bloom Shampoo", "Bloom Conditioner", "Bloom Repair Mask"],
-    img: "/products/primavera-produtos/primavera-kit-1.png",
-  },
-  {
-    name: "Spring Full Bloom",
-    desc: "Tratamento completo com proteção botânica e hidratação profunda para os dias de renovação.",
-    price: "R$ 189,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Bloom Shampoo", "Bloom Conditioner", "Bloom Repair Mask", "Floral Bloom Leave-In"],
-    img: "/products/primavera-produtos/primavera-kit-2.png",
-  },
-  {
-    name: "Spring Definition Duo",
-    desc: "A dupla perfeita para definição duradoura e controle do frizz nos dias de primavera.",
-    price: "R$ 89,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Floral Bloom Leave-In", "Bloom Definition Jelly"],
-    img: "/products/primavera-produtos/primavera-kit-3.png",
-  },
-  {
-    name: "Spring Finishing Trio",
-    desc: "O trio indispensável para finalizar os fios com toque floral e brilho na primavera.",
-    price: "R$ 109,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Floral Bloom Leave-In", "Bloom Definition Jelly", "Bloom Hair Oil"],
-    img: "/products/primavera-produtos/primavera-kit-4.png",
-  },
-  {
-    name: "Spring Styling Duo",
-    desc: "A combinação ideal para modelar e nutrir os fios com fragrância floral na primavera.",
-    price: "R$ 69,90",
-    rating: 4.8,
-    reviews: 250,
-    includes: ["Bloom Definition Jelly", "Bloom Hair Oil"],
-    img: "/products/primavera-produtos/primavera-kit-5.png",
-  },
-  {
-    name: "Spring Total Bloom",
-    desc: "A experiência completa de florescimento para os seus fios na nova estação.",
-    price: "R$ 249,90",
-    rating: 4.9,
-    reviews: 300,
-    includes: [
-      "Bloom Shampoo",
-      "Bloom Conditioner",
-      "Bloom Repair Mask",
-      "Floral Bloom Leave-In",
-      "Bloom Definition Jelly",
-      "Bloom Hair Oil",
-    ],
-    img: "/products/primavera-produtos/primavera-kit-completo.png",
-  },
-];
-
 const AUTO_PLAY_INTERVAL = 5000;
 
 export default function Spring() {
+  const seasonData = usePrimaveraProducts();
+
   const [current, setCurrent] = useState(0);
   const total = heroSlides.length;
 
@@ -265,20 +147,14 @@ export default function Spring() {
           <h2 className={styles.sectionTitle}>Linha de Produtos & Kits de Primavera</h2>
         </div>
 
-        <ProductCarousel
-          title="Linha Primavera Bloom"
-          products={products}
-          bannerSrc="/products/primavera-produtos/propaganda-primavera.png"
-          bannerAlt="Linha Primavera Bloom"
-          visibleCount={3}
-        />
-
-        <ProductCarousel
-          title="Kits de Primavera"
-          products={kits}
-          bannerSrc="/products/primavera-produtos/propaganda-primavera-2.png"
-          bannerAlt="Kits de Primavera"
-          visibleCount={3}
+        <SeasonProductsSection
+          seasonData={seasonData}
+          lineTitle="Linha Primavera Bloom"
+          kitsTitle="Kits de Primavera"
+          lineBannerSrc="/products/primavera-produtos/propaganda-primavera.png"
+          lineBannerAlt="Linha Primavera Bloom"
+          kitsBannerSrc="/products/primavera-produtos/propaganda-primavera-2.png"
+          kitsBannerAlt="Kits de Primavera"
         />
       </section>
 

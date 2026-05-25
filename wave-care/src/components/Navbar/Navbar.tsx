@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, Menu, X, ChevronDown } from "lucide-react";
 import "./navbar.css";
 import { useUser } from "@/contexts/UserContext";
-import { AvatarDisplay } from "@/components/AvatarUpload/Avatarupload"; // 
+import { AvatarDisplay } from "@/components/AvatarUpload/Avatarupload";
+import { getProducts, type ApiProduct } from "@/lib/api";
 
 const estacoes = [
   { label: "Verão",     param: "verao"     },
@@ -23,15 +24,12 @@ const navLinks = [
   { href: "/blog", label: "Blog"         },
 ];
 
-const searchData = [
-  { id: "1", name: "Shampoo Brisa do Mar",       category: "Shampoo",  href: "/#produtos"        },
-  { id: "2", name: "Máscara Nutri Oceano",        category: "Máscara",  href: "/#produtos"        },
-  { id: "3", name: "Leave-in Proteção Litorânea", category: "Leave-in", href: "/#produtos"        },
-  { id: "4", name: "Óleo Reparador Marítimo",     category: "Óleo",     href: "/#produtos"        },
-  { id: "5", name: "Kit Verão Completo",          category: "Kit",      href: "/?estacao=verao"   },
-  { id: "6", name: "Kit Inverno Nutritivo",       category: "Kit",      href: "/?estacao=inverno" },
-  { id: "7", name: "Quiz Capilar",                category: "Página",   href: "/quiz"             },
-];
+interface SearchResult {
+  id: string;
+  name: string;
+  category: string;
+  href: string;
+}
 
 export default function Navbar() {
   const { user, isLoggedIn } = useUser();
@@ -46,7 +44,8 @@ export default function Navbar() {
   const [dropdownOpen,     setDropdownOpen]     = useState(false);
   const [searchOpen,       setSearchOpen]       = useState(false);
   const [searchQuery,      setSearchQuery]      = useState("");
-  const [searchResults,    setSearchResults]    = useState<typeof searchData>([]);
+  const [searchResults,    setSearchResults]    = useState<SearchResult[]>([]);
+  const [catalogProducts,  setCatalogProducts]  = useState<ApiProduct[]>([]);
 
   const dropdownRef    = useRef<HTMLDivElement>(null);
   const searchRef      = useRef<HTMLDivElement>(null);
@@ -58,6 +57,12 @@ export default function Navbar() {
     const params = new URLSearchParams(window.location.search);
     setActiveEstacao(params.get("estacao"));
   }, [pathname]);
+
+  useEffect(() => {
+    getProducts()
+      .then(setCatalogProducts)
+      .catch(() => setCatalogProducts([]));
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -99,14 +104,22 @@ export default function Navbar() {
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     if (!query.trim()) { setSearchResults([]); return; }
+    const q = query.trim().toLowerCase();
     setSearchResults(
-      searchData.filter(
-        (item) =>
-          item.name.toLowerCase().includes(query.toLowerCase()) ||
-          item.category.toLowerCase().includes(query.toLowerCase())
-      )
+      catalogProducts
+        .filter(
+          (item) =>
+            item.name.toLowerCase().includes(q) ||
+            item.category.toLowerCase().includes(q)
+        )
+        .map((item) => ({
+          id: String(item.id),
+          name: item.name,
+          category: item.category,
+          href: "/loja",
+        }))
     );
-  }, []);
+  }, [catalogProducts]);
 
   const handleSearchResultClick = (href: string) => {
     setSearchOpen(false); setSearchQuery(""); setSearchResults([]);
@@ -249,7 +262,7 @@ export default function Navbar() {
 
                     {searchQuery && searchResults.length === 0 && (
                       <div className="navbar-search-empty">
-                        <p>Nenhum resultado encontrado</p>
+                        <p>Nenhum produto encontrado</p>
                         <span>Tente buscar por outro termo</span>
                       </div>
                     )}

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
-import ProductCarousel from "@/components/ProductCarousel/ProductCarousel";
+import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
+import { useInvernoProducts } from "./inverno.service";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -48,130 +49,11 @@ const tips = [
   "Use óleos capilares para proteger contra o ar seco",
 ];
 
-const products = [
-  {
-    name: "Winter Deep Hydration Shampoo",
-    desc: "Limpeza suave com nutrição intensiva para cabelos ressecados pelo frio e ar seco.",
-    price: "R$ 46,90",
-    size: "400ml",
-    rating: 4.8,
-    reviews: 189,
-    img: "/products/inverno-produtos/inverno-shampoo.png",
-  },
-  {
-    name: "Winter Soft Repair Conditioner",
-    desc: "Restaura a maciez e hidratação dos fios após exposição ao frio, vento e aquecedores.",
-    price: "R$ 48,90",
-    size: "400ml",
-    rating: 4.7,
-    reviews: 142,
-    img: "/products/inverno-produtos/inverno-condicionador.png",
-  },
-  {
-    name: "Winter Intense Repair Mask",
-    desc: "Tratamento intensivo para recuperar fios danificados e ressecados pelo inverno rigoroso.",
-    price: "R$ 56,90",
-    size: "500g",
-    rating: 4.5,
-    reviews: 108,
-    img: "/products/inverno-produtos/inverno-mascara.png",
-  },
-  {
-    name: "Winter Protective Leave-in Cream",
-    desc: "Cria um escudo protetor contra o frio e o vento, mantendo a hidratação e a definição dos fios.",
-    price: "R$ 42,90",
-    size: "500ml",
-    rating: 4.6,
-    reviews: 197,
-    img: "/products/inverno-produtos/inverno-creme.png",
-  },
-  {
-    name: "Winter Curl Definition Gelatin",
-    desc: "Definição duradoura com proteção térmica e efeito antifrizz para os dias mais frios.",
-    price: "R$ 58,90",
-    size: "500g",
-    rating: 4.8,
-    reviews: 233,
-    img: "/products/inverno-produtos/inverno-gelatina.png",
-  },
-  {
-    name: "Winter Frost Shine Oil",
-    desc: "Óleo nutritivo com aquecimento capilar e brilho instantâneo. Sela cutículas e protege do frio.",
-    price: "R$ 44,90",
-    size: "100ml",
-    rating: 4.3,
-    reviews: 87,
-    img: "/products/inverno-produtos/inverno-oleo.png",
-  },
-];
-
-const kits = [
-  {
-    name: "Winter Hydration Essential Kit",
-    desc: "O combo ideal para manter os fios protegidos, hidratados e nutridos durante o inverno.",
-    price: "R$ 129,90",
-    rating: 4.8,
-    reviews: 215,
-    includes: ["Winter Deep Hydration Shampoo", "Winter Soft Repair Conditioner", "Winter Intense Repair Mask"],
-    img: "/products/inverno-produtos/inverno-kit-1.png",
-  },
-  {
-    name: "Winter Deep Care Kit",
-    desc: "Tratamento completo com hidratação profunda e proteção contra o frio e o ar seco.",
-    price: "R$ 199,90",
-    rating: 4.8,
-    reviews: 178,
-    includes: ["Winter Deep Hydration Shampoo", "Winter Soft Repair Conditioner", "Winter Intense Repair Mask", "Winter Protective Leave-in Cream"],
-    img: "/products/inverno-produtos/inverno-kit-2.png",
-  },
-  {
-    name: "Winter Curl Definition Duo",
-    desc: "A dupla perfeita para definição duradoura e proteção térmica no inverno.",
-    price: "R$ 89,90",
-    rating: 4.7,
-    reviews: 134,
-    includes: ["Winter Protective Leave-in Cream", "Winter Curl Definition Gelatin"],
-    img: "/products/inverno-produtos/inverno-kit-3.png",
-  },
-  {
-    name: "Winter Curl Definition Trio",
-    desc: "O trio indispensável para finalizar e proteger os fios durante o inverno.",
-    price: "R$ 129,90",
-    rating: 4.8,
-    reviews: 161,
-    includes: ["Winter Protective Leave-in Cream", "Winter Curl Definition Gelatin", "Winter Frost Shine Oil"],
-    img: "/products/inverno-produtos/inverno-kit-4.png",
-  },
-  {
-    name: "Winter Shine Repair Kit",
-    desc: "A combinação ideal para modelar e nutrir os fios no inverno.",
-    price: "R$ 84,90",
-    rating: 4.7,
-    reviews: 119,
-    includes: ["Winter Curl Definition Gelatin", "Winter Frost Shine Oil"],
-    img: "/products/inverno-produtos/inverno-kit-5.png",
-  },
-  {
-    name: "Winter Ultimate Care Kit",
-    desc: "A experiência completa de cuidado e nutrição para enfrentar o inverno.",
-    price: "R$ 259,90",
-    rating: 4.9,
-    reviews: 280,
-    includes: [
-      "Winter Deep Hydration Shampoo",
-      "Winter Soft Repair Conditioner",
-      "Winter Intense Repair Mask",
-      "Winter Protective Leave-in Cream",
-      "Winter Curl Definition Gelatin",
-      "Winter Frost Shine Oil",
-    ],
-    img: "/products/inverno-produtos/inverno-kit-completo.png",
-  },
-];
-
 const AUTO_PLAY_INTERVAL = 5000;
 
 export default function Winter() {
+  const seasonData = useInvernoProducts();
+
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const total = heroSlides.length;
@@ -384,20 +266,14 @@ export default function Winter() {
           <h2 className={styles.sectionTitle}>Linha de Produtos & Kits de Inverno</h2>
         </div>
 
-        <ProductCarousel
-          title="Linha Winter Frost"
-          products={products}
-          bannerSrc="/products/inverno-produtos/propaganda-inverno.png"
-          bannerAlt="Linha Winter Frost"
-          visibleCount={3}
-        />
-
-        <ProductCarousel
-          title="Kits de Inverno"
-          products={kits}
-          bannerSrc="/products/inverno-produtos/propaganda-kit-inverno.png"
-          bannerAlt="Kits de Inverno"
-          visibleCount={3}
+        <SeasonProductsSection
+          seasonData={seasonData}
+          lineTitle="Linha Winter Frost"
+          kitsTitle="Kits de Inverno"
+          lineBannerSrc="/products/inverno-produtos/propaganda-inverno.png"
+          lineBannerAlt="Linha Winter Frost"
+          kitsBannerSrc="/products/inverno-produtos/propaganda-kit-inverno.png"
+          kitsBannerAlt="Kits de Inverno"
         />
       </section>
 
