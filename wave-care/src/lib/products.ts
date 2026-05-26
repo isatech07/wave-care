@@ -25,7 +25,9 @@ export function mapToCarouselProduct(product: ApiProduct): CarouselProduct {
     price: formatPriceBRL(product.price),
     rating: product.rating ?? 4.5,
     reviews: product.reviews ?? 0,
-    img: product.image,
+    img: product.image
+    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${product.image}`
+    : undefined,
   };
 }
 

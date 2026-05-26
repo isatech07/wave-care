@@ -3,10 +3,9 @@
   min-height: 100vh;
 }
 
-/* Verão — fade + slide de baixo */
 .enterVerao {
-  opacity: 0;
-  transform: translateY(16px);
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .enterVeraoActive {

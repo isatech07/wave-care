@@ -21,30 +21,36 @@ export default function EstacoesLayout({ children }: { children: ReactNode }) {
   const [entered, setEntered] = useState(false);
   const [overlayDone, setOverlayDone] = useState(false);
 
-  useEffect(() => {
-    setEntered(false);
-    setOverlayDone(false);
+useEffect(() => {
+  setEntered(false);
+  setOverlayDone(false);
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) {
+    setEntered(true);
+    setOverlayDone(true);
+    return;
+  }
+
+  let raf1: number;
+  let raf2: number;
+  const doneTimer = window.setTimeout(() => setOverlayDone(true), 620);
+
+  raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(() => {
       setEntered(true);
-      setOverlayDone(true);
-      return;
-    }
+    });
+  });
 
-    const enterTimer = window.setTimeout(() => setEntered(true), 10);
-    const doneTimer = window.setTimeout(() => setOverlayDone(true), 620);
+  return () => {
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+    clearTimeout(doneTimer);
+  };
+}, [pathname]);
 
-    return () => {
-      clearTimeout(enterTimer);
-      clearTimeout(doneTimer);
-    };
-  }, [pathname]);
 
-  const shellClass =
-    season === "verao"
-      ? `${styles.pageShell} ${styles.enterVerao} ${entered ? styles.enterVeraoActive : ""}`
-      : styles.pageShell;
+const shellClass = styles.pageShell;
 
   return (
     <div className={shellClass}>
