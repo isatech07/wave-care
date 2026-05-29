@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
-import { apiUpdateUser } from "@/lib/api";
+import { apiUpdateUser, apiGetAllOrders, type Order } from "@/lib/api";
 import { AvatarUpload } from "@/components/AvatarUpload/Avatarupload";
 
 // ─── Paleta ───────────────────────────────────────────────────────
@@ -139,6 +139,9 @@ export default function PerfilPage() {
   const [editing,      setEditing]      = useState(false);
   const [saved,        setSaved]        = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [orders,       setOrders]       = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError,  setOrdersError]  = useState<string | null>(null);
 
   // Settings
   const [showSettings,      setShowSettings]      = useState(false);
@@ -182,6 +185,30 @@ export default function PerfilPage() {
     setTwoFactor(localStorage.getItem("wc_2fa")       === "true");
     setDataShare(localStorage.getItem("wc_datashare") === "true");
   }, []);
+
+  // Carrega pedidos do backend
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (!isLoggedIn || !user?.id) return;
+      
+      setOrdersLoading(true);
+      setOrdersError(null);
+      
+      try {
+        const allOrders = await apiGetAllOrders();
+        // Filtra pedidos do usuário atual
+        const userOrders = allOrders.filter(order => order.userId === user.id);
+        setOrders(userOrders);
+      } catch (err) {
+        console.error('Erro ao carregar pedidos:', err);
+        setOrdersError(err instanceof Error ? err.message : 'Erro ao carregar pedidos');
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, [isLoggedIn, user?.id]);
 
   function applyTheme(t: Theme) {
     const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -536,34 +563,45 @@ export default function PerfilPage() {
               <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-color, #1a2e28)" }}>Meus Pedidos</h1>
               <p style={{ margin: "0.2rem 0 0", fontSize: "0.83rem", color: C.muted }}>Acompanhe seus pedidos</p>
             </div>
-            {!user!.orders || user!.orders.length === 0 ? (
+            {ordersLoading ? (
+              <div style={{ textAlign: "center", padding: "3rem", color: C.muted }}>Carregando pedidos...</div>
+            ) : ordersError ? (
+              <div style={{ textAlign: "center", padding: "3rem", color: C.danger }}>{ordersError}</div>
+            ) : !orders || orders.length === 0 ? (
               <EmptyState icon="📦" title="Nenhum pedido ainda" text="Explore nossos produtos e faça seu primeiro pedido." />
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {user!.orders.map(order => {
+                {orders.map(order => {
                   const sc = STATUS_COLORS[order.status] ?? { bg: "#f3f4f6", color: "#374151" };
                   const stepIdx = TRACK_STEPS.indexOf(order.status);
+                  const formattedDate = new Date(order.createdAt).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
                   return (
                     <div key={order.id} style={s.card}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
                         <div>
                           <span style={{ fontWeight: 700, color: "var(--text-color, #1a2e28)", fontSize: "0.95rem", display: "block" }}>Pedido #{order.id}</span>
-                          <span style={{ fontSize: "0.78rem", color: C.muted, display: "block" }}>{order.date}</span>
+                          <span style={{ fontSize: "0.78rem", color: C.muted, display: "block" }}>{formattedDate}</span>
                         </div>
                         <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "0.3rem 0.75rem", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.5px", background: sc.bg, color: sc.color }}>
-                          {STATUS_LABELS[order.status]}
+                          {STATUS_LABELS[order.status] || order.status}
                         </span>
                       </div>
                       <div style={{ marginBottom: "0.75rem" }}>
-                        {order.items.map(({ product, quantity }) => (
-                          <div key={product.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--text-color, #1a2e28)", padding: "0.2rem 0" }}>
-                            <span>{product.name} <span style={{ color: C.muted }}>x{quantity}</span></span>
-                            <span>R$ {(product.price * quantity).toFixed(2).replace(".", ",")}</span>
+                        {order.items.map(item => (
+                          <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--text-color, #1a2e28)", padding: "0.2rem 0" }}>
+                            <span>{item.product.name} <span style={{ color: C.muted }}>x{item.quantity}</span></span>
+                            <span>R$ {(item.price * item.quantity).toFixed(2).replace(".", ",")}</span>
                           </div>
                         ))}
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.75rem", borderTop: `1px solid ${C.border}`, marginBottom: "1rem" }}>
-                        <span style={{ fontSize: "0.78rem", color: C.muted }}>{order.address}</span>
+                        <span style={{ fontSize: "0.78rem", color: C.muted }}>{order.items.length} {order.items.length === 1 ? 'item' : 'itens'}</span>
                         <span style={{ fontWeight: 700, color: C.primary, fontSize: "1rem" }}>R$ {order.total.toFixed(2).replace(".", ",")}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center" }}>
@@ -572,7 +610,7 @@ export default function PerfilPage() {
                           return (
                             <div key={step} style={{ display: "flex", flex: isLast ? 0 : 1, alignItems: "center", flexDirection: "column", position: "relative" }}>
                               <div style={{ width: 13, height: 13, borderRadius: "50%", zIndex: 1, background: done ? C.primary : C.border, border: `2px solid ${done ? C.primary : C.border}` }} />
-                              <span style={{ fontSize: "0.62rem", marginTop: "0.3rem", whiteSpace: "nowrap", color: done ? C.primary : C.muted, fontWeight: done ? 600 : 400 }}>{STATUS_LABELS[step]}</span>
+                              <span style={{ fontSize: "0.62rem", marginTop: "0.3rem", whiteSpace: "nowrap", color: done ? C.primary : C.muted, fontWeight: done ? 600 : 400 }}>{STATUS_LABELS[step] || step}</span>
                               {!isLast && <div style={{ position: "absolute", top: 6, left: "50%", width: "100%", height: 2, background: done && i < stepIdx ? C.primary : C.border, zIndex: 0 }} />}
                             </div>
                           );

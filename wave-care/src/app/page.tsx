@@ -532,46 +532,6 @@ export default function Home() {
             "--text-color": currentGelatina.textColor,
           } as React.CSSProperties}
         >
-          {/* Animated Background Blobs */}
-          <div className="gelatin-blobs">
-            <motion.div 
-              className="blob blob-1"
-              animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 10, 0],
-              }}
-              transition={{ 
-                duration: 8,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-            <motion.div 
-              className="blob blob-2"
-              animate={{ 
-                scale: [1, 1.15, 1],
-                rotate: [0, -15, 0],
-              }}
-              transition={{ 
-                duration: 10,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-            <motion.div 
-              className="blob blob-3"
-              animate={{ 
-                scale: [1, 1.08, 1],
-                rotate: [0, 8, 0],
-              }}
-              transition={{ 
-                duration: 7,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </div>
-
           {/* Carousel Content */}
           <div className="gelatin-carousel-content">
             <AnimatePresence mode="wait">
@@ -597,19 +557,14 @@ export default function Home() {
                   </Link>
                 </div>
                 <div className="gelatin-image-wrapper">
-                  <motion.div
-                    animate={{ y: [0, -15, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Image
-                      src={currentGelatina.image}
-                      alt={currentGelatina.name}
-                      width={450}
-                      height={450}
-                      className="gelatin-image"
-                      priority
-                    />
-                  </motion.div>
+                  <Image
+                    src={currentGelatina.image}
+                    alt={currentGelatina.name}
+                    width={450}
+                    height={450}
+                    className="gelatin-image"
+                    priority
+                  />
                 </div>
               </motion.div>
             </AnimatePresence>

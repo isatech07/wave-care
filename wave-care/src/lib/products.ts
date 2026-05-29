@@ -18,6 +18,32 @@ export function formatPriceBRL(price: number): string {
 }
 
 export function mapToCarouselProduct(product: ApiProduct): CarouselProduct {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+  
+  // Log the incoming product image for debugging
+  console.log('Product image from API:', product.image, 'for product:', product.name);
+  
+  // Handle image URL construction
+  let imageUrl: string | undefined;
+  if (product.image) {
+    // If image starts with http, use as-is
+    if (product.image.startsWith('http')) {
+      imageUrl = product.image;
+    }
+    // If image starts with /, prefix with API_URL
+    else if (product.image.startsWith('/')) {
+      imageUrl = `${API_URL}${product.image}`;
+    }
+    // Otherwise, assume it's a relative path and add /
+    else {
+      imageUrl = `${API_URL}/${product.image}`;
+    }
+    console.log('Constructed image URL:', imageUrl);
+  } else {
+    console.log('Product has no image field, using fallback');
+    imageUrl = '/products/placeholder.png';
+  }
+
   return {
     id: product.id,
     name: product.name,
@@ -25,9 +51,7 @@ export function mapToCarouselProduct(product: ApiProduct): CarouselProduct {
     price: formatPriceBRL(product.price),
     rating: product.rating ?? 4.5,
     reviews: product.reviews ?? 0,
-    img: product.image
-    ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${product.image}`
-    : undefined,
+    img: imageUrl,
   };
 }
 

@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
 import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
 import { useOutonoProducts } from "./outono.service";
+import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -17,6 +18,8 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600"],
   variable: "--font-title",
 });
+
+const MARQUEE_WORDS = ["Terroso", "Caramelo", "Outono", "Folhas", "Sobreposição", "Aconchego", "Xadrez", "Ferrugem", "Neutros", "Conforto", "Cobre", "Quente"];
 
 const heroSlides = [
   {
@@ -160,7 +163,13 @@ export default function Autumn() {
         </div>
       </section>
 
-      {/* ── Protection - Carrossel de Palavras ── */}
+      {/* Carrossel de Palavras */}
+      <div style={{ margin: '3rem 0', zIndex: 1 }}>
+        <SeasonMarquee
+          words={MARQUEE_WORDS}
+          highlightColor="#c2410c"
+        />
+      </div>
 
       {/* ── Carrosséis ── */}
       <section className={styles.productsSection}>

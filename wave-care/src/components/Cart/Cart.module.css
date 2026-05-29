@@ -190,3 +190,96 @@
   filter: brightness(1.08);
   transform: translateY(-1px);
 }
+
+.checkout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.error {
+  margin: 0.5rem 0 0;
+  color: #dc3545;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.orderSummary {
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f0fdf4;
+}
+
+.orderSummaryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.orderSummaryHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.orderNumber {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #166534;
+  background: #dcfce7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.orderSummaryItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.orderSummaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.orderItemName {
+  flex: 1;
+  font-weight: 500;
+  color: #1C1917;
+}
+
+.orderItemQty {
+  margin: 0 0.5rem;
+  color: #78716C;
+  font-size: 0.8rem;
+}
+
+.orderItemPrice {
+  font-weight: 600;
+  color: #1C1917;
+}
+
+.orderSummaryTotal {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.95rem;
+}
+
+.orderSummaryTotal strong {
+  color: #166534;
+}

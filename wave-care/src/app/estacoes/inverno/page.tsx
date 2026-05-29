@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
 import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
 import { useInvernoProducts } from "./inverno.service";
+import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -17,6 +18,8 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600"],
   variable: "--font-title",
 });
+
+const MARQUEE_WORDS = ["Aconchegante", "Tricô", "Casaco", "Lã", "Inverno", "Frio", "Layering", "Neutros", "Bota", "Suéter", "Manta", "Quentinho"];
 
 const heroSlides = [
   {
@@ -258,7 +261,13 @@ export default function Winter() {
         </div>
       </section>
 
-          {/* Carrossel Palavras */}
+      {/* Carrossel de Palavras */}
+      <div style={{ margin: '3rem 0', zIndex: 1 }}>
+        <SeasonMarquee
+          words={MARQUEE_WORDS}
+          highlightColor="#3b82f6"
+        />
+      </div>
 
       {/* ── Carrosséis ── */}
       <section className={styles.productsSection}>

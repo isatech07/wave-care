@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingBag, X, Plus, Minus, Trash2 } from "lucide-react";
 import styles from "./Cart.module.css";
+import { apiCreateOrder } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
 
 export interface CartLineItem {
   id: number;
@@ -21,6 +25,8 @@ interface CartProps {
   normalizeImage?: (path: string) => string;
   /** Cor primária da estação — badge e botão finalizar; omitir = estilo original */
   seasonColor?: string;
+  /** Callback para limpar o carrinho local após pedido criado */
+  onClearCart?: () => void;
 }
 
 const defaultNormalize = (path: string) => {
@@ -40,9 +46,53 @@ export default function Cart({
   formatPrice,
   normalizeImage = defaultNormalize,
   seasonColor,
+  onClearCart,
 }: CartProps) {
   const accent = seasonColor ?? "#245850";
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const router = useRouter();
+  const { user, isLoggedIn } = useUser();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [orderSummary, setOrderSummary] = useState<any>(null);
+
+  const handleFinalizarPedido = async () => {
+    if (!isLoggedIn || !user?.id) {
+      setError("Você precisa estar logado para finalizar o pedido");
+      return;
+    }
+
+    if (items.length === 0) {
+      setError("Seu carrinho está vazio");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const order = await apiCreateOrder(user.id);
+      console.log('Pedido criado:', order);
+      
+      // Mostrar resumo do pedido
+      setOrderSummary(order);
+      
+      // Limpar o carrinho local
+      if (onClearCart) {
+        onClearCart();
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao finalizar pedido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseOrderSummary = () => {
+    setOrderSummary(null);
+    onClose();
+    router.push('/pedido/confirmado');
+  };
 
   if (!isOpen) return null;
 
@@ -97,18 +147,49 @@ export default function Cart({
           )}
         </div>
 
-        {items.length > 0 && (
-          <div className={styles.footer}>
-            <div className={styles.total}>
+        {orderSummary ? (
+          <div className={styles.orderSummary}>
+            <div className={styles.orderSummaryHeader}>
+              <h3>Pedido Confirmado!</h3>
+              <span className={styles.orderNumber}>#{orderSummary.id}</span>
+            </div>
+            <div className={styles.orderSummaryItems}>
+              {orderSummary.items?.map((item: any) => (
+                <div key={item.id} className={styles.orderSummaryItem}>
+                  <span className={styles.orderItemName}>{item.product.name}</span>
+                  <span className={styles.orderItemQty}>x{item.quantity}</span>
+                  <span className={styles.orderItemPrice}>{formatPrice(item.price)}</span>
+                </div>
+              ))}
+            </div>
+            <div className={styles.orderSummaryTotal}>
               <span>Total</span>
-              <strong>{formatPrice(total)}</strong>
+              <strong>{formatPrice(orderSummary.total)}</strong>
             </div>
             <button
               type="button"
               className={styles.checkout}
               style={seasonColor ? { background: accent } : undefined}
+              onClick={handleCloseOrderSummary}
             >
-              Finalizar Compra
+              Continuar
+            </button>
+          </div>
+        ) : items.length > 0 && (
+          <div className={styles.footer}>
+            <div className={styles.total}>
+              <span>Total</span>
+              <strong>{formatPrice(total)}</strong>
+            </div>
+            {error && <p className={styles.error}>{error}</p>}
+            <button
+              type="button"
+              className={styles.checkout}
+              style={seasonColor ? { background: accent } : undefined}
+              onClick={handleFinalizarPedido}
+              disabled={loading}
+            >
+              {loading ? 'Processando...' : 'Finalizar Compra'}
             </button>
           </div>
         )}

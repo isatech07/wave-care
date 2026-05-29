@@ -399,33 +399,11 @@ body {
   height: 320px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(45, 106, 90, 0.1) 0%, rgba(45, 106, 90, 0) 70%);
-  animation: pulse 3s ease-in-out infinite;
 }
 
 .rotating-product-wrapper {
   position: relative;
   z-index: 1;
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
 }
 
 /* ===================================
@@ -465,49 +443,6 @@ body {
   min-height: 550px;
   transition: background-color 0.8s ease;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* Animated Blobs */
-.gelatin-blobs {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  transition: background-color 0.8s ease;
-}
-
-.blob-1 {
-  width: 300px;
-  height: 300px;
-  background: var(--blob-color-1);
-  top: -80px;
-  left: -60px;
-  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-}
-
-.blob-2 {
-  width: 350px;
-  height: 350px;
-  background: var(--blob-color-2);
-  bottom: -100px;
-  right: -80px;
-  border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%;
-}
-
-.blob-3 {
-  width: 200px;
-  height: 200px;
-  background: var(--blob-color-1);
-  top: 50%;
-  right: 15%;
-  transform: translateY(-50%);
-  border-radius: 50% 60% 40% 70% / 60% 40% 70% 50%;
-  opacity: 0.6;
 }
 
 /* Carousel Content */

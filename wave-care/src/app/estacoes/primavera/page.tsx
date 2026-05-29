@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
 import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
 import { usePrimaveraProducts } from "./primavera.service";
+import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -17,6 +18,8 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600"],
   variable: "--font-title",
 });
+
+const MARQUEE_WORDS = ["Floral", "Pastel", "Leve", "Renovação", "Primavera", "Cores", "Jardim", "Delicado", "Estampado", "Fresco", "Alegre", "Novo"];
 
 const heroSlides = [
   {
@@ -140,6 +143,13 @@ export default function Spring() {
         </div>
       </section>
 
+      {/* Carrossel de Palavras */}
+      <div style={{ margin: '3rem 0', zIndex: 1 }}>
+        <SeasonMarquee
+          words={MARQUEE_WORDS}
+          highlightColor="#ec4899"
+        />
+      </div>
 
       {/* ── Carrosséis ── */}
       <section className={styles.productsSection}>
