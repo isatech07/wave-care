@@ -1,0 +1,177 @@
+/* ═══════════════════════════════════════════════
+   SeasonProductsSection.module.css
+   ═══════════════════════════════════════════════ */
+
+/* ── Status Box (loading / erro / vazio) ── */
+.statusBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+/* ── Loading ── */
+.loadingText {
+  margin: 0;
+  color: #5a5550;
+  font-size: 0.9rem;
+}
+
+/* ── Spinner ── */
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #C2410C;
+  border-radius: 50%;
+  animation: seasonSpin 0.9s linear infinite;
+}
+
+
+
+/* ── Erro ── */
+.errorMessage {
+  margin: 0;
+  color: #dc3545;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.errorHint {
+  margin: 0;
+  color: #5a5550;
+  font-size: 0.85rem;
+}
+
+.retryButton {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: #C2410C;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+
+
+/* ── Vazio ── */
+.emptyText {
+  margin: 0;
+  color: #5a5550;
+  font-size: 0.9rem;
+}
+
+/* ═══════════════════════════════════════════════
+   TABLET (1024px)
+═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+
+  .statusBox {
+    padding: 3.5rem 1.5rem;
+  }
+
+  .spinner {
+    width: 44px;
+    height: 44px;
+  }
+
+  .loadingText,
+  .emptyText {
+    font-size: 0.9rem;
+  }
+
+  .errorMessage {
+    font-size: 0.95rem;
+  }
+
+  .errorHint {
+    font-size: 0.85rem;
+  }
+
+  .retryButton {
+    padding: 0.65rem 1.4rem;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════
+   MOBILE (768px)
+═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  .statusBox {
+    padding: 3rem 1.25rem;
+    gap: 0.9rem;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+
+  .loadingText,
+  .emptyText {
+    font-size: 0.85rem;
+  }
+
+  .errorMessage {
+    font-size: 0.9rem;
+  }
+
+  .errorHint {
+    font-size: 0.8rem;
+    max-width: 28ch;
+  }
+
+  .retryButton {
+    width: 100%;
+    max-width: 220px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════
+   MOBILE PEQUENO (480px)
+═══════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  .statusBox {
+    padding: 2.5rem 1rem;
+    gap: 0.8rem;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+  }
+
+  .loadingText,
+  .emptyText {
+    font-size: 0.8rem;
+  }
+
+  .errorMessage {
+    font-size: 0.85rem;
+  }
+
+  .errorHint {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    max-width: 24ch;
+  }
+
+  .retryButton {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+  }
+}

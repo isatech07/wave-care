@@ -8,7 +8,7 @@ import {
 
 const SEASON_SLUG = "verao";
 
-/** Busca produtos no backend e filtra apenas os da estação verão */
+/* Busca produtos no backend e filtra apenas os da estação verão */
 export async function getProdutosVerao(): Promise<ApiProduct[]> {
   const res = await fetch(`${API_URL}/products`);
   const data = await res.json();
@@ -16,13 +16,13 @@ export async function getProdutosVerao(): Promise<ApiProduct[]> {
   return filterProductsBySeason(data, SEASON_SLUG);
 }
 
-/** Separa linha de produtos e kits no formato dos carrosséis */
+/* Separa linha de produtos e kits no formato dos carrosséis */
 export async function getCarrosselVerao() {
   const filtered = await getProdutosVerao();
   return splitProductsAndKits(filtered);
 }
 
-/** Hook de carregamento — mesmo comportamento que antes, com fetch no serviço */
+
 export function useVeraoProducts() {
   const [products, setProducts] = useState<CarouselProduct[]>([]);
   const [kits, setKits] = useState<CarouselProduct[]>([]);

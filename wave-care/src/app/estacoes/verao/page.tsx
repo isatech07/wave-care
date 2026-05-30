@@ -28,38 +28,10 @@ const playfair = Playfair_Display({
 
 const theme = seasonThemes.verao;
 
-const MARQUEE_WORDS = ["SUMMER", "Colorido", "Praia", "Floral", "Shorts", "Vestidos", "Sandálias", "Verão", "Sol", "Calor", "Estampado", "Fresco"];
+const MARQUEE_WORDS = ["SUMMER", "PROTEÇÃO UV", "PRAIA", "HIDRATAÇÃO", "SOL", "BRILHO", "CUIDADO", "LEVEZA", "FRESCOR", "NUTRIÇÃO", "OCEANO", "CABELOS SAUDÁVEIS"];
 
-const heroSlides = [
-  {
-    img: `${API}/products/verao-produtos/banner-kit-verao.jpg`,
-    alt: "Verão",
-    title: "Verão",
-    subtitle: "Proteja seus fios contra o sol intenso, sal do mar e maresia.",
-  },
-  {
-    img: `${API}/products/verao-produtos/Summer-Protection-kit.png`,
-    alt: "Summer Protection",
-    title: "Summer Protection",
-    subtitle: "Proteção UV, antifrizz e nutrição leve para os dias mais quentes.",
-  },
-  {
-    img: `${API}/products/verao-produtos/SummerKit-2.png`,
-    alt: "Kits de Verão",
-    title: "Kits de Verão",
-    subtitle: "Combos completos para cuidar dos fios durante toda a estação.",
-  },
-];
-
-const tips = [
-  { icon: "☀️", text: "Use protetor solar capilar antes de ir à praia" },
-  { icon: "🌊", text: "Enxágue os fios com água doce após o mar" },
-  { icon: "💧", text: "Hidrate profundamente 2x por semana" },
-  { icon: "🌬️", text: "Evite secador nos dias mais quentes" },
-];
-
-const AUTO_PLAY_INTERVAL = 5000;
 type ModalProduct = ApiProduct & { stock: number; createdAt: string };
+
 const SummerIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <circle cx="12" cy="12" r="4" fill="currentColor" />
@@ -79,8 +51,6 @@ const formatPrice = (price: number) =>
 
 export default function Summer() {
   const seasonData = useVeraoProducts();
-  const [current, setCurrent] = useState(0);
-  const total = heroSlides.length;
 
   const [cart, setCart] = useState<CartLineItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -89,29 +59,9 @@ export default function Summer() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [visible, setVisible] = useState(false);
 
-  const startTimeRef = useRef(Date.now());
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
     setVisible(true);
   }, []);
-
-  const goTo = useCallback((index: number) => {
-    setCurrent((index + total) % total);
-    startTimeRef.current = Date.now();
-  }, [total]);
-
-  useEffect(() => {
-    startTimeRef.current = Date.now();
-    timerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      if (elapsed >= AUTO_PLAY_INTERVAL) {
-        setCurrent((c) => (c + 1) % total);
-        startTimeRef.current = Date.now();
-      }
-    }, 200);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [current, total]);
 
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
@@ -147,50 +97,33 @@ export default function Summer() {
   }, []);
 
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
-  const slide = heroSlides[current];
 
   return (
     <div className={`${styles.container} ${poppins.variable} ${playfair.variable} ${visible ? styles.pageVisible : ""}`}>
 
       {/* ── HERO COMPACTO ── */}
-      <section className={styles.hero}>
-        <div className={styles.heroSlides}>
-          {heroSlides.map((s, i) => (
-            <img
-              key={i}
-              src={s.img}
-              alt={s.alt}
-              className={`${styles.heroSlide} ${i === current ? styles.heroSlideActive : ""}`}
-            />
-          ))}
-          <div className={styles.heroGrain} aria-hidden="true" />
-          <div className={styles.heroOverlay} />
-        </div>
-
-        <div className={styles.heroContent}>
-          <span className={styles.heroEyebrow}>Coleção Verão 2025</span>
-          <h1 className={styles.heroTitle}>{slide.title}</h1>
-          <p className={styles.heroSub}>{slide.subtitle}</p>
-        </div>
-
-        {/* Setas compactas */}
-        <button onClick={() => goTo(current - 1)} className={`${styles.arrow} ${styles.arrowL}`} aria-label="Anterior">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
-        <button onClick={() => goTo(current + 1)} className={`${styles.arrow} ${styles.arrowR}`} aria-label="Próximo">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
-
-        {/* Dots */}
-        <div className={styles.dots}>
-          {heroSlides.map((_, i) => (
-            <button key={i} onClick={() => goTo(i)}
-              className={`${styles.dot} ${i === current ? styles.dotActive : ""}`}
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
-        </div>
-      </section>
+    <section className={styles.hero}>
+      <img
+        src="/products/verao-produtos/banner-principal-verao.png"
+        alt="Verão"
+        className={styles.heroImg}
+        />
+ 
+      {/* grain overlay editorial */}
+      <div className={styles.heroGrain} aria-hidden="true" />
+ 
+      {/* gradiente escuro */}
+      <div className={styles.heroOverlay} aria-hidden="true" />
+ 
+      {/* conteúdo */}
+      <div className={styles.heroContent}>
+        <span className={styles.heroEyebrow}>Summer Protection</span>
+        <h1 className={styles.heroTitle}>Verão</h1>
+        <p className={styles.heroSub}>
+          Defenda seus fios dos desafios do verão com uma proteção eficaz contra os raios solares, o sal marinho e a maresia.
+        </p>
+      </div>
+    </section>
 
       {/* ── MARQUEE ── */}
       <div className={styles.marqueeSection}>
@@ -202,19 +135,19 @@ export default function Summer() {
       <section className={styles.editorial}>
         <div className={styles.editorialImg}>
           <img
-            src={`${API}/products/verao-produtos/banner-kit-verao.jpg`}
+            src={"/products/verao-produtos/propaganda-verao.jpg"}
             alt="Summer Protection"
           />
           <div className={styles.editorialImgOverlay} />
         </div>
         <div className={styles.editorialText}>
-          <span className={styles.editorialLabel}>Linha Exclusiva</span>
+          <span className={styles.editorialLabel}>Tecnologia de Proteção UV</span>
           <h2 className={styles.editorialTitle}>Summer<br />Protection</h2>
           <p className={styles.editorialBody}>
             Proteção contra sol, maresia e calor excessivo. Foco em brilho, definição e nutrição leve para os seus fios durante toda a estação.
           </p>
           <div className={styles.editorialDivider} />
-          <p className={styles.editorialNote}>Desenvolvida para o clima brasileiro</p>
+          <p className={styles.editorialNote}>Ideal para o clima tropical</p>
         </div>
       </section>
 
@@ -224,11 +157,11 @@ export default function Summer() {
           seasonData={seasonData}
           seasonId="verao"
           onProductClick={openProduct}
-          lineTitle="Linha Summer Protection"
-          kitsTitle="Kits de Verão"
-          lineBannerSrc={`${API}/products/verao-produtos/propaganda-verao.jpg`}
+          lineTitle="O Poder do Verão"
+          kitsTitle="Cuidados Completos"
+          lineBannerSrc={"products/verao-produtos/banner-creme-verao.png"}
           lineBannerAlt="Linha Summer Protection"
-          kitsBannerSrc={`${API}/products/verao-produtos/propaganda-kit-verao.png`}
+          kitsBannerSrc={"/products/verao-produtos/banner-kit-verao.jpg"}
           kitsBannerAlt="Kits de Verão"
         />
       </section>

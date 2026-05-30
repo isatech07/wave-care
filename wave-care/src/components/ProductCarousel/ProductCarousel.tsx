@@ -4,6 +4,15 @@ import { useState } from "react";
 import SeasonCard from "@/components/seasonal/SeasonCard";
 import styles from "./ProductCarousel.module.css";
 
+// Igual à loja — normaliza o path e serve do public/ do Next.js
+const normalizeImagePath = (path?: string): string => {
+  if (!path) return "/products/placeholder.svg";
+  let normalized = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
+  normalized = normalized.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!normalized.startsWith("/")) normalized = "/" + normalized;
+  return normalized;
+};
+
 interface Product {
   id?: number;
   name: string;
@@ -53,7 +62,7 @@ export default function ProductCarousel({
       {/* ── Header com título e setas ── */}
       <div className={styles.carouselHeader}>
         <div className={styles.headerLeft}>
-          <span className={styles.carouselEyebrow}>Coleção Verão 2026</span>
+          <span className={styles.carouselEyebrow}>Descubra</span>
           <h2 className={styles.carouselTitle}>{title}</h2>
         </div>
 
@@ -73,16 +82,18 @@ export default function ProductCarousel({
         )}
       </div>
 
-      {/* ── Banner wide acima dos cards ── */}
-      {bannerSrc && (
+      {/* ── Banner wide ── */}
+      {bannerSrc ? (
         <div className={styles.carouselBanner}>
-          <img src={bannerSrc} alt={bannerAlt} />
+          <img
+            src={normalizeImagePath(bannerSrc)}
+            alt={bannerAlt}
+            onError={(e) => { (e.target as HTMLImageElement).src = "/products/placeholder.svg"; }}
+          />
           <div className={styles.bannerOverlay} />
           <span className={styles.bannerLabel}>{title}</span>
         </div>
-      )}
-
-      {!bannerSrc && (
+      ) : (
         <div className={styles.carouselBanner}>
           <div className={styles.bannerPlaceholder}>
             <span className={styles.bannerIcon}>🌸</span>
@@ -106,15 +117,16 @@ export default function ProductCarousel({
                 }
               }}
             >
-              {/* Imagem */}
+              {/* Imagem — igual à loja */}
               <div className={styles.cardImage}>
-                {product.img ? (
-                  <img src={product.img} alt={product.name} />
-                ) : (
-                  <div className={styles.cardImagePlaceholder} />
-                )}
+                <img
+                  src={normalizeImagePath(product.img)}
+                  alt={product.name}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/products/placeholder.svg";
+                  }}
+                />
                 <div className={styles.cardImageOverlay} />
-                {/* Badge de rating sobre a imagem */}
                 <div className={styles.cardBadge}>
                   <span className={styles.badgeStar}>★</span>
                   {product.rating}
