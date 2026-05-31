@@ -22,10 +22,11 @@ export async function getCarrosselPrimavera() {
   return splitProductsAndKits(filtered);
 }
 
-/** Hook de carregamento — mesmo comportamento que antes, com fetch no serviço */
+/** Hook de carregamento — expõe apiProducts para uso no modal */
 export function usePrimaveraProducts() {
   const [products, setProducts] = useState<CarouselProduct[]>([]);
   const [kits, setKits] = useState<CarouselProduct[]>([]);
+  const [apiProducts, setApiProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +34,9 @@ export function usePrimaveraProducts() {
     try {
       setLoading(true);
       setError(null);
-      const { products: lineProducts, kits: seasonKits } = await getCarrosselPrimavera();
+      const filtered = await getProdutosPrimavera();
+      setApiProducts(filtered);
+      const { products: lineProducts, kits: seasonKits } = splitProductsAndKits(filtered);
       setProducts(lineProducts);
       setKits(seasonKits);
     } catch (err) {
@@ -41,6 +44,7 @@ export function usePrimaveraProducts() {
       setError(message);
       setProducts([]);
       setKits([]);
+      setApiProducts([]);
     } finally {
       setLoading(false);
     }
@@ -50,5 +54,5 @@ export function usePrimaveraProducts() {
     load();
   }, [load]);
 
-  return { products, kits, loading, error, retry: load };
+  return { products, kits, apiProducts, loading, error, retry: load };
 }

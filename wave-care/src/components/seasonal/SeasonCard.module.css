@@ -70,14 +70,6 @@
 /* ════════════════════════════════════
    OUTONO — terracota/âmbar
 ════════════════════════════════════ */
-.outono:hover,
-.outono:focus-within {
-  transform: translateY(-6px);
-  box-shadow:
-    0 12px 32px rgba(146, 64, 14, 0.22),
-    0 4px 12px rgba(217, 119, 6, 0.15);
-}
-
 .outono:hover :global(.addButton)::after,
 .outono:focus-within :global(.addButton)::after {
   content: "";
@@ -114,14 +106,6 @@
 /* ════════════════════════════════════
    INVERNO — azul/gelo
 ════════════════════════════════════ */
-.inverno:hover,
-.inverno:focus-within {
-  transform: translateY(-6px);
-  box-shadow:
-    0 12px 32px rgba(37, 99, 235, 0.18),
-    0 4px 12px rgba(147, 197, 253, 0.2);
-}
-
 .inverno:hover :global(.addButton)::after,
 .inverno:focus-within :global(.addButton)::after {
   content: "";
@@ -158,14 +142,6 @@
 /* ════════════════════════════════════
    PRIMAVERA — rosa/verde
 ════════════════════════════════════ */
-.primavera:hover,
-.primavera:focus-within {
-  transform: translateY(-6px);
-  box-shadow:
-    0 12px 32px rgba(219, 39, 119, 0.18),
-    0 4px 12px rgba(134, 239, 172, 0.2);
-}
-
 .primavera:hover :global(.addButton)::after,
 .primavera:focus-within :global(.addButton)::after {
   content: "";

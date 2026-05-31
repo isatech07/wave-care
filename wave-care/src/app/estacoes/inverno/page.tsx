@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styles from "./page.module.css";
 import { Poppins, Playfair_Display } from "next/font/google";
 import SeasonProductsSection from "@/components/SeasonProducts/SeasonProductsSection";
 import { useInvernoProducts } from "./inverno.service";
+import { seasonThemes } from "@/lib/seasonThemes";
+import Cart, { CartFloatingButton, type CartLineItem } from "@/components/Cart/Cart";
+import ProductModal from "@/components/ProductModal/ProductModal";
 import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
+
+import type { ApiProduct } from "@/lib/api";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,273 +24,238 @@ const playfair = Playfair_Display({
   variable: "--font-title",
 });
 
-const MARQUEE_WORDS = ["Aconchegante", "Tricô", "Casaco", "Lã", "Inverno", "Frio", "Layering", "Neutros", "Bota", "Suéter", "Manta", "Quentinho"];
+const theme = seasonThemes.inverno;
 
-const heroSlides = [
-  {
-    img: "/products/inverno-produtos/banner-inverno.jpg",
-    alt: "Inverno",
-    title: "Inverno",
-    subtitle:
-      "Proteja seus fios do frio intenso e do ar seco. Nutrição profunda e selamento de cutículas para manter seus cabelos macios e protegidos nos dias mais frios.",
-  },
-  {
-    img: "/products/inverno-produtos/Winter-banner.png",
-    alt: "Winter Frost",
-    title: "Winter Frost",
-    subtitle:
-      "Hidratação intensa, selamento de cutículas e proteção térmica para os dias mais frios. Seus fios nutridos do amanhecer ao entardecer.",
-  },
-  {
-    img: "/products/inverno-produtos/inverno-kit-2.png",
-    alt: "Kits de Inverno",
-    title: "Kits de Inverno",
-    subtitle:
-      "Combos completos para cuidar dos fios durante toda a estação. Escolha o kit ideal para o seu tipo de cabelo.",
-  },
+const MARQUEE_WORDS = [
+  "WINTER",
+  "NUTRIÇÃO PROFUNDA",
+  "HIDRATAÇÃO",
+  "PROTEÇÃO TÉRMICA",
+  "FRIO",
+  "BRILHO",
+  "CUIDADO",
+  "CUTÍCULAS",
+  "SUAVIDADE",
+  "SELAMENTO",
+  "INVERNO",
+  "CABELOS SAUDÁVEIS",
 ];
 
-const tips = [
-  "Use máscara de nutrição profunda toda semana",
-  "Aposte em leave-in para selar as cutículas abertas pelo frio",
-  "Evite banhos muito quentes para não ressecar os fios",
-  "Use óleos capilares para proteger contra o ar seco",
-];
+type ModalProduct = ApiProduct & { stock: number; createdAt: string };
 
-const AUTO_PLAY_INTERVAL = 5000;
+const WinterIcon = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    {/* Eixo vertical */}
+    <line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    {/* Eixo horizontal */}
+    <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    {/* Diagonal 1 */}
+    <line x1="5.64" y1="5.64" x2="18.36" y2="18.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    {/* Diagonal 2 */}
+    <line x1="18.36" y1="5.64" x2="5.64" y2="18.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    {/* Pontas do eixo vertical */}
+    <circle cx="12" cy="2"  r="1.2" fill="currentColor" />
+    <circle cx="12" cy="22" r="1.2" fill="currentColor" />
+    {/* Pontas do eixo horizontal */}
+    <circle cx="2"  cy="12" r="1.2" fill="currentColor" />
+    <circle cx="22" cy="12" r="1.2" fill="currentColor" />
+  </svg>
+);
+
+const formatPrice = (price: number) =>
+  price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Winter() {
   const seasonData = useInvernoProducts();
 
-  const [current, setCurrent] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const total = heroSlides.length;
-
-  const startTimeRef = useRef(Date.now());
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const goTo = (index: number) => {
-    setCurrent((index + total) % total);
-    setProgress(0);
-    startTimeRef.current = Date.now();
-  };
+  const [cart, setCart] = useState<CartLineItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ModalProduct | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    startTimeRef.current = Date.now();
+    setVisible(true);
+  }, []);
 
-    timerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const pct = Math.min((elapsed / AUTO_PLAY_INTERVAL) * 100, 100);
-      setProgress(pct);
+  const openProduct = useCallback(
+    (productId: number) => {
+      const found = seasonData.apiProducts?.find((p) => p.id === productId);
+      if (!found) return;
+      setSelectedProduct({
+        ...found,
+        stock: found.stock ?? 10,
+        createdAt: found.createdAt ?? new Date().toISOString(),
+      });
+      setIsModalOpen(true);
+    },
+    [seasonData.apiProducts]
+  );
 
-      if (elapsed >= AUTO_PLAY_INTERVAL) {
-        setCurrent((c) => (c + 1) % total);
-        setProgress(0);
-        startTimeRef.current = Date.now();
-      }
-    }, 50);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  }, []);
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [current, total]);
+  const addToCart = useCallback((product: ModalProduct) => {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === product.id);
+      if (existing)
+        return prev.map((i) =>
+          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+        );
+      return [
+        ...prev,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1,
+        },
+      ];
+    });
+  }, []);
 
-  const slide = heroSlides[current];
+  const updateQuantity = useCallback((productId: number, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id !== productId) return item;
+          const qty = item.quantity + delta;
+          return qty > 0 ? { ...item, quantity: qty } : null;
+        })
+        .filter((item): item is CartLineItem => item !== null)
+    );
+  }, []);
+
+  const removeFromCart = useCallback((productId: number) => {
+    setCart((prev) => prev.filter((i) => i.id !== productId));
+  }, []);
+
+  const toggleFavorite = useCallback((productId: number) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      next.has(productId) ? next.delete(productId) : next.add(productId);
+      return next;
+    });
+  }, []);
+
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className={`${styles.container} ${poppins.variable} ${playfair.variable}`}>
+    <div
+      className={`${styles.container} ${poppins.variable} ${playfair.variable} ${
+        visible ? styles.pageVisible : ""
+      }`}
+    >
+      {/* ── HERO ── */}
+      <section className={styles.hero}>
+        <img
+          src="/products/inverno-produtos/banner-principal-inverno.png"
+          alt="Inverno"
+          className={styles.heroImg}
+        />
 
-      {/* ── Hero com carrossel automático ── */}
-      <main className={styles.hero}>
-        <div className={styles.heroBanner}>
+        {/* grain overlay editorial */}
+        <div className={styles.heroGrain} aria-hidden="true" />
 
-          {heroSlides.map((s, i) => (
-            <img
-              key={i}
-              src={s.img}
-              alt={s.alt}
-              className={`${styles.heroBannerImg} ${i === current ? styles.heroBannerImgActive : ""}`}
-            />
-          ))}
+        {/* gradiente escuro */}
+        <div className={styles.heroOverlay} aria-hidden="true" />
 
-          <div className={styles.heroOverlay}>
-            <h1 className={styles.heroTitle}>{slide.title}</h1>
-            <p className={styles.heroSubtitle}>{slide.subtitle}</p>
-          </div>
-
-          <button onClick={() => goTo(current - 1)} className={`${styles.heroArrow} ${styles.heroArrowLeft}`} aria-label="Anterior">←</button>
-          <button onClick={() => goTo(current + 1)} className={`${styles.heroArrow} ${styles.heroArrowRight}`} aria-label="Próximo">→</button>
-
-          <div className={styles.heroDots}>
-            {heroSlides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                className={`${styles.heroDot} ${i === current ? styles.heroDotActive : ""}`}
-                aria-label={`Slide ${i + 1}`}
-              />
-            ))}
-          </div>
-
-          <div className={styles.heroWave}>
-            <svg viewBox="0 0 1440 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-
-            {/* Flocos de neve */}
-            <g fill="var(--bg)">
-
-                {/* Floco 1 — cruz com pontas */}
-                <g transform="translate(100, 38)" opacity="0.55">
-                <rect x="-1" y="-9" width="2" height="18" rx="1"/>
-                <rect x="-9" y="-1" width="18" height="2" rx="1"/>
-                <rect x="-1" y="-9" width="2" height="18" rx="1" transform="rotate(45)"/>
-                <rect x="-9" y="-1" width="18" height="2" rx="1" transform="rotate(45)"/>
-                <circle cx="0" cy="-9" r="1.5"/><circle cx="0" cy="9" r="1.5"/>
-                <circle cx="-9" cy="0" r="1.5"/><circle cx="9" cy="0" r="1.5"/>
-                </g>
-
-                {/* Floco 2 — pequeno */}
-                <g transform="translate(290, 22)" opacity="0.40">
-                <rect x="-0.8" y="-6" width="1.6" height="12" rx="0.8"/>
-                <rect x="-6" y="-0.8" width="12" height="1.6" rx="0.8"/>
-                <rect x="-0.8" y="-6" width="1.6" height="12" rx="0.8" transform="rotate(45)"/>
-                <rect x="-6" y="-0.8" width="12" height="1.6" rx="0.8" transform="rotate(45)"/>
-                <circle cx="0" cy="-6" r="1.2"/><circle cx="0" cy="6" r="1.2"/>
-                <circle cx="-6" cy="0" r="1.2"/><circle cx="6" cy="0" r="1.2"/>
-                </g>
-
-                {/* Floco 3 — grande hexagonal */}
-                <g transform="translate(490, 16)" opacity="0.65">
-                <rect x="-1.2" y="-11" width="2.4" height="22" rx="1.2"/>
-                <rect x="-11" y="-1.2" width="22" height="2.4" rx="1.2"/>
-                <rect x="-1.2" y="-11" width="2.4" height="22" rx="1.2" transform="rotate(60)"/>
-                <rect x="-11" y="-1.2" width="22" height="2.4" rx="1.2" transform="rotate(60)"/>
-                <rect x="-1.2" y="-11" width="2.4" height="22" rx="1.2" transform="rotate(120)"/>
-                <rect x="-11" y="-1.2" width="22" height="2.4" rx="1.2" transform="rotate(120)"/>
-                <circle cx="0" cy="0" r="3"/>
-                <circle cx="0" cy="-11" r="2"/><circle cx="0" cy="11" r="2"/>
-                <circle cx="-9.5" cy="-5.5" r="2"/><circle cx="9.5" cy="-5.5" r="2"/>
-                <circle cx="-9.5" cy="5.5" r="2"/><circle cx="9.5" cy="5.5" r="2"/>
-                </g>
-
-                {/* Floco 4 — médio hexagonal */}
-                <g transform="translate(700, 14)" opacity="0.50">
-                <rect x="-1" y="-8" width="2" height="16" rx="1"/>
-                <rect x="-8" y="-1" width="16" height="2" rx="1"/>
-                <rect x="-1" y="-8" width="2" height="16" rx="1" transform="rotate(60)"/>
-                <rect x="-8" y="-1" width="16" height="2" rx="1" transform="rotate(60)"/>
-                <rect x="-1" y="-8" width="2" height="16" rx="1" transform="rotate(120)"/>
-                <rect x="-8" y="-1" width="16" height="2" rx="1" transform="rotate(120)"/>
-                <circle cx="0" cy="0" r="2.5"/>
-                </g>
-
-                {/* Floco 5 */}
-                <g transform="translate(870, 28)" opacity="0.42">
-                <rect x="-0.8" y="-7" width="1.6" height="14" rx="0.8"/>
-                <rect x="-7" y="-0.8" width="14" height="1.6" rx="0.8"/>
-                <rect x="-0.8" y="-7" width="1.6" height="14" rx="0.8" transform="rotate(45)"/>
-                <rect x="-7" y="-0.8" width="14" height="1.6" rx="0.8" transform="rotate(45)"/>
-                <circle cx="0" cy="-7" r="1.3"/><circle cx="0" cy="7" r="1.3"/>
-                <circle cx="-7" cy="0" r="1.3"/><circle cx="7" cy="0" r="1.3"/>
-                </g>
-
-                {/* Floco 6 — grande */}
-                <g transform="translate(1060, 18)" opacity="0.60">
-                <rect x="-1.2" y="-11" width="2.4" height="22" rx="1.2"/>
-                <rect x="-11" y="-1.2" width="22" height="2.4" rx="1.2"/>
-                <rect x="-1.2" y="-11" width="2.4" height="22" rx="1.2" transform="rotate(60)"/>
-                <rect x="-11" y="-1.2" width="22" height="2.4" rx="1.2" transform="rotate(60)"/>
-                <rect x="-1.2" y="-11" width="2.4" height="22" rx="1.2" transform="rotate(120)"/>
-                <rect x="-11" y="-1.2" width="22" height="2.4" rx="1.2" transform="rotate(120)"/>
-                <circle cx="0" cy="0" r="3"/>
-                <circle cx="0" cy="-11" r="2"/><circle cx="0" cy="11" r="2"/>
-                <circle cx="-9.5" cy="-5.5" r="2"/><circle cx="9.5" cy="-5.5" r="2"/>
-                <circle cx="-9.5" cy="5.5" r="2"/><circle cx="9.5" cy="5.5" r="2"/>
-                </g>
-
-                {/* Floco 7 — pequeno */}
-                <g transform="translate(1280, 24)" opacity="0.45">
-                <rect x="-0.8" y="-6" width="1.6" height="12" rx="0.8"/>
-                <rect x="-6" y="-0.8" width="12" height="1.6" rx="0.8"/>
-                <rect x="-0.8" y="-6" width="1.6" height="12" rx="0.8" transform="rotate(60)"/>
-                <rect x="-6" y="-0.8" width="12" height="1.6" rx="0.8" transform="rotate(60)"/>
-                <rect x="-0.8" y="-6" width="1.6" height="12" rx="0.8" transform="rotate(120)"/>
-                <rect x="-6" y="-0.8" width="12" height="1.6" rx="0.8" transform="rotate(120)"/>
-                <circle cx="0" cy="0" r="2"/>
-                </g>
-
-            </g>
-
-            {/* Onda com picos de cristal */}
-            <path d="
-                M0,68
-                C20,64 40,72 70,70 C90,68 105,58 130,55
-                C150,53 160,58 180,62 C205,67 220,72 255,70
-                C278,68 292,56 320,52 C345,49 358,54 378,60
-                C400,66 415,72 450,70 C472,68 488,55 518,50
-                C544,46 558,52 580,59 C600,65 615,72 655,70
-                C678,68 694,55 724,50 C750,46 764,52 786,59
-                C806,65 820,72 860,70 C882,68 898,54 928,49
-                C955,45 968,52 990,59 C1010,65 1025,72 1062,70
-                C1085,68 1100,55 1130,50 C1155,46 1168,52 1190,59
-                C1210,65 1225,72 1265,70 C1288,68 1305,55 1340,52
-                C1368,50 1400,58 1440,62
-                L1440,110 L0,110 Z"
-                fill="var(--bg)"/>
-
-            {/* Cristais nas cristas */}
-            <g fill="var(--bg)" opacity="0.25">
-                <polygon points="130,55 124,47 136,47"/>
-                <polygon points="320,52 314,44 326,44"/>
-                <polygon points="518,50 512,42 524,42"/>
-                <polygon points="724,50 718,42 730,42"/>
-                <polygon points="928,49 922,41 934,41"/>
-                <polygon points="1130,50 1124,42 1136,42"/>
-            </g>
-
-            </svg>
-          </div>
-
-        </div>
-      </main>
-
-      {/* ── Tips ── */}
-      <section className={styles.tipsSection}>
-        <h2 className={styles.sectionTitle}>Dicas para o Inverno</h2>
-        <div className={styles.tipsGrid}>
-          {tips.map((tip, i) => (
-            <div key={i} className={styles.tipCard}>
-              <span className={styles.tipIcon}>✓</span>
-              <span>{tip}</span>
-            </div>
-          ))}
+        {/* conteúdo */}
+        <div className={styles.heroContent}>
+          <span className={styles.heroEyebrow}>Winter Protection</span>
+          <h1 className={styles.heroTitle}>Inverno</h1>
+          <p className={styles.heroSub}>
+            Proteja seus fios do frio intenso e do ar seco. Nutrição profunda e
+            selamento de cutículas para manter seus cabelos macios nos dias mais frios.
+          </p>
         </div>
       </section>
 
-      {/* Carrossel de Palavras */}
-      <div style={{ margin: '3rem 0', zIndex: 1 }}>
+      {/* ── MARQUEE ── */}
+      <div className={styles.marqueeSection}>
         <SeasonMarquee
           words={MARQUEE_WORDS}
-          highlightColor="#3b82f6"
+          highlightColor="#1d4ed8"
+          icon={<WinterIcon />}
         />
       </div>
 
-      {/* ── Carrosséis ── */}
-      <section className={styles.productsSection}>
-        <div className={styles.productsHeader}>
-          <h2 className={styles.sectionTitle}>Linha de Produtos & Kits de Inverno</h2>
+      {/* ── BANNER EDITORIAL ── */}
+      <section className={styles.editorial}>
+        <div className={styles.editorialImg}>
+          <img
+            src="/products/inverno-produtos/propaganda-inverno.png"
+            alt="Winter Frost"
+          />
+          <div className={styles.editorialImgOverlay} />
         </div>
+        <div className={styles.editorialText}>
+          <span className={styles.editorialLabel}>Tecnologia de Nutrição Profunda</span>
+          <h2 className={styles.editorialTitle}>
+            Winter
+            <br />
+            Frost
+          </h2>
+          <p className={styles.editorialBody}>
+            Hidratação intensa, selamento de cutículas e proteção térmica para os dias
+            mais frios. Seus fios nutridos e protegidos do amanhecer ao entardecer.
+          </p>
+          <div className={styles.editorialDivider} />
+          <p className={styles.editorialNote}>Ideal para o clima frio e seco</p>
+        </div>
+      </section>
 
+      {/* ── PRODUTOS ── */}
+      <section className={styles.productsSection}>
         <SeasonProductsSection
           seasonData={seasonData}
-          lineTitle="Linha Winter Frost"
-          kitsTitle="Kits de Inverno"
-          lineBannerSrc="/products/inverno-produtos/propaganda-inverno.png"
+          seasonId="inverno"
+          onProductClick={openProduct}
+          lineTitle="Essenciais da Estação"
+          kitsTitle="Rituais de Cuidado"
+          lineBannerSrc="/products/inverno-produtos/banner-oleo-inverno.png"
           lineBannerAlt="Linha Winter Frost"
-          kitsBannerSrc="/products/inverno-produtos/propaganda-kit-inverno.png"
+          kitsBannerSrc="/products/inverno-produtos/banner-kit-inverno.png"
           kitsBannerAlt="Kits de Inverno"
         />
       </section>
 
+      {/* ── CARRINHO ── */}
+      <CartFloatingButton
+        count={cartCount}
+        onOpen={() => setIsCartOpen(true)}
+        seasonColor={theme.primary}
+      />
+      <Cart
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={cart}
+        onUpdateQuantity={updateQuantity}
+        onRemove={removeFromCart}
+        formatPrice={formatPrice}
+        seasonColor={theme.primary}
+        onClearCart={() => setCart([])}
+      />
+      <ProductModal
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onAddToCart={addToCart}
+        onToggleFavorite={toggleFavorite}
+        isFavorite={selectedProduct ? favorites.has(selectedProduct.id) : false}
+        seasonTheme={{ primary: theme.primary, background: theme.background }}
+      />
     </div>
   );
 }
