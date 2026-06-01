@@ -1,114 +1,88 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, X, Plus, Minus, Trash2 } from "lucide-react";
+import { ShoppingBag, X, Plus, Minus, Trash2, Loader2 } from "lucide-react";
 import styles from "./Cart.module.css";
-import { apiCreateOrder } from "@/lib/api";
-import { useUser } from "@/contexts/UserContext";
+import { useCart } from "@/contexts/CartContext";
 
-export interface CartLineItem {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
+const formatPrice = (price: number) =>
+  price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-interface CartProps {
-  isOpen: boolean;
-  onClose: () => void;
-  items: CartLineItem[];
-  onUpdateQuantity: (productId: number, delta: number) => void;
-  onRemove: (productId: number) => void;
-  formatPrice: (price: number) => string;
-  normalizeImage?: (path: string) => string;
-  /** Cor primária da estação — badge e botão finalizar; omitir = estilo original */
-  seasonColor?: string;
-  /** Callback para limpar o carrinho local após pedido criado */
-  onClearCart?: () => void;
-}
-
-const defaultNormalize = (path: string) => {
+function normalizeImage(path: string) {
   if (!path) return "/products/placeholder.png";
   let n = path.trim();
   if (!n.startsWith("/")) n = "/" + n;
   return n;
-};
+}
 
-/** Sacola lateral — mesma estrutura da loja, com theming opcional por estação */
-export default function Cart({
-  isOpen,
-  onClose,
-  items,
-  onUpdateQuantity,
-  onRemove,
-  formatPrice,
-  normalizeImage = defaultNormalize,
-  seasonColor,
-  onClearCart,
-}: CartProps) {
+interface CartProps {
+
+  seasonColor?: string;
+}
+
+export default function Cart({ seasonColor }: CartProps) {
   const accent = seasonColor ?? "#245850";
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const router = useRouter();
-  const { user, isLoggedIn } = useUser();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [orderSummary, setOrderSummary] = useState<any>(null);
+
+  const {
+    items,
+    isOpen,
+    closeCart,
+    updateQuantity,
+    removeItem,
+    checkout,
+    checkoutLoading,
+    error,
+    orderSummary,
+    dismissOrderSummary,
+    cartTotal,
+    loading,
+  } = useCart();
 
   const handleFinalizarPedido = async () => {
-    if (!isLoggedIn || !user?.id) {
-      setError("Você precisa estar logado para finalizar o pedido");
-      return;
-    }
-
-    if (items.length === 0) {
-      setError("Seu carrinho está vazio");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
     try {
-      const order = await apiCreateOrder(user.id);
-      console.log('Pedido criado:', order);
-      
-      // Mostrar resumo do pedido
-      setOrderSummary(order);
-      
-      // Limpar o carrinho local
-      if (onClearCart) {
-        onClearCart();
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao finalizar pedido');
-    } finally {
-      setLoading(false);
+      await checkout();
+    } catch {
     }
   };
 
-  const handleCloseOrderSummary = () => {
-    setOrderSummary(null);
-    onClose();
-    router.push('/pedido/confirmado');
+  const handleContinuar = () => {
+    dismissOrderSummary();
+    closeCart();
+    router.push("/pedido/confirmado");
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-      <div className={styles.overlay} onClick={onClose} aria-hidden />
-      <aside className={styles.sidebar} role="dialog" aria-label="Sacola de compras">
+      <div className={styles.overlay} onClick={closeCart} aria-hidden />
+      <aside
+        className={styles.sidebar}
+        role="dialog"
+        aria-label="Sacola de compras"
+      >
+        {/* Header */}
         <div className={styles.header}>
           <h2>Sua Sacola</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Fechar sacola">
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={closeCart}
+            aria-label="Fechar sacola"
+          >
             <X size={20} />
           </button>
         </div>
 
+        {/* Conteúdo */}
         <div className={styles.content}>
-          {items.length === 0 ? (
+          {loading ? (
+            <div className={styles.empty}>
+              <Loader2 size={32} className={styles.spin} />
+              <p>Carregando carrinho...</p>
+            </div>
+          ) : items.length === 0 ? (
             <div className={styles.empty}>
               <ShoppingBag size={48} strokeWidth={1} />
               <p>Sua sacola está vazia</p>
@@ -122,13 +96,23 @@ export default function Cart({
                   </div>
                   <div className={styles.itemDetails}>
                     <h4>{item.name}</h4>
-                    <span className={styles.itemPrice}>{formatPrice(item.price)}</span>
+                    <span className={styles.itemPrice}>
+                      {formatPrice(item.price)}
+                    </span>
                     <div className={styles.qty}>
-                      <button type="button" onClick={() => onUpdateQuantity(item.id, -1)} aria-label="Diminuir">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, -1)}
+                        aria-label="Diminuir"
+                      >
                         <Minus size={14} />
                       </button>
                       <span>{item.quantity}</span>
-                      <button type="button" onClick={() => onUpdateQuantity(item.id, 1)} aria-label="Aumentar">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, 1)}
+                        aria-label="Aumentar"
+                      >
                         <Plus size={14} />
                       </button>
                     </div>
@@ -136,7 +120,7 @@ export default function Cart({
                   <button
                     type="button"
                     className={styles.removeBtn}
-                    onClick={() => onRemove(item.id)}
+                    onClick={() => removeItem(item.id)}
                     aria-label="Remover"
                   >
                     <Trash2 size={16} />
@@ -147,6 +131,7 @@ export default function Cart({
           )}
         </div>
 
+        {/* Resumo pós-pedido */}
         {orderSummary ? (
           <div className={styles.orderSummary}>
             <div className={styles.orderSummaryHeader}>
@@ -154,11 +139,15 @@ export default function Cart({
               <span className={styles.orderNumber}>#{orderSummary.id}</span>
             </div>
             <div className={styles.orderSummaryItems}>
-              {orderSummary.items?.map((item: any) => (
+              {orderSummary.items?.map((item) => (
                 <div key={item.id} className={styles.orderSummaryItem}>
-                  <span className={styles.orderItemName}>{item.product.name}</span>
+                  <span className={styles.orderItemName}>
+                    {item.product.name}
+                  </span>
                   <span className={styles.orderItemQty}>x{item.quantity}</span>
-                  <span className={styles.orderItemPrice}>{formatPrice(item.price)}</span>
+                  <span className={styles.orderItemPrice}>
+                    {formatPrice(item.price)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -169,59 +158,65 @@ export default function Cart({
             <button
               type="button"
               className={styles.checkout}
-              style={seasonColor ? { background: accent } : undefined}
-              onClick={handleCloseOrderSummary}
+              style={{ background: accent }}
+              onClick={handleContinuar}
             >
-              Continuar
+              Ver meu pedido
             </button>
           </div>
-        ) : items.length > 0 && (
-          <div className={styles.footer}>
-            <div className={styles.total}>
-              <span>Total</span>
-              <strong>{formatPrice(total)}</strong>
+        ) : (
+          items.length > 0 && (
+            <div className={styles.footer}>
+              <div className={styles.total}>
+                <span>Total</span>
+                <strong>{formatPrice(cartTotal)}</strong>
+              </div>
+              {error && <p className={styles.error}>{error}</p>}
+              <button
+                type="button"
+                className={styles.checkout}
+                style={{ background: accent }}
+                onClick={handleFinalizarPedido}
+                disabled={checkoutLoading}
+              >
+                {checkoutLoading ? (
+                  <>
+                    <Loader2 size={16} className={styles.spinInline} />
+                    Processando...
+                  </>
+                ) : (
+                  "Finalizar Compra"
+                )}
+              </button>
             </div>
-            {error && <p className={styles.error}>{error}</p>}
-            <button
-              type="button"
-              className={styles.checkout}
-              style={seasonColor ? { background: accent } : undefined}
-              onClick={handleFinalizarPedido}
-              disabled={loading}
-            >
-              {loading ? 'Processando...' : 'Finalizar Compra'}
-            </button>
-          </div>
+          )
         )}
       </aside>
     </>
   );
 }
 
-/** Botão flutuante da sacola (usado quando o painel está fechado) */
+/** Botão flutuante da sacola */
 export function CartFloatingButton({
-  count,
-  onOpen,
   seasonColor,
 }: {
-  count: number;
-  onOpen: () => void;
   seasonColor?: string;
 }) {
   const accent = seasonColor ?? "#245850";
+  const { cartCount, openCart } = useCart();
 
   return (
     <button
       type="button"
       className={styles.floatingBtn}
-      style={seasonColor ? { background: accent } : undefined}
-      onClick={onOpen}
+      style={{ background: accent }}
+      onClick={openCart}
       aria-label="Abrir sacola"
     >
       <ShoppingBag size={22} />
-      {count > 0 && (
-        <span className={styles.badge} style={seasonColor ? { background: accent } : undefined}>
-          {count}
+      {cartCount > 0 && (
+        <span className={styles.badge} style={{ background: accent }}>
+          {cartCount}
         </span>
       )}
     </button>

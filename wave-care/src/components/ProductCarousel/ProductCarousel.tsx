@@ -4,7 +4,6 @@ import { useState } from "react";
 import SeasonCard from "@/components/seasonal/SeasonCard";
 import styles from "./ProductCarousel.module.css";
 
-// Igual à loja — normaliza o path e serve do public/ do Next.js
 const normalizeImagePath = (path?: string): string => {
   if (!path) return "/products/placeholder.svg";
   let normalized = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
@@ -33,7 +32,8 @@ interface ProductCarouselProps {
   visibleCount?: number;
   className?: string;
   seasonId?: "verao" | "outono" | "inverno" | "primavera";
-  onProductClick?: (productId: number) => void;
+  onProductClick?: (productId: number) => void;  
+  onAddToCart?: (productId: number) => void;     
   cardIndexOffset?: number;
 }
 
@@ -46,6 +46,7 @@ export default function ProductCarousel({
   className = "",
   seasonId,
   onProductClick,
+  onAddToCart,   
   cardIndexOffset = 0,
 }: ProductCarouselProps) {
   const [index, setIndex] = useState<number>(0);
@@ -59,13 +60,11 @@ export default function ProductCarousel({
   return (
     <div className={`${styles.carouselWrapper} ${className}`}>
 
-      {/* ── Header com título e setas ── */}
       <div className={styles.carouselHeader}>
         <div className={styles.headerLeft}>
           <span className={styles.carouselEyebrow}>Descubra</span>
           <h2 className={styles.carouselTitle}>{title}</h2>
         </div>
-
         {products.length > visibleCount && (
           <div className={styles.headerNav}>
             <button onClick={prev} disabled={index === 0} className={styles.arrowBtn} aria-label="Anterior">
@@ -82,7 +81,6 @@ export default function ProductCarousel({
         )}
       </div>
 
-      {/* ── Banner wide ── */}
       {bannerSrc ? (
         <div className={styles.carouselBanner}>
           <img
@@ -101,7 +99,6 @@ export default function ProductCarousel({
         </div>
       )}
 
-      {/* ── Grid de cards ── */}
       <div className={styles.carouselCards}>
         {visibleProducts.map((product, i) => {
           const cardInner = (
@@ -117,14 +114,11 @@ export default function ProductCarousel({
                 }
               }}
             >
-              {/* Imagem — igual à loja */}
               <div className={styles.cardImage}>
                 <img
                   src={normalizeImagePath(product.img)}
                   alt={product.name}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/products/placeholder.svg";
-                  }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = "/products/placeholder.svg"; }}
                 />
                 <div className={styles.cardImageOverlay} />
                 <div className={styles.cardBadge}>
@@ -134,16 +128,13 @@ export default function ProductCarousel({
                 </div>
               </div>
 
-              {/* Info */}
               <div className={styles.cardInfo}>
                 <div className={styles.productRating}>
                   <span className={styles.ratingStar}>★</span>
                   <span className={styles.ratingValue}>{product.rating}</span>
                   <span className={styles.ratingCount}>({product.reviews})</span>
                 </div>
-
                 <h3 className={styles.cardName}>{product.name}</h3>
-
                 <div className={styles.cardBody}>
                   <p className={styles.cardDesc}>{product.desc}</p>
                   {product.includes && product.includes.length > 0 && (
@@ -156,7 +147,6 @@ export default function ProductCarousel({
                     </ul>
                   )}
                 </div>
-
                 <div className={styles.cardFooter}>
                   <div className={styles.cardPriceBlock}>
                     <span className={styles.cardPrice}>{product.price}</span>
@@ -167,7 +157,9 @@ export default function ProductCarousel({
                     className={styles.addButton}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (product.id) onProductClick?.(product.id);
+                      if (!product.id) return;
+                      if (onAddToCart) onAddToCart(product.id);
+                      else onProductClick?.(product.id);
                     }}
                   >
                     Adicionar
@@ -181,12 +173,7 @@ export default function ProductCarousel({
 
           if (seasonId) {
             return (
-              <SeasonCard
-                key={cardKey}
-                seasonId={seasonId}
-                index={cardIndexOffset + index + i}
-                className={styles.carouselCardWrap}
-              >
+              <SeasonCard key={cardKey} seasonId={seasonId} index={cardIndexOffset + index + i} className={styles.carouselCardWrap}>
                 {cardInner}
               </SeasonCard>
             );
@@ -196,13 +183,10 @@ export default function ProductCarousel({
         })}
       </div>
 
-      {/* ── Dots ── */}
       {products.length > visibleCount && (
         <div className={styles.dots}>
           {Array.from({ length: maxIndex + 1 }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIndex(i)}
+            <button key={i} onClick={() => setIndex(i)}
               className={`${styles.dot} ${i === index ? styles.dotActive : ""}`}
               aria-label={`Ir para o item ${i + 1}`}
             />

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
-import { apiUpdateUser, apiGetAllOrders, type Order } from "@/lib/api";
+import { apiUpdateUser, apiGetUserOrders, type Order } from "@/lib/api";
 import { AvatarUpload } from "@/components/AvatarUpload/Avatarupload";
 
 // ─── Paleta ───────────────────────────────────────────────────────
@@ -35,16 +35,18 @@ type Theme  = "light" | "dark" | "system";
 type SettingsSection = "main" | "appearance" | "notifications" | "privacy" | "language";
 
 const STATUS_LABELS: Record<string, string> = {
-  aguardando: "Aguardando", confirmado: "Confirmado",
-  enviado: "Enviado", entregue: "Entregue",
+  PENDING:   "Aguardando",
+  CONFIRMED: "Confirmado",
+  SHIPPED:   "Enviado",
+  DELIVERED: "Entregue",
 };
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  aguardando: { bg: "#fef3c7", color: "#92400e" },
-  confirmado: { bg: "#dbeafe", color: "#1e40af" },
-  enviado:    { bg: "#ede9fe", color: "#5b21b6" },
-  entregue:   { bg: "#d1fae5", color: "#065f46" },
+  PENDING:   { bg: "#fef3c7", color: "#92400e" },
+  CONFIRMED: { bg: "#dbeafe", color: "#1e40af" },
+  SHIPPED:   { bg: "#ede9fe", color: "#5b21b6" },
+  DELIVERED: { bg: "#d1fae5", color: "#065f46" },
 };
-const TRACK_STEPS = ["aguardando", "confirmado", "enviado", "entregue"];
+const TRACK_STEPS = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 
 // ─── Ícones ───────────────────────────────────────────────────────
 const Icon = {
@@ -190,23 +192,17 @@ export default function PerfilPage() {
   useEffect(() => {
     const loadOrders = async () => {
       if (!isLoggedIn || !user?.id) return;
-      
       setOrdersLoading(true);
       setOrdersError(null);
-      
       try {
-        const allOrders = await apiGetAllOrders();
-        // Filtra pedidos do usuário atual
-        const userOrders = allOrders.filter(order => order.userId === user.id);
+        const userOrders = apiGetUserOrders(user.id);
         setOrders(userOrders);
       } catch (err) {
-        console.error('Erro ao carregar pedidos:', err);
         setOrdersError(err instanceof Error ? err.message : 'Erro ao carregar pedidos');
       } finally {
         setOrdersLoading(false);
       }
     };
-
     loadOrders();
   }, [isLoggedIn, user?.id]);
 
@@ -264,7 +260,6 @@ export default function PerfilPage() {
         telefone: form.telefone,
         cidade: form.cidade,
       });
-      // Persiste no localStorage com os valores do formulário (fonte de verdade)
       updateUser({
         nome: form.nome,
         email: form.email,
@@ -279,7 +274,6 @@ export default function PerfilPage() {
     }
   }
 
-  // ── estilos base
   const s = {
     wrapper:    { display: "flex" as const, minHeight: "100vh", background: "var(--bg-color, #f5f5f0)", fontFamily: "var(--font-inter), var(--font-jost), sans-serif", paddingTop: "80px" },
     sidebar:    { width: "260px", minWidth: "260px", background: "var(--card-bg, #ffffff)", borderRight: `1px solid ${C.border}`, display: "flex" as const, flexDirection: "column" as const, padding: "2rem 1.25rem", gap: "0.5rem", position: "sticky" as const, top: "80px", height: "calc(100vh - 80px)", overflowY: "auto" as const },
@@ -686,7 +680,6 @@ export default function PerfilPage() {
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────
 function EmptyState({ icon, title, text, cta }: { icon: string; title: string; text: string; cta?: { href: string; label: string } }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "4rem 2rem", textAlign: "center", background: "var(--card-bg, #ffffff)", borderRadius: C.radius, border: `1px solid ${C.border}`, boxShadow: C.shadow }}>

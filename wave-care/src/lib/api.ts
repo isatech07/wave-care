@@ -1,72 +1,64 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
+//  Token 
+// Chave usada para salvar o JWT no localStorage
+const TOKEN_KEY = 'wavecare_token';
+
+export function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function saveToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+// Fetch autenticado 
+async function authFetch(url: string, options: RequestInit = {}) {
+  const token = getToken();
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `Erro ${res.status}`);
+  return data;
+}
+
+// Tipos 
+
 export interface MappedUser {
   id?: number;
-  name?: string;
   nome?: string;
   email?: string;
   telefone?: string;
   cidade?: string;
+  foto?: string;
+  role?: string;
 }
 
-function mapUser(data: any): MappedUser {
-  const user = data?.user ?? data;
-  if (!user || typeof user !== 'object') return {};
-
+function mapUser(raw: any): MappedUser {
+  const u = raw?.user ?? raw;
+  if (!u || typeof u !== 'object') return {};
   return {
-    id: user.id,
-    email: user.email ?? '',
-    telefone: user.telefone ?? '',
-    cidade: user.cidade ?? '',
-    nome: user.name ?? user.nome ?? '',
+    id:       u.id,
+    email:    u.email    ?? '',
+    telefone: u.telefone ?? '',
+    cidade:   u.cidade   ?? '',
+    foto:     u.foto     ?? undefined,
+    role:     u.role     ?? 'user',
+    nome:     u.name     ?? u.nome ?? '',
   };
-}
-
-export async function apiLogin(email: string, password: string) {
-  const res = await fetch(`${API_URL}/users/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao fazer login');
-  return mapUser(data.user);
-}
-
-export async function apiRegister(name: string, email: string, password: string) {
-  const res = await fetch(`${API_URL}/users/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao cadastrar');
-  return data;
-}
-
-export async function apiUpdateUser(id: number, fields: { name?: string; email?: string; telefone?: string; cidade?: string }) {
-  const res = await fetch(`${API_URL}/users/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(fields),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao atualizar');
-  return mapUser(data);
-}
-
-export async function apiDeleteUser(id: number) {
-  const res = await fetch(`${API_URL}/users/${id}`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-  });
-
-  if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.message || 'Erro ao deletar conta');
-  }
-
-  return true;
 }
 
 export interface ApiProduct {
@@ -86,31 +78,24 @@ export interface ApiProduct {
   createdAt?: string;
 }
 
-export async function getProducts(): Promise<ApiProduct[]> {
-  const res = await fetch(`${API_URL}/products`);
-  const data = await res.json();
-  if (!res.ok) throw new Error('Erro ao buscar produtos');
-  return data;
-}
-
 export interface CartItem {
-  id: number;
+  id: number;         
   quantity: number;
   cartId: number;
   productId: number;
   product: ApiProduct;
   createdAt: string;
 }
- 
+
 export interface Cart {
   id: number;
   userId: number;
   items: CartItem[];
   createdAt: string;
 }
- 
-export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
- 
+
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+
 export interface OrderItem {
   id: number;
   orderId: number;
@@ -119,7 +104,7 @@ export interface OrderItem {
   quantity: number;
   price: number;
 }
- 
+
 export interface Order {
   id: number;
   userId: number;
@@ -128,103 +113,149 @@ export interface Order {
   items: OrderItem[];
   createdAt: string;
 }
- 
-// ==== CARRINHO ====
- 
-// POST /cart — adiciona item ao carrinho
- export async function apiAddCartItem(userId: number, productId: number, quantity: number): Promise<CartItem> {
-  const res = await fetch(`${API_URL}/cart`, {
+
+//  Auth / Usuário 
+
+
+export async function apiLogin(email: string, password: string): Promise<MappedUser> {
+  const res = await fetch(`${API_URL}/users/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Erro ao fazer login');
+
+  if (data.access_token) saveToken(data.access_token);
+
+  return mapUser(data.user);
+}
+
+/** POST /users/register */
+export async function apiRegister(name: string, email: string, password: string) {
+  const res = await fetch(`${API_URL}/users/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Erro ao cadastrar');
+  return data;
+}
+
+/** PUT /users/:id — requer JWT */
+export async function apiUpdateUser(
+  id: number,
+  fields: { name?: string; email?: string; telefone?: string; cidade?: string },
+): Promise<MappedUser> {
+  const data = await authFetch(`${API_URL}/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(fields),
+  });
+  return mapUser(data);
+}
+
+/** DELETE /users/:id — requer JWT */
+export async function apiDeleteUser(id: number): Promise<true> {
+  await authFetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
+  return true;
+}
+
+// Produtos
+
+export async function getProducts(): Promise<ApiProduct[]> {
+  const res = await fetch(`${API_URL}/products`);
+  const data = await res.json();
+  if (!res.ok) throw new Error('Erro ao buscar produtos');
+  return data;
+}
+
+//  Carrinho 
+
+export async function apiAddCartItem(
+  userId: number,
+  productId: number,
+  quantity: number
+): Promise<CartItem> {
+  return authFetch(`${API_URL}/cart`, {
+    method: 'POST',
     body: JSON.stringify({ userId, productId, quantity }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao adicionar item ao carrinho');
-  return data;
 }
- 
-// GET /cart/:userId — retorna carrinho com itens e produtos populados
+
+/** GET /cart/:userId — requer JWT */
 export async function apiGetCart(userId: number): Promise<Cart | null> {
-  const res = await fetch(`${API_URL}/cart/${userId}`);
-  if (res.status === 404) return null;
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao buscar carrinho');
-  return data;
+  try {
+    return await authFetch(`${API_URL}/cart/${userId}`);
+  } catch (err: any) {
+    if (err.message?.includes('404') || err.message?.includes('não encontrado')) return null;
+    throw err;
+  }
 }
- 
-// PUT /cart/:id — atualiza quantidade de um CartItem pelo id do item (não do produto)
+
+/** PUT /cart/:cartItemId — requer JWT */
 export async function apiUpdateCartItem(cartItemId: number, quantity: number): Promise<CartItem> {
-  const res = await fetch(`${API_URL}/cart/${cartItemId}`, {
+  return authFetch(`${API_URL}/cart/${cartItemId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ quantity }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao atualizar quantidade');
-  return data;
 }
- 
-// DELETE /cart/:id — remove um CartItem pelo id do item
-export async function apiRemoveCartItem(cartItemId: number): Promise<CartItem> {
-  const res = await fetch(`${API_URL}/cart/${cartItemId}`, { method: 'DELETE' });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao remover item');
-  return data;
+
+/** DELETE /cart/:cartItemId — requer JWT */
+export async function apiRemoveCartItem(cartItemId: number): Promise<void> {
+  return authFetch(`${API_URL}/cart/${cartItemId}`, { method: 'DELETE' });
 }
- 
-// DELETE /cart/clear/:userId — limpa todos os itens e deleta o carrinho
+
+/** DELETE /cart/clear/:userId — requer JWT */
 export async function apiClearCart(userId: number): Promise<void> {
-  const res = await fetch(`${API_URL}/cart/clear/${userId}`, { method: 'DELETE' });
-  if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.message || 'Erro ao limpar carrinho');
+  return authFetch(`${API_URL}/cart/clear/${userId}`, { method: 'DELETE' });
+}
+
+// Pedidos 
+
+export async function apiCreateOrder(userId: number): Promise<Order> {
+  return authFetch(`${API_URL}/order/${userId}`, { method: 'POST' });
+}
+
+/** GET /order — requer JWT + admin */
+export async function apiGetAllOrders(): Promise<Order[]> {
+  return authFetch(`${API_URL}/order`);
+}
+
+/** GET /order/:id — requer JWT */
+export async function apiGetOrder(orderId: number): Promise<Order | null> {
+  try {
+    return await authFetch(`${API_URL}/order/${orderId}`);
+  } catch {
+    return null;
   }
 }
- 
-// === PEDIDOS ===
- 
-// POST /order/:userId — cria pedido a partir do carrinho e limpa o carrinho
-export async function apiCreateOrder(userId: number): Promise<Order> {
-  const res = await fetch(`${API_URL}/order/${userId}`, { method: 'POST' });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao criar pedido');
-  return data;
-}
- 
-// GET /order — lista todos os pedidos com itens e produtos (uso admin)
-export async function apiGetAllOrders(): Promise<Order[]> {
-  const res = await fetch(`${API_URL}/order`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao listar pedidos');
-  return data;
-}
- 
-// GET /order/:id — busca pedido por id com itens e produtos
-export async function apiGetOrder(orderId: number): Promise<Order | null> {
-  const res = await fetch(`${API_URL}/order/${orderId}`);
-  if (res.status === 404) return null;
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao buscar pedido');
-  return data;
-}
- 
-// PUT /order/:id — atualiza status do pedido
+
+/** PUT /order/:id — requer JWT + admin */
 export async function apiUpdateOrderStatus(orderId: number, status: OrderStatus): Promise<Order> {
-  const res = await fetch(`${API_URL}/order/${orderId}`, {
+  return authFetch(`${API_URL}/order/${orderId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Erro ao atualizar status');
-  return data;
 }
- 
-// DELETE /order/:id — remove pedido e todos os seus itens
+
+/** DELETE /order/:id — requer JWT + admin */
 export async function apiDeleteOrder(orderId: number): Promise<void> {
-  const res = await fetch(`${API_URL}/order/${orderId}`, { method: 'DELETE' });
-  if (!res.ok) {
-    const data = await res.json();
-    throw new Error(data.message || 'Erro ao deletar pedido');
-  }
+  return authFetch(`${API_URL}/order/${orderId}`, { method: 'DELETE' });
+}
+
+const ordersKey = (userId: number) => `wavecare_orders_${userId}`;
+
+export function saveOrderLocally(userId: number, order: Order): void {
+  if (typeof window === 'undefined') return;
+  const key = ordersKey(userId);
+  const existing: Order[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+  const updated = [order, ...existing.filter((o) => o.id !== order.id)];
+  localStorage.setItem(key, JSON.stringify(updated));
+}
+
+export function apiGetUserOrders(userId: number): Order[] {
+  if (typeof window === 'undefined') return [];
+  const key = ordersKey(userId);
+  return JSON.parse(localStorage.getItem(key) ?? '[]');
 }

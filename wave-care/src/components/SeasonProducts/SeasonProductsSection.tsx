@@ -25,6 +25,7 @@ interface SeasonProductsSectionProps {
   seasonData: SeasonProductsData;
   seasonId?: "verao" | "outono" | "inverno" | "primavera";
   onProductClick?: (productId: number) => void;
+  onAddToCart?: (productId: number) => void;      // ← NOVO
 }
 
 function StatusBox({ children }: { children: ReactNode }) {
@@ -64,11 +65,12 @@ export default function SeasonProductsSection({
   seasonData,
   seasonId,
   onProductClick,
+  onAddToCart,                                    // ← NOVO
 }: SeasonProductsSectionProps) {
   const { products, kits, loading, error, retry } = seasonData;
 
   if (loading) return <ProductsLoading />;
-  if (error) return <ProductsError message={error} onRetry={retry} />;
+  if (error)   return <ProductsError message={error} onRetry={retry} />;
 
   return (
     <>
@@ -81,6 +83,7 @@ export default function SeasonProductsSection({
           visibleCount={4}
           seasonId={seasonId}
           onProductClick={onProductClick}
+          onAddToCart={onAddToCart}               // ← NOVO
         />
       )}
 
@@ -93,6 +96,7 @@ export default function SeasonProductsSection({
           visibleCount={4}
           seasonId={seasonId}
           onProductClick={onProductClick}
+          onAddToCart={onAddToCart}               // ← NOVO
           cardIndexOffset={products.length}
         />
       )}

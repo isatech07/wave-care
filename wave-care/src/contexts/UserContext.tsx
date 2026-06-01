@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { apiDeleteUser } from "@/lib/api";
+import { apiDeleteUser, clearToken } from "@/lib/api";
 
-// ─────────────────────────────────────────────
+
 
 export interface CapilarProfile {
   tipo: string;
@@ -43,10 +43,12 @@ export interface UserData {
   email: string;
   telefone: string;
   cidade: string;
-  avatar?: string; // base64 JPEG comprimido
+  avatar?: string;
   capilar: CapilarProfile | null;
   favorites: Product[];
   orders: Order[];
+  // role vem do backend: 'admin' | 'user'
+  role?: string;
   isAdmin?: boolean;
 }
 
@@ -58,6 +60,7 @@ type LoginData = {
   cidade: string;
   avatar?: string;
   capilar: CapilarProfile | null;
+  role?: string;
 };
 
 interface UserContextType {
@@ -76,7 +79,6 @@ interface UserContextType {
   isAdmin: boolean;
 }
 
-// ─────────────────────────────────────────────
 
 const STORAGE_KEY = "wavecare_user";
 const AVATARS_KEY = "wavecare_avatars";
@@ -120,7 +122,7 @@ function saveAvatarForEmail(email: string, base64: string): void {
     store[email] = base64;
     localStorage.setItem(AVATARS_KEY, JSON.stringify(store));
   } catch (e) {
-    console.warn("Erro ao salvar avatar (localStorage cheio?):", e);
+    console.warn("Erro ao salvar avatar:", e);
   }
 }
 
@@ -151,19 +153,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const login = (data: LoginData) => {
     const existing = loadUser();
     const sameAccount = existing?.email === data.email;
+
+    const isAdmin =
+      data.role === 'admin' || data.email === 'admin@wavecare.com';
+
     const full: UserData = {
       ...data,
-      // Foto só no localStorage (base64), independente do backend
       avatar: loadAvatarForEmail(data.email),
       favorites: sameAccount ? (existing?.favorites ?? []) : [],
-      orders: sameAccount ? (existing?.orders ?? []) : [],
-      isAdmin: data.email === "admin@wavecare.com",
+      orders:    sameAccount ? (existing?.orders    ?? []) : [],
+      role:      data.role ?? 'user',
+      isAdmin,
     };
     setUser(full);
     saveUser(full);
   };
 
-  const logout = () => { setUser(null); removeUser(); };
+  const logout = () => {
+    setUser(null);
+    removeUser();
+    clearToken();
+  };
 
   const updateUser = (data: Partial<UserData>) => {
     setUser((prev) => {
@@ -173,7 +183,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       return updated;
     });
   };
-
 
   const updateAvatar = (rawBase64: string) => {
     if (!rawBase64) {
@@ -197,7 +206,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       } else {
         if (height > MAX) { width = Math.round((width * MAX) / height); height = MAX; }
       }
-      canvas.width = width;
+      canvas.width  = width;
       canvas.height = height;
       canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
       const compressed = canvas.toDataURL("image/jpeg", 0.82);
@@ -249,12 +258,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (user?.id) await apiDeleteUser(user.id);
     setUser(null);
     removeUser();
+    clearToken(); 
   };
 
   return (
     <UserContext.Provider value={{
       user,
-      isLoggedIn: !!user,
+      isLoggedIn:    !!user,
       updateUser,
       updateAvatar,
       updateCapilar,
@@ -271,7 +281,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     </UserContext.Provider>
   );
 }
-
 
 export function useUser(): UserContextType {
   const ctx = useContext(UserContext);

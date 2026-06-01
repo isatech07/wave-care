@@ -1,0 +1,347 @@
+/* components/OrderStatus/OrderStatus.module.css */
+
+.section {
+  padding: 1.5rem 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1c1917;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refreshBtn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0.4rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+.refreshBtn:hover { color: #245850; border-color: #245850; }
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+
+.cardHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 1rem;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.orderId {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1c1917;
+}
+
+.userId {
+  font-size: 0.78rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.orderDate {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+}
+
+.total {
+  font-size: 0.9rem;
+  color: #1c1917;
+}
+
+/* ── Resumo do pedido (itens + total) — visível sem expandir ── */
+.cardSummary {
+  padding: 0 1.25rem 0.75rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.summaryItems {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+}
+
+.summaryItemName { color: #92400e; }
+.summaryItemPrice { color: #6b7280; }
+
+.summaryFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.summaryCount {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.summaryTotal {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #245850;
+}
+
+/* ── Stepper de status ── */
+.stepper {
+  padding: 1rem 1.25rem 1.25rem;  /* padding generoso dos dois lados */
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;               /* garante que nada vaze */
+}
+
+.stepperTrack {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  /* recua os pontos das bordas para os labels não serem cortados */
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+/* Linha de fundo (cinza) */
+.stepperTrack::before {
+  content: "";
+  position: absolute;
+  top: 6px;                       /* alinha ao centro dos pontos (12px / 2 = 6px) */
+  left: calc(0.5rem + 6px);       /* começa no centro do 1º ponto */
+  right: calc(0.5rem + 6px);      /* termina no centro do último ponto */
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 0;
+}
+
+.stepperStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+/* Remove flex do primeiro e último para fixar nas bordas */
+.stepperStep:first-child { flex: 0 0 auto; align-items: flex-start; }
+.stepperStep:last-child  { flex: 0 0 auto; align-items: flex-end; }
+
+.stepperDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d1d5db;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px #d1d5db;
+  flex-shrink: 0;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.stepperDotActive {
+  background: #245850;
+  box-shadow: 0 0 0 2px #245850;
+}
+
+.stepperDotCurrent {
+  background: #245850;
+  box-shadow: 0 0 0 3px rgba(36, 88, 80, 0.25);
+}
+
+.stepperLabel {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: color 0.2s;
+}
+
+.stepperLabelActive  { color: #245850; font-weight: 600; }
+.stepperLabelCurrent { color: #245850; font-weight: 700; }
+
+/* Detalhe expandido */
+.detail {
+  border-top: 1px solid #f3f4f6;
+  padding: 1rem 1.25rem;
+  background: #fafaf9;
+}
+
+.items {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.itemImg {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e5e7eb;
+}
+.itemImg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.itemName  { font-size: 0.875rem; font-weight: 500; color: #1c1917; }
+.itemSub   { font-size: 0.78rem; color: #9ca3af; }
+.itemTotal { font-size: 0.875rem; font-weight: 600; color: #1c1917; }
+
+/* Admin controls */
+.adminControls {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.adminLabel {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statusBtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.statusBtn {
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s;
+}
+.statusBtn:hover:not(:disabled) {
+  border-color: #245850;
+  color: #245850;
+}
+.statusBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.statusBtnActive { font-weight: 600; }
