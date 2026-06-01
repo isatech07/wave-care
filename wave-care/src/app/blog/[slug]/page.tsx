@@ -1,36 +1,45 @@
+"use client";
 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { notFound, useParams } from "next/navigation";
+import { posts } from "../data";
+import "../blog.css";
+import { getProducts, type ApiProduct } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
+import Cart, { CartFloatingButton } from "@/components/Cart/Cart";
 
-import Link from "next/link"
-import Image from "next/image"
-import { notFound } from "next/navigation"
-import { posts } from "../data"
-import "../blog.css"
+export default function PostPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const post = posts.find((p) => p.slug === slug);
 
-type Props = {
-  params: Promise<{ slug: string }>
-}
+  const { addItem, openCart } = useCart();
+  const [apiProducts, setApiProducts] = useState<ApiProduct[]>([]);
+  const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 
-// Gera as rotas estáticas para cada post
-export async function generateStaticParams() {
-  return posts.map((post) => ({ slug: post.slug }))
-}
+  useEffect(() => {
+    getProducts()
+      .then((all) => {
+        // filtra só os produtos do post pelo productId
+        const ids = post?.products.map((p) => p.productId) ?? [];
+        setApiProducts(all.filter((p) => ids.includes(p.id)));
+      })
+      .catch(console.error);
+  }, [post]);
 
-// Gera o metadata dinâmico para cada post (SEO)
-export async function generateMetadata({ params }: Props) {
-  const { slug } = await params
-  const post = posts.find((p) => p.slug === slug)
-  if (!post) return {}
-  return {
-    title: `${post.title} – Wave Care`,
-    description: post.excerpt,
-  }
-}
+  if (!post) return notFound();
 
-export default async function PostPage({ params }: Props) {
-  const { slug } = await params
-  const post = posts.find((p) => p.slug === slug)
-
-  if (!post) return notFound()
+  const handleAddToCart = (product: ApiProduct) => {
+    addItem({
+      id:    product.id,
+      name:  product.name,
+      price: product.price,
+      image: product.image,
+    });
+    setAddedIds((prev) => new Set(prev).add(product.id));
+    openCart();
+  };
 
   return (
     <main className="post-main">
@@ -40,11 +49,12 @@ export default async function PostPage({ params }: Props) {
         <Link href="/blog" className="post-breadcrumb__back">
           ← Volta ao Blog
         </Link>
-        <span className={`blog-card__tag ${post.tagColor}`}>{post.tag}</span>
+        <span className={`blog-tag ${post.tagColor}`}>{post.tag}</span>
       </nav>
 
-      {/* ── Cabeçalho do post ── */}
       <article className="post-article">
+
+        {/* ── Cabeçalho ── */}
         <header className="post-header">
           <h1 className="post-header__title">{post.title}</h1>
           <div className="post-header__meta">
@@ -56,7 +66,7 @@ export default async function PostPage({ params }: Props) {
           </div>
         </header>
 
-        {/* Imagem principal */}
+        {/* ── Imagem hero ── */}
         <div className="post-hero-image">
           <Image
             src={post.image}
@@ -68,10 +78,10 @@ export default async function PostPage({ params }: Props) {
           />
         </div>
 
-        {/* Subtítulo / resumo */}
+        {/* ── Lead ── */}
         <p className="post-lead">{post.excerpt}</p>
 
-        {/* Parágrafos do conteúdo */}
+        {/* ── Conteúdo ── */}
         <div className="post-body">
           {post.content.map((paragraph, index) => (
             <p key={index} className="post-body__paragraph">
@@ -80,43 +90,64 @@ export default async function PostPage({ params }: Props) {
           ))}
         </div>
 
-        {/* ── Produtos Recomendados ── */}
-        {post.products.length > 0 && (
+        {/* ── Produtos do banco ── */}
+        {apiProducts.length > 0 && (
           <section className="post-products">
             <h2 className="post-products__title">Produtos Recomendados</h2>
             <div className="post-products__grid">
-              {post.products.map((product, index) => (
-                <div key={index} className="product-card">
-                  {/* Imagem do produto */}
-                  <div className="product-card__image-wrapper">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 300px"
-                      className="product-card__image"
-                    />
-                  </div>
-
-                  {/* Infos do produto */}
-                  <div className="product-card__info">
-                    <div className="product-card__rating">
-                      <span className="product-card__stars">⭐ {product.rating}</span>
-                      <span className="product-card__reviews">({product.reviews})</span>
+              {apiProducts.map((product) => {
+                const added = addedIds.has(product.id);
+                return (
+                  <div key={product.id} className="product-card">
+                    <div className="product-card__image-wrapper">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 300px"
+                        className="product-card__image"
+                      />
                     </div>
-                    <h3 className="product-card__name">{product.name}</h3>
-                    <p className="product-card__description">{product.description}</p>
-                    <div className="product-card__footer">
-                      <strong className="product-card__price">{product.price}</strong>
-                      <button className="product-card__btn">adicionar</button>
+                    <div className="product-card__info">
+                      <div className="product-card__rating">
+                        <span className="product-card__stars">
+                          ⭐ {product.rating ?? "—"}
+                        </span>
+                        <span className="product-card__reviews">
+                          ({product.reviews ?? 0})
+                        </span>
+                      </div>
+                      <h3 className="product-card__name">{product.name}</h3>
+                      <p className="product-card__description">
+                        {product.description}
+                      </p>
+                      <div className="product-card__footer">
+                        <strong className="product-card__price">
+                          {product.price.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </strong>
+                        <button
+                          className="product-card__btn"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          {added ? "adicionado ✓" : "adicionar"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
+
       </article>
+
+      <CartFloatingButton />
+      <Cart />
+
     </main>
-  )
+  );
 }

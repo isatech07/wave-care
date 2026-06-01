@@ -54,8 +54,8 @@ export default function Navbar() {
   const pathname       = usePathname();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setActiveEstacao(params.get("estacao"));
+    const match = pathname.match(/^\/estacoes\/(.+)/);
+    setActiveEstacao(match ? match[1] : null);
   }, [pathname]);
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export default function Navbar() {
 
   function handleEstacaoClick(param: string) {
     setDropdownOpen(false); setIsMobileMenuOpen(false);
-    router.push(activeEstacao === param ? "/" : `/?estacao=${param}`);
+    router.push(activeEstacao === param ? "/" : `/estacoes/${param}`);
   }
 
   function isActive(href: string) {
@@ -172,7 +172,7 @@ export default function Navbar() {
             {/* Estações Dropdown */}
             <div className="navbar-dropdown" ref={dropdownRef}>
               <button
-                className={`navbar-link navbar-dropdown-trigger ${activeEstacao ? "navbar-link--active" : ""}`}
+              className={`navbar-link navbar-dropdown-trigger ${pathname.startsWith("/estacoes") ? "navbar-link--active" : ""}`}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <span>Estações</span>
