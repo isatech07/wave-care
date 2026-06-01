@@ -3,13 +3,11 @@
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   Leaf,
   Droplet,
-  Wind,
   Heart,
   ShoppingBag,
   Star,
@@ -21,6 +19,13 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Award,
+  Shield,
+  Gem,
+  Sun,
+  CloudSnow,
+  Flower2,
+  TreeDeciduous,
 } from "lucide-react";
 
 import "./home.css";
@@ -49,11 +54,20 @@ interface GelatinSlide {
   subtitle: string;
   description: string;
   image: string;
+  season: string;
   bgColor: string;
   blobColor1: string;
   blobColor2: string;
   textColor: string;
-  season: string;
+}
+
+interface Season {
+  id: string;
+  label: string;
+  description: string;
+  image: string;
+  color: string;
+  icon: React.ReactNode;
 }
 
 // Data
@@ -62,76 +76,91 @@ const gelatinSlides: GelatinSlide[] = [
     id: "verao",
     name: "Summer Protection",
     subtitle: "Gelatina Estilizadora",
-    description: "Definição e hidratação para cabelos ondulados e cacheados durante o verão",
+    description: "Definição e hidratação...",
     image: "/products/gelatina-verao.png",
-    bgColor: "#f5e6d3",
-    blobColor1: "#d4a574",
-    blobColor2: "#c4956a",
-    textColor: "#8b5a2b",
     season: "Verão",
+
+    bgColor: "#FFD89B",
+    blobColor1: "#FFB347",
+    blobColor2: "#FFCC70",
+    textColor: "#2D1B00",
   },
+
   {
     id: "outono",
-    name: "Gelatin Outono",
-    subtitle: "Regeneration & Strength",
-    description: "Cachos definidos e brilho intenso para os dias mais frios do outono",
+    name: "Autumn Regeneration",
+    subtitle: "Força & Vitalidade",
+    description: "Cachos definidos...",
     image: "/products/gelatina-outono.png",
-    bgColor: "#d4dcc6",
-    blobColor1: "#6b7f3a",
-    blobColor2: "#8fa055",
-    textColor: "#4a5828",
     season: "Outono",
+
+    bgColor: "#C8D5B9",
+    blobColor1: "#A3B18A",
+    blobColor2: "#CCD5AE",
+    textColor: "#283618",
   },
+
   {
     id: "inverno",
-    name: "Winter Complete Kit",
-    subtitle: "Gelatin",
-    description: "Nutrição profunda e proteção contra o ressecamento do inverno",
+    name: "Winter Shield",
+    subtitle: "Nutrição Intensiva",
+    description: "Nutrição profunda...",
     image: "/products/gelatina-inverno.png",
-    bgColor: "#b8c4d4",
-    blobColor1: "#7a8fa8",
-    blobColor2: "#5a7090",
-    textColor: "#2c3e50",
     season: "Inverno",
+
+    bgColor: "#D6E4F0",
+    blobColor1: "#A7C7E7",
+    blobColor2: "#CFE8FF",
+    textColor: "#0F172A",
   },
+
   {
     id: "primavera",
-    name: "Primavera Bloom",
-    subtitle: "Styling Gelatin",
-    description: "Definição e hidratação para renovar seus cabelos na primavera",
+    name: "Spring Bloom",
+    subtitle: "Renovação Capilar",
+    description: "Definição e hidratação...",
     image: "/products/gelatina-primavera.png",
-    bgColor: "#c25a7c",
-    blobColor1: "#a14466",
-    blobColor2: "#d47a98",
-    textColor: "#ffffff",
     season: "Primavera",
+
+    bgColor: "#F8D7E8",
+    blobColor1: "#F4A7C1",
+    blobColor2: "#FFD6E7",
+    textColor: "#5C2A3D",
   },
 ];
 
-const estacoes = [
+const estacoes: Season[] = [
   {
     id: "verao",
     label: "Verão",
     description: "Proteção Solar & Hidratação",
     image: "/products/verao-produtos/Summerkit-2.png",
+    color: "#f5e6d3",
+    icon: <Sun size={18} />,
   },
   {
     id: "outono",
     label: "Outono",
     description: "Fortalecimento & Anti-queda",
     image: "/products/outono-produtos/Autumn-Bloom-kit.png",
+    color: "#d4dcc6",
+    icon: <TreeDeciduous size={18} />,
   },
   {
     id: "inverno",
     label: "Inverno",
-    description: "Nutrição Profunda & Anti-ressecamento",
+    description: "Nutrição Profunda & Proteção",
     image: "/products/inverno-produtos/inverno-kit-2.png",
+    color: "#b8c4d4",
+    icon: <CloudSnow size={18} />,
   },
   {
     id: "primavera",
     label: "Primavera",
     description: "Renovação & Revitalização",
     image: "/products/primavera-produtos/primavera-kit-completo.png",
+    color: "#e8d4dd",
+    icon: <Flower2 size={18} />,
   },
 ];
 
@@ -139,9 +168,10 @@ const produtos: Product[] = [
   {
     id: "1",
     name: "SunShield Shampoo",
-    description: "Limpeza suave com proteção UV para cabelos expostos ao sol e maresia.",
-    price: 29.90,
-    originalPrice: 39.90,
+    description:
+      "Limpeza suave com proteção UV para cabelos expostos ao sol e maresia.",
+    price: 29.9,
+    originalPrice: 39.9,
     rating: 4.8,
     reviews: 234,
     image: "/products/verao-produtos/verao-shampoo.png",
@@ -151,9 +181,10 @@ const produtos: Product[] = [
   {
     id: "2",
     name: "Autumn Repair Mask",
-    description: "Tratamento intensivo para recuperar fios danificados e ressecados pela queda de temperatura.",
-    price: 44.90,
-    originalPrice: 54.90,
+    description:
+      "Tratamento intensivo para recuperar fios danificados e ressecados.",
+    price: 44.9,
+    originalPrice: 54.9,
     rating: 4.9,
     reviews: 312,
     image: "/products/outono-produtos/outono-mascara.png",
@@ -162,10 +193,11 @@ const produtos: Product[] = [
   },
   {
     id: "3",
-    name: "Winter Protective Leave-in Cream",
-    description: "Cria um escudo protetor contra o frio e o vento, mantendo a hidratação e a definição dos fios.",
-    price: 32.90,
-    originalPrice: 42.90,
+    name: "Winter Protective Cream",
+    description:
+      "Cria um escudo protetor contra o frio, mantendo a hidratação dos fios.",
+    price: 32.9,
+    originalPrice: 42.9,
     rating: 4.8,
     reviews: 267,
     image: "/products/inverno-produtos/inverno-creme.png",
@@ -174,15 +206,16 @@ const produtos: Product[] = [
   },
   {
     id: "4",
-    name: "Primavera Bloom Styling Gelatin",
-    description: "Gelatina modeladora que ajuda a definir cachos e ondas com efeito natural.",
-    price: 38.90,
-    originalPrice: 48.90,
+    name: "Spring Bloom Gelatin",
+    description:
+      "Gelatina modeladora que define cachos e ondas com efeito natural.",
+    price: 38.9,
+    originalPrice: 48.9,
     rating: 4.7,
     reviews: 189,
     image: "/products/primavera-produtos/primavera-gelatina.png",
     badge: "Novo",
-    category: "Óleo",
+    category: "Styling",
   },
 ];
 
@@ -197,6 +230,13 @@ const marqueeTexts = [
   "Nutrição Intensa",
 ];
 
+const brandFeatures = [
+  { icon: <Leaf size={18} />, text: "100% Natural" },
+  { icon: <Award size={18} />, text: "Premiado" },
+  { icon: <Shield size={18} />, text: "Dermatologicamente Testado" },
+  { icon: <Gem size={18} />, text: "Ingredientes Premium" },
+];
+
 // Helper function
 const formatPrice = (price: number): string => {
   return price.toLocaleString("pt-BR", {
@@ -206,10 +246,6 @@ const formatPrice = (price: number): string => {
 };
 
 export default function Home() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const estacao = searchParams?.get("estacao");
-
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -217,25 +253,12 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  // Redirect to new App Router routes for season pages
-  useEffect(() => {
-    if (estacao === "verao") {
-      router.push("/estacoes/verao");
-    } else if (estacao === "outono") {
-      router.push("/estacoes/outono");
-    } else if (estacao === "inverno") {
-      router.push("/estacoes/inverno");
-    } else if (estacao === "primavera") {
-      router.push("/estacoes/primavera");
-    }
-  }, [estacao, router]);
-
   // Auto-play carousel
   useEffect(() => {
     if (!isAutoPlaying) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % gelatinSlides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [isAutoPlaying]);
 
@@ -243,7 +266,7 @@ export default function Home() {
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
     setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
+    setTimeout(() => setIsAutoPlaying(true), 12000);
   };
 
   const nextSlide = () => {
@@ -251,7 +274,9 @@ export default function Home() {
   };
 
   const prevSlide = () => {
-    goToSlide((currentSlide - 1 + gelatinSlides.length) % gelatinSlides.length);
+    goToSlide(
+      (currentSlide - 1 + gelatinSlides.length) % gelatinSlides.length
+    );
   };
 
   // Toggle favorite
@@ -317,11 +342,13 @@ export default function Home() {
     (total, item) => total + item.price * item.quantity,
     0
   );
-  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const cartItemsCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
 
   const currentGelatina = gelatinSlides[currentSlide];
 
-  // Home page padrão com carrinho e produtos
   return (
     <main className="home-main">
       {/* Notification */}
@@ -367,7 +394,7 @@ export default function Home() {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              transition={{ type: "spring", damping: 28, stiffness: 220 }}
             >
               <div className="cart-header">
                 <h2>Sua Sacola</h2>
@@ -383,7 +410,7 @@ export default function Home() {
               <div className="cart-content">
                 {cart.length === 0 ? (
                   <div className="cart-empty">
-                    <ShoppingBag size={48} strokeWidth={1} />
+                    <ShoppingBag size={52} strokeWidth={1} />
                     <p>Sua sacola está vazia</p>
                     <span>Adicione produtos para continuar</span>
                   </div>
@@ -457,64 +484,260 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Hero Section */}
-      <section className="home-hero">
-        <div className="home-hero-content">
-          <motion.span
-            className="home-hero-badge"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Cuidados sazonais
-          </motion.span>
-          <motion.h1
-            className="home-hero-title"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            Cabelos saudáveis
-            <br />
-            <span>em cada estação</span>
-          </motion.h1>
-          <motion.p
-            className="home-hero-description"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Descubra a rotina perfeita para seu tipo de cabelo, adaptada para
-            cada época do ano com produtos que promovem saúde, beleza e
-            autoestima.
-          </motion.p>
+      {/* ══════════════════════════════════════
+          HERO SECTION — Cinematic & Premium
+          ══════════════════════════════════════ */}
+      <section className="hero-section">
+        <div className="hero-content-wrapper">
           <motion.div
-            className="home-hero-actions"
-            initial={{ opacity: 0, y: 20 }}
+            className="hero-content"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Link href="/quiz" className="home-button home-button-primary">
-              Descobrir rotina
-            </Link>
-            <Link href="#produtos" className="home-button home-button-secondary">
-              Conhecer produtos
-            </Link>
+            <span className="hero-badge">
+              <Sparkles size={14} />
+              Cuidados Sazonais Premium
+            </span>
+            <h1 className="hero-title">
+              A Ciência do
+              <span className="hero-title-accent">Cuidado Capilar</span>
+            </h1>
+            <p className="hero-description">
+              Fórmulas exclusivas desenvolvidas para cada estação do ano.
+              Descubra a rotina perfeita para transformar seus cabelos com
+              ingredientes naturais e tecnologia avançada.
+            </p>
+            <div className="hero-actions">
+              <Link href="/quiz" className="btn btn-primary">
+                Descobrir Minha Rotina
+                <ArrowRight size={18} />
+              </Link>
+              <Link href="#colecoes" className="btn btn-secondary">
+                Ver Coleções
+              </Link>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="hero-visual"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="hero-image-container">
+              <div className="hero-image-glow" />
+              <Image
+  src="/products/verao-produtos/verao-shampoo.png"
+  alt="Wave Care Premium Collection"
+  width={560}
+  height={700}
+  priority
+/>
+              <motion.div
+                className="hero-floating-badge hero-floating-badge-left"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                <Leaf size={20} />
+                <span>100% Natural</span>
+              </motion.div>
+              <motion.div
+                className="hero-floating-badge hero-floating-badge-right"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1 }}
+              >
+                <Award size={20} />
+                <span>Premiado 2024</span>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
-        <div className="home-hero-image">
+
+        {/* Brand Strip */}
+        <div className="brand-strip">
+          <div className="brand-strip-inner">
+            {brandFeatures.map((feature, index) => (
+              <motion.div
+                key={index}
+                className="brand-strip-item"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 + index * 0.1 }}
+              >
+                {feature.icon}
+                <span>{feature.text}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          PHILOSOPHY SECTION — Brand Story
+          ══════════════════════════════════════ */}
+      <section className="philosophy-section">
+        <div className="philosophy-content">
           <motion.div
-            className="home-product-rotating"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
+            className="philosophy-text"
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
           >
-            
+            <span className="section-label">Nossa Filosofia</span>
+            <h2 className="philosophy-title">
+              Cabelos que respondem às estações
+            </h2>
+            <p className="philosophy-description">
+              Cada estação traz desafios únicos para seus cabelos. Desenvolvemos
+              fórmulas específicas que trabalham em harmonia com as mudanças
+              climáticas, garantindo proteção, nutrição e beleza durante todo o
+              ano.
+            </p>
+            <div className="philosophy-features">
+              <div className="philosophy-feature">
+                <Droplet size={20} />
+                <span>Hidratação inteligente que se adapta ao clima</span>
+              </div>
+              <div className="philosophy-feature">
+                <Shield size={20} />
+                <span>Proteção avançada contra danos ambientais</span>
+              </div>
+              <div className="philosophy-feature">
+                <Leaf size={20} />
+                <span>Ingredientes naturais de alta performance</span>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="philosophy-visual"
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <div className="philosophy-image-wrapper">
+              <Image
+                src="/products/inverno-produtos/propaganda-inverno.png"
+                alt="Wave Care Philosophy"
+                fill
+                className="philosophy-image"
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+            <div className="philosophy-stat">
+              <span className="philosophy-stat-number">98%</span>
+              <span className="philosophy-stat-label">
+                Clientes Satisfeitos
+              </span>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Gelatin Carousel Section */}
+      {/* ══════════════════════════════════════
+          COLLECTIONS SECTION — Seasonal
+          ══════════════════════════════════════ */}
+      <section className="collections-section" id="colecoes">
+        <div className="collections-header">
+          <motion.div
+            className="collections-header-left"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="section-label">Coleções Sazonais</span>
+            <h2 className="collections-title">Kits para Cada Estação</h2>
+            <p className="collections-subtitle">
+              Cada estação pede um cuidado diferente. Encontre o kit ideal para
+              seus fios em qualquer época do ano.
+            </p>
+          </motion.div>
+          <div className="collections-nav">
+            <button className="collections-nav-btn" aria-label="Anterior">
+              <ChevronLeft size={20} />
+            </button>
+            <button className="collections-nav-btn" aria-label="Próximo">
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="collections-grid">
+          {estacoes.map((season, index) => (
+            <motion.div
+              key={season.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Link
+                href={`/estacoes/${season.id}`}
+                className="collection-card"
+              >
+                <div
+                  className="collection-card-bg"
+                  style={{ backgroundColor: season.color }}
+                >
+                  <Image
+                    src={season.image}
+                    alt={season.label}
+                    fill
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
+                <div className="collection-card-overlay" />
+                <div className="collection-card-content">
+                  <span className="collection-card-badge">
+                    {season.icon}
+                    {season.label}
+                  </span>
+                  <h3 className="collection-card-name">{season.label}</h3>
+                  <p className="collection-card-desc">{season.description}</p>
+                  <span className="collection-card-link">
+                    Ver Coleção <ArrowRight size={14} />
+                  </span>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+    MARQUEE SECTION — Infinite Scroll
+    ══════════════════════════════════════ */}
+<section className="marquee-section">
+  <div className="marquee-wrapper">
+    <div className="marquee-track">
+      {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
+        <span key={index} className="marquee-item">
+          {text}
+          <span className="marquee-separator">◆</span>
+        </span>
+      ))}
+    </div>
+
+    <div className="marquee-track marquee-track-reverse">
+      {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
+        <span key={index} className="marquee-item">
+          {text}
+          <span className="marquee-separator">◆</span>
+        </span>
+      ))}
+    </div>
+  </div>
+</section>
+<br />
+<br />
+
+
+     {/* Gelatin Carousel Section */}
       <section className="gelatin-carousel-section">
         <div className="gelatin-carousel-header">
           <h2 className="gelatin-carousel-title">Novos Produtos</h2>
@@ -599,100 +822,33 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Estações Section */}
-      <section className="home-estacoes">
-        <div className="home-estacoes-header">
-          <h2 className="home-estacoes-title">Kits por Estação</h2>
-          <p className="home-estacoes-description">
-            Cada estação pede um cuidado diferente. Encontre o ideal para seus
-            fios.
-          </p>
-        </div>
-
-        <div className="home-estacoes-grid">
-          {estacoes.map(({ id, label, description, image }, index) => (
-            <motion.div
-              key={id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link href={`/estacoes/${id}`} className="home-estacao-card">
-                <div className="estacao-image-wrapper">
-                  <Image
-                    src={image}
-                    alt={label}
-                    width={300}
-                    height={200}
-                    className="estacao-image"
-                  />
-                </div>
-                <div className="home-estacao-card-content">
-                  <h3 className="home-estacao-label">{label}</h3>
-                  <p className="home-estacao-description">{description}</p>
-                  <span className="home-estacao-link">
-                    Ver produtos <ArrowRight size={14} />
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Quiz Section */}
-      <section className="quiz-section" id="quiz">
-        <div className="quiz-card">
-          <Sparkles className="quiz-icon" size={32} />
-          <h2 className="quiz-title">Descubra seu tipo de cabelo</h2>
-          <p className="quiz-description">
-            Faça nosso quiz inteligente e receba recomendações personalizadas
-            para seu tipo de fio, cidade e estação.
-          </p>
-          <Link href="/quiz" className="quiz-button">
-            <Sparkles size={18} />
-            Fazer o Quiz
-          </Link>
-        </div>
-      </section>
-
+  
       
 
-      {/* Marquee Section */}
-      <section className="marquee-section">
-        <div className="marquee-wrapper">
-          <div className="marquee-track">
-            {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
-              <span key={index} className="marquee-item">
-                {text}
-                <span className="marquee-separator">•</span>
-              </span>
-            ))}
-          </div>
-          <div className="marquee-track marquee-track-reverse">
-            {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
-              <span key={index} className="marquee-item">
-                {text}
-                <span className="marquee-separator">•</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-    
-
-      {/* Produtos Section */}
-      <section className="home-produtos" id="produtos">
-        <div className="home-produtos-header">
-          <h2 className="home-produtos-title">Produtos em Destaque</h2>
-          <p className="home-produtos-description">
-            Os mais amados pela comunidade Wave Care
-          </p>
+      {/* ══════════════════════════════════════
+          PRODUCTS SECTION — Grid Display
+          ══════════════════════════════════════ */}
+      <section className="products-section" id="produtos">
+        <div className="products-header">
+          <motion.div
+            className="products-header-left"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <span className="section-label">Mais Vendidos</span>
+            <h2 className="products-title">Produtos em Destaque</h2>
+            <p className="products-subtitle">
+              Os mais amados pela comunidade Wave Care
+            </p>
+          </motion.div>
+          <Link href="/produtos" className="products-view-all">
+            Ver Todos
+            <ArrowRight size={16} />
+          </Link>
         </div>
 
-        <div className="home-produtos-grid">
+        <div className="products-grid">
           {produtos.map((product, index) => (
             <motion.article
               key={product.id}
@@ -707,7 +863,9 @@ export default function Home() {
                   <span className="product-badge">{product.badge}</span>
                 )}
                 <button
-                  className={`product-favorite ${favorites.has(product.id) ? "active" : ""}`}
+                  className={`product-favorite ${
+                    favorites.has(product.id) ? "active" : ""
+                  }`}
                   onClick={() => toggleFavorite(product.id)}
                   aria-label={
                     favorites.has(product.id)
@@ -723,9 +881,9 @@ export default function Home() {
                 <Image
                   src={product.image}
                   alt={product.name}
-                  width={300}
-                  height={380}
+                  fill
                   className="product-image"
+                  style={{ objectFit: "cover" }}
                 />
               </div>
 
@@ -762,6 +920,54 @@ export default function Home() {
           ))}
         </div>
       </section>
-      </main>
+
+      {/* ══════════════════════════════════════
+          QUIZ CTA SECTION — Premium Dark
+          ══════════════════════════════════════ */}
+      <section className="quiz-section" id="quiz">
+        <motion.div
+          className="quiz-card"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="quiz-card-left">
+            <div className="quiz-icon">
+              <Sparkles size={28} />
+            </div>
+            <span className="quiz-eyebrow">Recomendação Personalizada</span>
+            <h2 className="quiz-title">Descubra seu tipo de cabelo</h2>
+            <p className="quiz-description">
+              Faça nosso quiz inteligente e receba recomendações personalizadas
+              para seu tipo de fio, cidade e estação atual.
+            </p>
+          </div>
+          <div className="quiz-card-right">
+            <ul className="quiz-features">
+              <li className="quiz-feature">
+                <Check size={20} />
+                <span>Análise personalizada em 2 minutos</span>
+              </li>
+              <li className="quiz-feature">
+                <Check size={20} />
+                <span>Recomendações baseadas no seu clima</span>
+              </li>
+              <li className="quiz-feature">
+                <Check size={20} />
+                <span>Rotina completa de cuidados</span>
+              </li>
+            </ul>
+            <Link href="/quiz" className="quiz-button">
+              <Sparkles size={18} />
+              Fazer o Quiz
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      
+    </main>
   );
 }
