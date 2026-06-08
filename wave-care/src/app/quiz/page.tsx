@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import "./quiz.css"
 import { useUser } from "@/contexts/UserContext"
+import { apiSubmitQuiz, type QuizApiResult } from "@/lib/api"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface Opcao {
@@ -33,107 +34,124 @@ interface EstadoSalvo {
 const PERGUNTAS: Pergunta[] = [
   {
     id: 1,
-    categoria: "Localização",
-    pergunta: "Em qual cidade do litoral norte você mora?",
+    categoria: "Ambiente",
+    pergunta: "Como você descreveria o ambiente onde você vive ou passa mais tempo?",
     opcoes: [
-      { texto: "Caraguatatuba", valor: "caraguatatuba", pontos: { sol: 2, sal: 2, umidade: 2 } },
-      { texto: "São Sebastião",  valor: "sao-sebastiao", pontos: { sol: 2, sal: 3, umidade: 2 } },
-      { texto: "Ilhabela",       valor: "ilhabela",      pontos: { sol: 2, sal: 3, umidade: 3 } },
-      { texto: "Ubatuba",        valor: "ubatuba",       pontos: { sol: 2, sal: 2, umidade: 3 } },
+      { texto: "Quente e úmido",  valor: "quente-umido", pontos: { umidade: 3 } },
+      { texto: "Quente e seco",   valor: "quente-seco",  pontos: { ressecamento: 3 } },
+      { texto: "Frio e úmido",    valor: "frio-umido",   pontos: { umidade: 2 } },
+      { texto: "Frio e seco",     valor: "frio-seco",    pontos: { ressecamento: 2 } },
     ],
   },
   {
     id: 2,
     categoria: "Tipo de cabelo",
-    pergunta: "Como são seus fios naturalmente?",
+    pergunta: "Qual é o seu tipo de cabelo?",
     opcoes: [
-      { texto: "Liso",             valor: "liso",     pontos: { liso: 3 } },
-      { texto: "Ondulado (2A–2C)", valor: "ondulado", pontos: { liso: 1, cacheado: 2 } },
-      { texto: "Cacheado (3A–3C)", valor: "cacheado", pontos: { cacheado: 3 } },
-      { texto: "Crespo (4A–4C)",   valor: "crespo",   pontos: { cacheado: 3 } },
+      { texto: "Liso",     valor: "liso",     pontos: { liso: 3 } },
+      { texto: "Ondulado", valor: "ondulado", pontos: { liso: 1, cacheado: 2 } },
+      { texto: "Cacheado", valor: "cacheado", pontos: { cacheado: 3 } },
+      { texto: "Crespo",   valor: "crespo",   pontos: { cacheado: 4 } },
     ],
   },
   {
     id: 3,
-    categoria: "Rotina de praia",
-    pergunta: "Com que frequência você vai à praia?",
+    categoria: "Exposição",
+    pergunta: "Com que frequência seu cabelo fica exposto ao sol, vento ou umidade?",
     opcoes: [
-      { texto: "Todo dia ou quase",     valor: "diario", pontos: { sol: 3, sal: 3 } },
-      { texto: "Fins de semana",         valor: "fds",    pontos: { sol: 2, sal: 2 } },
-      { texto: "Algumas vezes por mês", valor: "mensal", pontos: { sol: 1, sal: 1 } },
-      { texto: "Raramente",             valor: "raro",   pontos: { sol: 0, sal: 0 } },
+      { texto: "Quase todo dia",           valor: "quase-todo-dia", pontos: { sol: 3, dano: 2 } },
+      { texto: "Algumas vezes por semana", valor: "algumas-semana", pontos: { sol: 2 } },
+      { texto: "Raramente",                valor: "raramente",      pontos: { sol: 1 } },
+      { texto: "Quase nunca",              valor: "quase-nunca",    pontos: {} },
     ],
   },
   {
     id: 4,
-    categoria: "Proteção solar",
-    pergunta: "Como você protege o cabelo do sol?",
+    categoria: "Praia",
+    pergunta: "Como seu cabelo fica após a praia?",
     opcoes: [
-      { texto: "Nunca uso proteção",                valor: "nunca",    pontos: { ressecamento: 3, dano: 3 } },
-      { texto: "Às vezes chapéu ou boné",           valor: "as-vezes", pontos: { ressecamento: 2, dano: 2 } },
-      { texto: "Sempre uso protetor solar capilar", valor: "sempre",   pontos: { ressecamento: 1, dano: 1 } },
-      { texto: "Evito exposição direta",            valor: "evita",    pontos: { ressecamento: 0, dano: 0 } },
+      { texto: "Ressecado e áspero", valor: "ressecado", pontos: { hidratacao: 3 } },
+      { texto: "Com muito frizz",    valor: "frizz",     pontos: { nutricao: 2 } },
+      { texto: "Opaco e sem brilho", valor: "opaco",     pontos: { nutricao: 3 } },
+      { texto: "Fica normal",        valor: "normal",    pontos: { manutencao: 2 } },
     ],
   },
   {
     id: 5,
-    categoria: "Água do mar",
-    pergunta: "Na praia, você molha o cabelo?",
+    categoria: "Cuidados",
+    pergunta: "Você lava o cabelo após entrar no mar?",
     opcoes: [
-      { texto: "Sim, sempre mergulho", valor: "sempre",   pontos: { sal: 3, ressecamento: 2 } },
-      { texto: "Às vezes molho",        valor: "as-vezes", pontos: { sal: 2, ressecamento: 1 } },
-      { texto: "Só molho na piscina",   valor: "piscina",  pontos: { cloro: 3, ressecamento: 2 } },
-      { texto: "Prefiro não molhar",    valor: "nao",      pontos: { sal: 0, ressecamento: 0 } },
+      { texto: "Sempre",             valor: "sempre",   pontos: { manutencao: 2 } },
+      { texto: "Às vezes",           valor: "as-vezes", pontos: { sal: 2 } },
+      { texto: "Raramente",          valor: "raramente",pontos: { sal: 3, ressecamento: 2 } },
+      { texto: "Nunca pensei nisso", valor: "nunca",    pontos: { sal: 4, ressecamento: 3 } },
     ],
   },
   {
     id: 6,
-    categoria: "Estado atual",
-    pergunta: "Como está seu cabelo hoje?",
+    categoria: "Condição atual",
+    pergunta: "Qual a condição atual do seu cabelo?",
     opcoes: [
-      { texto: "Ressecado e com frizz",          valor: "ressecado",  pontos: { hidratacao: 3, nutricao: 2 } },
-      { texto: "Quebradiço e sem vida",           valor: "quebradico", pontos: { reconstrucao: 3, nutricao: 2 } },
-      { texto: "Opaco, sem brilho",               valor: "opaco",      pontos: { nutricao: 3, hidratacao: 2 } },
-      { texto: "Saudável, precisa de manutenção", valor: "saudavel",   pontos: { manutencao: 3 } },
+      { texto: "Seco e quebradiço", valor: "seco",      pontos: { hidratacao: 3, reconstrucao: 2 } },
+      { texto: "Oleoso na raiz",    valor: "misto",     pontos: { equilibrar: 2 } },
+      { texto: "Com pontas duplas", valor: "danificado",pontos: { reconstrucao: 3 } },
+      { texto: "Saudável",          valor: "saudavel",  pontos: { manutencao: 3 } },
     ],
   },
   {
     id: 7,
-    categoria: "Processos químicos",
-    pergunta: "Seu cabelo tem processo químico?",
+    categoria: "Química",
+    pergunta: "Faz algum tratamento químico?",
     opcoes: [
-      { texto: "Coloração ou descoloração",  valor: "coloracao",  pontos: { reconstrucao: 3, dano: 2 } },
-      { texto: "Alisamento ou relaxamento",  valor: "alisamento", pontos: { reconstrucao: 2, dano: 2 } },
-      { texto: "Permanente ou texturização", valor: "permanente", pontos: { hidratacao: 2, dano: 1 } },
-      { texto: "Natural, sem química",       valor: "natural",    pontos: { manutencao: 2 } },
+      { texto: "Coloração",   valor: "coloracao",   pontos: { reconstrucao: 2 } },
+      { texto: "Progressiva", valor: "progressiva", pontos: { hidratacao: 2 } },
+      { texto: "Descoloração",valor: "descoloracao",pontos: { reconstrucao: 4, dano: 3 } },
+      { texto: "Nenhum",      valor: "natural",     pontos: { manutencao: 2 } },
     ],
   },
   {
     id: 8,
-    categoria: "Estação",
-    pergunta: "Qual estação estamos vivendo agora?",
+    categoria: "Principal queixa",
+    pergunta: "Qual sua principal queixa?",
     opcoes: [
-      { texto: "Verão",     valor: "verao",     pontos: { verao: 3 } },
-      { texto: "Outono",    valor: "outono",    pontos: { outono: 3 } },
-      { texto: "Inverno",   valor: "inverno",   pontos: { inverno: 3 } },
-      { texto: "Primavera", valor: "primavera", pontos: { primavera: 3 } },
+      { texto: "Falta de hidratação", valor: "hidratacao", pontos: { hidratacao: 4 } },
+      { texto: "Frizz",               valor: "frizz",      pontos: { nutricao: 3 } },
+      { texto: "Falta de definição",  valor: "definicao",  pontos: { definicao: 3 } },
+      { texto: "Queda ou quebra",     valor: "queda",      pontos: { reconstrucao: 4 } },
+    ],
+  },
+  {
+    id: 9,
+    categoria: "Estação Atual",
+    pergunta: "Em qual estação do ano estamos agora?",
+    opcoes: [
+      { texto: "Verão",    valor: "verao",    pontos: { verao: 3 } },
+      { texto: "Outono",   valor: "outono",   pontos: { outono: 3 } },
+      { texto: "Inverno",  valor: "inverno",  pontos: { inverno: 3 } },
+      { texto: "Primavera",valor: "primavera",pontos: { primavera: 3 } },
+    ],
+  },
+  {
+    id: 10,
+    categoria: "Dificuldade",
+    pergunta: "Qual estação do ano você acha mais difícil de cuidar do seu cabelo?",
+    opcoes: [
+      { texto: "Verão",    valor: "verao-dificil",    pontos: { sol: 2 } },
+      { texto: "Outono",   valor: "outono-dificil",   pontos: { nutricao: 2 } },
+      { texto: "Inverno",  valor: "inverno-dificil",  pontos: { hidratacao: 2 } },
+      { texto: "Primavera",valor: "primavera-dificil",pontos: { frizz: 2 } },
     ],
   },
 ]
 
 // ─── Dados por estação ─────────────────────────────────────────────────────────
 const ESTACOES: Record<EstacaoKey, {
-  nome: string
-  kitNome: string
-  kitImagem: string
-  tagline: string
-  bg: string
+  nome: string; kitNome: string; kitImagem: string; tagline: string; bg: string
   produtos: { nome: string; descricao: string }[]
   blogLinks: { titulo: string; link: string }[]
 }> = {
   verao: {
-    nome: "Verão",
-    bg: "#FFF6EE",
+    nome: "Verão", bg: "#FFF6EE",
     kitNome: "Summer Protection",
     kitImagem: "/products/verao-produtos/verao-kit-completo.png",
     tagline: "Proteção total contra sol e sal",
@@ -150,8 +168,7 @@ const ESTACOES: Record<EstacaoKey, {
     ],
   },
   outono: {
-    nome: "Outono",
-    bg: "#F6F2E8",
+    nome: "Outono", bg: "#F6F2E8",
     kitNome: "Autumn Bloom",
     kitImagem: "/products/outono-produtos/Autumn-kit-completo.png",
     tagline: "Nutrição para a transição de estação",
@@ -168,8 +185,7 @@ const ESTACOES: Record<EstacaoKey, {
     ],
   },
   inverno: {
-    nome: "Inverno",
-    bg: "#EEF3FA",
+    nome: "Inverno", bg: "#EEF3FA",
     kitNome: "Winter Complete",
     kitImagem: "/products/inverno-produtos/inverno-kitcompleto.png",
     tagline: "Hidratação profunda contra o frio",
@@ -186,8 +202,7 @@ const ESTACOES: Record<EstacaoKey, {
     ],
   },
   primavera: {
-    nome: "Primavera",
-    bg: "#FBF0F5",
+    nome: "Primavera", bg: "#FBF0F5",
     kitNome: "Primavera Bloom",
     kitImagem: "/products/primavera-produtos/primavera-kit-completo.png",
     tagline: "Leveza e definição para os cachos",
@@ -212,11 +227,36 @@ const CIDADES: Record<string, string> = {
   ubatuba: "Ubatuba",
 }
 
+// Labels legíveis para o diagnóstico vindo do back
+const DIAGNOSIS_LABELS: Record<string, string> = {
+  hydration:      "Hidratação intensiva",
+  reconstruction: "Reconstrução capilar",
+  nutrition:      "Nutrição profunda",
+  maintenance:    "Manutenção preventiva",
+}
+
 const STORAGE_KEY = "wavecare_quiz_v1"
 
-// ─── Lógica de resultado ───────────────────────────────────────────────────────
+// ─── Monta payload para o backend ─────────────────────────────────────────────
+// Índices das respostas:
+// 0=ambiente, 1=hairType, 2=beachFrequency, 3=sunProtection,
+// 4=wetHair,  5=hairState, 6=chemicalProcess, 7=queixa, 8=season, 9=dificuldade
+function montarPayload(respostas: string[], cidade: string) {
+  return {
+    city:            cidade || "caraguatatuba",
+    hairType:        respostas[1] ?? "",
+    beachFrequency:  respostas[2] ?? "",
+    sunProtection:   respostas[3] ?? "",
+    wetHair:         respostas[4] ?? "",
+    hairState:       respostas[5] ?? "",
+    chemicalProcess: respostas[6] ?? "",
+    season:          respostas[8] ?? "verao",
+  }
+}
+
+// ─── Lógica de resultado (frontend) ───────────────────────────────────────────
 function calcularResultado(respostas: string[], pontos: Record<string, number>) {
-  const estacao    = (respostas[7] ?? "verao") as EstacaoKey
+  const estacao    = (respostas[8] ?? "verao") as EstacaoKey
   const condicao   = respostas[5]
   const cidade     = respostas[0]
   const frequencia = respostas[2]
@@ -233,16 +273,16 @@ function calcularResultado(respostas: string[], pontos: Record<string, number>) 
   if (necessidades.length === 0) necessidades.push("Manutenção e prevenção")
 
   const titulos: Record<string, string> = {
-    ressecado:  "Seu cabelo precisa de hidratação urgente",
-    quebradico: "Foco em reconstrução e fortalecimento",
-    opaco:      "Seu cabelo pede nutrição de verdade",
-    saudavel:   "Continue com a rotina — e evolua",
+    seco:      "Seu cabelo precisa de hidratação urgente",
+    danificado:"Foco em reconstrução e fortalecimento",
+    misto:     "Seu cabelo pede nutrição de verdade",
+    saudavel:  "Continue com a rotina — e evolua",
   }
   const descricoes: Record<string, string> = {
-    ressecado:  `Morando em ${CIDADES[cidade] ?? "sua cidade"} e indo à praia ${frequencia === "diario" ? "diariamente" : "regularmente"}, o sol e o sal estão ressecando seus fios. Com a rotina certa, a vitalidade volta rapidamente.`,
-    quebradico: "Sol, sal e química enfraqueceram a estrutura dos fios. É hora de reconstruir de dentro pra fora e devolver a força que seu cabelo merece.",
-    opaco:      "O clima litorâneo remove os óleos naturais dos fios, deixando-os sem brilho. Nutrição profunda vai trazer o viço de volta.",
-    saudavel:   "Seu cabelo está bem cuidado! Morar no litoral exige atenção constante. Vamos potencializar o que já funciona para manter a saúde dos fios o ano todo.",
+    seco:      `Morando em ${CIDADES[cidade] ?? "sua cidade"} e indo à praia ${frequencia === "quase-todo-dia" ? "quase todo dia" : "regularmente"}, o sol e o sal estão ressecando seus fios. Com a rotina certa, a vitalidade volta rapidamente.`,
+    danificado:"Sol, sal e química enfraqueceram a estrutura dos fios. É hora de reconstruir de dentro pra fora e devolver a força que seu cabelo merece.",
+    misto:     "O clima litorâneo remove os óleos naturais dos fios, deixando-os sem brilho. Nutrição profunda vai trazer o viço de volta.",
+    saudavel:  "Seu cabelo está bem cuidado! Morar no litoral exige atenção constante. Vamos potencializar o que já funciona para manter a saúde dos fios o ano todo.",
   }
 
   return {
@@ -271,13 +311,16 @@ export default function QuizCapilar() {
   const [temSalvo,    setTemSalvo]    = useState(false)
   const [savedPerfil, setSavedPerfil] = useState(false)
 
-  // ── 1. resultado (useMemo) — DEVE vir antes de qualquer useCallback que o usa ──
+  // Resultado do backend (diagnosis + recommendedKit)
+  const [backResult, setBackResult] = useState<QuizApiResult | null>(null)
+
+  // ── resultado (useMemo) ───────────────────────────────────────────────────
   const resultado = useMemo(() => {
-    if (!concluido || respostas.length < 8) return null
+    if (!concluido || respostas.length < 9) return null
     return calcularResultado(respostas, pontos)
   }, [concluido, respostas, pontos])
 
-  // ── 2. Carrega localStorage ───────────────────────────────────────────────
+  // ── Carrega localStorage ──────────────────────────────────────────────────
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -285,28 +328,37 @@ export default function QuizCapilar() {
       const s: EstadoSalvo = JSON.parse(raw)
       setTemSalvo(true)
       if (s.concluido) {
-        setPasso(s.passo)
-        setRespostas(s.respostas)
-        setPontos(s.pontos)
-        setConcluido(true)
+        setPasso(s.passo); setRespostas(s.respostas)
+        setPontos(s.pontos); setConcluido(true)
       }
     } catch { /* ignora */ }
   }, [])
 
-  // ── 3. Persiste no localStorage ───────────────────────────────────────────
+  // ── Persiste no localStorage ──────────────────────────────────────────────
   useEffect(() => {
     if (passo === -1) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ passo, respostas, pontos, concluido }))
   }, [passo, respostas, pontos, concluido])
 
-  // ── 4. Fade-in resultado ──────────────────────────────────────────────────
   useEffect(() => {
     if (!concluido) return
     const t = setTimeout(() => setResVisible(true), 80)
     return () => clearTimeout(t)
   }, [concluido])
 
-  // ── 5. Salva no perfil — resultado já está disponível aqui ────────────────
+  useEffect(() => {
+    if (!concluido || respostas.length < 9) return
+    const jaEnviado = localStorage.getItem("wavecare_quiz_enviado")
+    if (jaEnviado === "true") return
+    localStorage.setItem("wavecare_quiz_enviado", "true")
+    const cidade = user?.cidade ?? ""
+    const payload = montarPayload(respostas, cidade)
+    apiSubmitQuiz(payload)
+      .then(result => setBackResult(result))
+      .catch(err => console.error("Erro ao enviar quiz:", err))
+  }, [concluido]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Salva no perfil ───────────────────────────────────────────────────────
   const salvarNoPerfil = useCallback(() => {
     if (!resultado || !isLoggedIn) return
     updateCapilar({
@@ -314,11 +366,14 @@ export default function QuizCapilar() {
       preocupacao:     resultado.condicao,
       frequenciaPreia: resultado.frequencia,
       estacaoCritica:  resultado.estacao,
+      // enriquece com dados do back se disponíveis
+      diagnosis:      backResult?.diagnosis,
+      recommendedKit: backResult?.recommendedKit,
     })
     setSavedPerfil(true)
-  }, [resultado, isLoggedIn, updateCapilar])
+  }, [resultado, isLoggedIn, updateCapilar, backResult])
 
-  // ── 6. Transição animada ──────────────────────────────────────────────────
+  // ── Transição animada ─────────────────────────────────────────────────────
   const transitar = useCallback((fn: () => void) => {
     setSaindo(true)
     setTimeout(() => { fn(); setSaindo(false); setOpcaoSel(null) }, 320)
@@ -330,8 +385,7 @@ export default function QuizCapilar() {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return
       const s: EstadoSalvo = JSON.parse(raw)
-      setRespostas(s.respostas)
-      setPontos(s.pontos)
+      setRespostas(s.respostas); setPontos(s.pontos)
       transitar(() => setPasso(s.passo))
     } catch { /* ignora */ }
   }
@@ -364,9 +418,9 @@ export default function QuizCapilar() {
   }
 
   function reiniciar() {
-    setResVisible(false)
-    setSavedPerfil(false)
+    setResVisible(false); setSavedPerfil(false); setBackResult(null)
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem("wavecare_quiz_enviado") // ← adiciona essa linha
     setTimeout(() => {
       setPasso(-1); setRespostas([]); setPontos({})
       setConcluido(false); setOpcaoSel(null); setTemSalvo(false)
@@ -388,16 +442,24 @@ export default function QuizCapilar() {
         <div className="res-blob res-blob--2" />
 
         <div className="res-inner">
-
-          <nav className="res-nav">
-           
-           
-          </nav>
+          <nav className="res-nav" />
 
           <section className="res-hero">
             <span className="res-label">Diagnóstico capilar</span>
             <h1 className="res-titulo">{resultado.titulo}</h1>
             <p className="res-desc">{resultado.descricao}</p>
+
+            {/* Badge com diagnóstico do backend */}
+            {backResult?.diagnosis && (
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                marginTop: "0.75rem", padding: "0.35rem 0.9rem",
+                borderRadius: "20px", background: "rgba(45,106,90,0.1)",
+                fontSize: "0.78rem", fontWeight: 600, color: "#2d6a5a",
+              }}>
+                🔬 Diagnóstico: {DIAGNOSIS_LABELS[backResult.diagnosis] ?? backResult.diagnosis}
+              </div>
+            )}
           </section>
 
           <div className="res-tags">
@@ -410,13 +472,18 @@ export default function QuizCapilar() {
             <Image
               src={est.kitImagem}
               alt={`Kit ${est.kitNome}`}
-              width={220}
-              height={220}
+              width={220} height={220}
               className="res-kit-img"
             />
             <div className="res-kit-info">
               <span className="res-kit-label">Kit recomendado · {est.nome}</span>
               <h2 className="res-kit-nome">Kit {est.kitNome}</h2>
+              {/* Se o back retornou um kit específico, mostra abaixo */}
+              {backResult?.recommendedKit && (
+                <p style={{ fontSize: "0.78rem", color: "#6b7280", marginBottom: "0.25rem" }}>
+                  Kit personalizado: <strong>{backResult.recommendedKit}</strong>
+                </p>
+              )}
               <p className="res-kit-tagline">{est.tagline}</p>
               <ul className="res-kit-lista">
                 {est.produtos.map((p, i) => (
@@ -448,47 +515,40 @@ export default function QuizCapilar() {
           </section>
 
           <div className="res-save-banner">
-  {isLoggedIn ? (
-    <>
-      <div className="res-save-banner-text">
-        <p>Salvar diagnóstico no perfil</p>
-        <span>
-          {savedPerfil
-            ? "Salvo! Acesse em Perfil › Perfil Capilar."
-            : `Olá, ${user?.nome ? user.nome.split(" ")[0] : "usuário"}! Salve seu resultado para acompanhar na sua conta.`}
-        </span>
-      </div>
-
-      <button
-        onClick={salvarNoPerfil}
-        disabled={savedPerfil}
-        className={`res-save-btn ${savedPerfil ? "res-save-btn--saved" : ""}`}
-      >
-        {savedPerfil ? "Salvo!" : "Salvar no perfil"}
-      </button>
-    </>
-  ) : (
-    <>
-      <div className="res-save-banner-text">
-        <p>Crie uma conta para salvar seu diagnóstico</p>
-        <span>
-          Entre ou crie uma conta para salvar seu resultado e acompanhar seu perfil capilar.
-        </span>
-      </div>
-
-      <a href="/auth" className="res-save-btn">
-        Criar conta / Entrar
-      </a>
-    </>
-  )}
-</div>
+            {isLoggedIn ? (
+              <>
+                <div className="res-save-banner-text">
+                  <p>Salvar diagnóstico no perfil</p>
+                  <span>
+                    {savedPerfil
+                      ? "Salvo! Acesse em Perfil › Perfil Capilar."
+                      : `Olá, ${user?.nome ? user.nome.split(" ")[0] : "usuário"}! Salve seu resultado para acompanhar na sua conta.`}
+                  </span>
+                </div>
+                <button
+                  onClick={salvarNoPerfil}
+                  disabled={savedPerfil}
+                  className={`res-save-btn ${savedPerfil ? "res-save-btn--saved" : ""}`}
+                >
+                  {savedPerfil ? "Salvo!" : "Salvar no perfil"}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="res-save-banner-text">
+                  <p>Crie uma conta para salvar seu diagnóstico</p>
+                  <span>Entre ou crie uma conta para salvar seu resultado e acompanhar seu perfil capilar.</span>
+                </div>
+                <a href="/auth" className="res-save-btn">Criar conta / Entrar</a>
+              </>
+            )}
+          </div>
 
           <div className="res-actions">
             <button onClick={reiniciar} className="res-btn-ghost">← Refazer quiz</button>
-            <Link href="/loja" className="res-btn-ghost">Ver todos os kits →</Link>
-            <Link href="/blog" className="res-btn-ghost">Blog capilar →</Link>
+            <Link href="/loja"  className="res-btn-ghost">Ver todos os kits →</Link>
+            <Link href="/blog"  className="res-btn-ghost">Blog capilar →</Link>
           </div>
-
         </div>
       </main>
     )
@@ -503,7 +563,6 @@ export default function QuizCapilar() {
   return (
     <main className="quiz-page">
       <div className="quiz-bg" aria-hidden="true" />
-
       <div className="quiz-shell">
         <Link href="/" className="quiz-logo">Wave<em>Care</em></Link>
 
@@ -514,7 +573,6 @@ export default function QuizCapilar() {
         )}
 
         <div className={`quiz-card ${saindo ? "quiz-card-exit" : "quiz-card-enter"}`}>
-
           {passo === -1 && (
             <div className="quiz-start">
               <span className="quiz-start-eyebrow">Quiz Capilar</span>
@@ -524,7 +582,7 @@ export default function QuizCapilar() {
               </h1>
               <div className="quiz-start-divider" />
               <p className="quiz-start-sub">
-                8 perguntas. Diagnóstico personalizado.
+                10 perguntas. Diagnóstico personalizado.
                 Kit ideal para a sua estação do ano.
               </p>
               <div className="quiz-start-pills">
@@ -548,9 +606,7 @@ export default function QuizCapilar() {
                 <span className="quiz-categoria">{perguntaAtual.categoria}</span>
                 <span className="quiz-counter">{passo + 1} / {PERGUNTAS.length}</span>
               </div>
-
               <h2 className="quiz-texto">{perguntaAtual.pergunta}</h2>
-
               <div className="quiz-opcoes">
                 {perguntaAtual.opcoes.map((op, i) => (
                   <button
@@ -566,16 +622,13 @@ export default function QuizCapilar() {
                   </button>
                 ))}
               </div>
-
               {passo > 0 && (
                 <button onClick={voltar} className="quiz-voltar">← Voltar</button>
               )}
             </div>
           )}
-
         </div>
 
-        {/* Banner quiz salvo — tela inicial */}
         {passo === -1 && temSalvo && (
           <div className="quiz-saved-banner">
             <div>
@@ -589,19 +642,17 @@ export default function QuizCapilar() {
           </div>
         )}
 
-        {/* Banner de login — aparece na pergunta 4 para não logados */}
-        {passo === 3 && !isLoggedIn && (
-          <div className="quiz-login-banner">
-            <div className="quiz-login-banner-text">
-              <p>Entre para salvar seu resultado</p>
-              <span>Acompanhe sua evolução capilar ao longo do tempo.</span>
+          {passo === 0 && !isLoggedIn && (
+            <div className="quiz-login-banner">
+              <div className="quiz-login-banner-text">
+                <p>Entre para fazer o quiz</p>
+                <span>É necessário ter uma conta para descobrir seu diagnóstico capilar.</span>
+              </div>
+              <Link href="/auth?redirect=/quiz" className="quiz-login-btn">
+                Entrar →
+              </Link>
             </div>
-            <Link href="/auth?redirect=/quiz" className="quiz-login-btn">
-              Entrar →
-            </Link>
-          </div>
-        )}
-
+          )}
       </div>
     </main>
   )
