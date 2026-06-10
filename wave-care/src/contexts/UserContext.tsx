@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { apiDeleteUser, clearToken } from "@/lib/api";
+import { apiDeleteUser, clearToken,  API_URL, getToken, mapUser } from "@/lib/api";
 
 
 
@@ -150,24 +150,46 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = (data: LoginData) => {
-    const existing = loadUser();
-    const sameAccount = existing?.email === data.email;
+const login = (data: LoginData) => {
+  const existing = loadUser();
+  const sameAccount = existing?.email === data.email;
 
-    const isAdmin =
-      data.role === 'admin' || data.email === 'admin@wavecare.com';
+  const isAdmin =
+    data.role === 'admin' || data.email === 'admin@wavecare.com';
 
-    const full: UserData = {
-      ...data,
-      avatar: loadAvatarForEmail(data.email),
-      favorites: sameAccount ? (existing?.favorites ?? []) : [],
-      orders:    sameAccount ? (existing?.orders    ?? []) : [],
-      role:      data.role ?? 'user',
-      isAdmin,
-    };
-    setUser(full);
-    saveUser(full);
+  const full: UserData = {
+    ...data,
+    avatar:    loadAvatarForEmail(data.email),
+    favorites: sameAccount ? (existing?.favorites ?? []) : [],
+    orders:    sameAccount ? (existing?.orders    ?? []) : [],
+    role:      data.role ?? 'user',
+    isAdmin,
   };
+  setUser(full);
+  saveUser(full);
+
+  // Busca dados completos (telefone, cidade) do backend
+  if (data.id) {
+    fetch(`${API_URL}/users/${data.id}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(r => r.json())
+      .then(raw => {
+        const mapped = mapUser(raw);
+        setUser(prev => {
+          if (!prev) return null;
+          const updated = {
+            ...prev,
+            telefone: mapped.telefone ?? prev.telefone,
+            cidade:   mapped.cidade   ?? prev.cidade,
+          };
+          saveUser(updated);
+          return updated;
+        });
+      })
+      .catch(() => {/* fallback silencioso */});
+  }
+};
 
   const logout = () => {
     setUser(null);

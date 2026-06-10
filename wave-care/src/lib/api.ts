@@ -36,18 +36,7 @@ async function authFetch(url: string, options: RequestInit = {}) {
 }
 
 // Tipos 
-
-export interface MappedUser {
-  id?: number;
-  nome?: string;
-  email?: string;
-  telefone?: string;
-  cidade?: string;
-  foto?: string;
-  role?: string;
-}
-
-function mapUser(raw: any): MappedUser {
+export function mapUser(raw: any): MappedUser {
   const u = raw?.user ?? raw;
   if (!u || typeof u !== 'object') return {};
   return {
@@ -61,6 +50,15 @@ function mapUser(raw: any): MappedUser {
   };
 }
 
+export interface MappedUser {
+  id?: number;
+  nome?: string;
+  email?: string;
+  telefone?: string;
+  cidade?: string;
+  foto?: string;
+  role?: string;
+}
 export interface ApiProduct {
   id: number;
   name: string;
