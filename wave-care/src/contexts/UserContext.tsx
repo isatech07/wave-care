@@ -10,6 +10,8 @@ export interface CapilarProfile {
   preocupacao: string;
   frequenciaPreia: string;
   estacaoCritica: string;
+  diagnosis?: string;
+  recommendedKit?: string;
 }
 
 export interface Product {
@@ -192,10 +194,12 @@ const login = (data: LoginData) => {
 };
 
   const logout = () => {
-    setUser(null);
-    removeUser();
-    clearToken();
-  };
+    setUser(null)
+    removeUser()
+    clearToken()
+    localStorage.removeItem("wavecare_quiz_v1") // ← adiciona essa linha
+    localStorage.removeItem("wavecare_quiz_enviado")
+  }
 
   const updateUser = (data: Partial<UserData>) => {
     setUser((prev) => {

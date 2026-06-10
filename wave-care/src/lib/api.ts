@@ -257,3 +257,47 @@ export function apiGetUserOrders(userId: number): Order[] {
   const key = ordersKey(userId);
   return JSON.parse(localStorage.getItem(key) ?? '[]');
 }
+
+export async function apiGetOrdersByUser(userId: number): Promise<Order[]> {
+  try {
+    return await authFetch(`${API_URL}/order/user/${userId}`)
+  } catch {
+    return []
+  }
+}
+
+// ── Quiz ─────────────────────────────────────────────────────────────────────
+ 
+export interface QuizPayload {
+  city: string
+  hairType: string
+  beachFrequency: string
+  sunProtection: string
+  wetHair: string
+  hairState: string
+  chemicalProcess: string
+  season: string
+}
+ 
+export interface QuizApiResult {
+  diagnosis: string
+  scores: Record<string, number>
+  season: string
+  recommendedKit: string
+}
+ 
+/** POST /quiz — envia resultado ao banco; userId vai via JWT no header */
+export async function apiSubmitQuiz(payload: QuizPayload): Promise<QuizApiResult> {
+  const token = getToken()
+  const res = await fetch(`${API_URL}/quiz`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.message || 'Erro ao enviar quiz')
+  return data
+}

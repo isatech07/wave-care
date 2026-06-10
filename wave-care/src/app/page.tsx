@@ -3,453 +3,152 @@
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight,
-  Leaf,
-  Droplet,
-  Wind,
-  Heart,
-  ShoppingBag,
-  Star,
-  Sparkles,
-  X,
-  Plus,
-  Minus,
-  Check,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
+  ArrowRight, Leaf, Heart, ShoppingBag, Star, Sparkles,
+  X, Plus, Minus, Check, Trash2, ChevronLeft, ChevronRight, Award,
+  Sun, CloudSnow, Flower2, TreeDeciduous,
 } from "lucide-react";
-
 import "./home.css";
 
-// Types
+// ── Types ──────────────────────────────────────────────────────────
 interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviews: number;
-  image: string;
-  badge?: string;
-  category: string;
+  id: string; name: string; description: string;
+  price: number; originalPrice?: number;
+  rating: number; reviews: number;
+  image: string; badge?: string; category: string;
 }
+interface CartItem extends Product { quantity: number }
+interface Season { id: string; label: string; description: string; image: string; color: string; icon: React.ReactNode }
+interface GelatinSlide { id: string; name: string; subtitle: string; description: string; image: string; season: string; bgColor: string; blobColor1: string; blobColor2: string; textColor: string }
 
-interface CartItem extends Product {
-  quantity: number;
-}
-
-interface GelatinSlide {
-  id: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  image: string;
-  bgColor: string;
-  blobColor1: string;
-  blobColor2: string;
-  textColor: string;
-  season: string;
-}
-
-// Data
-const gelatinSlides: GelatinSlide[] = [
-  {
-    id: "verao",
-    name: "Summer Protection",
-    subtitle: "Gelatina Estilizadora",
-    description: "Definição e hidratação para cabelos ondulados e cacheados durante o verão",
-    image: "/products/gelatina-verao.png",
-    bgColor: "#f5e6d3",
-    blobColor1: "#d4a574",
-    blobColor2: "#c4956a",
-    textColor: "#8b5a2b",
-    season: "Verão",
-  },
-  {
-    id: "outono",
-    name: "Gelatin Outono",
-    subtitle: "Regeneration & Strength",
-    description: "Cachos definidos e brilho intenso para os dias mais frios do outono",
-    image: "/products/gelatina-outono.png",
-    bgColor: "#d4dcc6",
-    blobColor1: "#6b7f3a",
-    blobColor2: "#8fa055",
-    textColor: "#4a5828",
-    season: "Outono",
-  },
-  {
-    id: "inverno",
-    name: "Winter Complete Kit",
-    subtitle: "Gelatin",
-    description: "Nutrição profunda e proteção contra o ressecamento do inverno",
-    image: "/products/gelatina-inverno.png",
-    bgColor: "#b8c4d4",
-    blobColor1: "#7a8fa8",
-    blobColor2: "#5a7090",
-    textColor: "#2c3e50",
-    season: "Inverno",
-  },
-  {
-    id: "primavera",
-    name: "Primavera Bloom",
-    subtitle: "Styling Gelatin",
-    description: "Definição e hidratação para renovar seus cabelos na primavera",
-    image: "/products/gelatina-primavera.png",
-    bgColor: "#c25a7c",
-    blobColor1: "#a14466",
-    blobColor2: "#d47a98",
-    textColor: "#ffffff",
-    season: "Primavera",
-  },
+// ── Data ───────────────────────────────────────────────────────────
+const seasons: Season[] = [
+  { id: "verao",     label: "Verão",     description: "Proteção Solar & Hidratação",  image: "/products/verao-produtos/Summerkit-2.png",                  color: "#f5e6d3", icon: <Sun size={15} /> },
+  { id: "outono",    label: "Outono",    description: "Fortalecimento & Anti-queda",  image: "/products/outono-produtos/Autumn-Bloom-kit.png",            color: "#d4dcc6", icon: <TreeDeciduous size={15} /> },
+  { id: "inverno",   label: "Inverno",   description: "Nutrição Profunda & Proteção", image: "/products/inverno-produtos/inverno-kit-2.png",              color: "#b8c4d4", icon: <CloudSnow size={15} /> },
+  { id: "primavera", label: "Primavera", description: "Renovação & Revitalização",    image: "/products/primavera-produtos/primavera-kit-completo.png",   color: "#e8d4dd", icon: <Flower2 size={15} /> },
 ];
 
-const estacoes = [
-  {
-    id: "verao",
-    label: "Verão",
-    description: "Proteção Solar & Hidratação",
-    image: "/products/verao-produtos/Summerkit-2.png",
-  },
-  {
-    id: "outono",
-    label: "Outono",
-    description: "Fortalecimento & Anti-queda",
-    image: "/products/outono-produtos/Autumn-Bloom-kit.png",
-  },
-  {
-    id: "inverno",
-    label: "Inverno",
-    description: "Nutrição Profunda & Anti-ressecamento",
-    image: "/products/inverno-produtos/inverno-kit-2.png",
-  },
-  {
-    id: "primavera",
-    label: "Primavera",
-    description: "Renovação & Revitalização",
-    image: "/products/primavera-produtos/primavera-kit-completo.png",
-  },
+const slides: GelatinSlide[] = [
+  { id: "verao",     name: "Summer Protection", subtitle: "Gelatina Estilizadora",  description: "Definição e hidratação com proteção UV para dias ensolarados.",         image: "/products/gelatina-verao.png",     season: "Verão",     bgColor: "#F5E6C8", blobColor1: "#E8C97A", blobColor2: "#F2D98A", textColor: "#2D1B00" },
+  { id: "outono",    name: "Autumn Regeneration",subtitle: "Força & Vitalidade",    description: "Cachos definidos com nutrição profunda para a estação das mudanças.",   image: "/products/gelatina-outono.png",    season: "Outono",    bgColor: "#D8E0CC", blobColor1: "#9BB085", blobColor2: "#C2D0A8", textColor: "#1E2B14" },
+  { id: "inverno",   name: "Winter Shield",      subtitle: "Nutrição Intensiva",    description: "Nutrição profunda contra o frio intenso e o ar seco do inverno.",       image: "/products/gelatina-inverno.png",   season: "Inverno",   bgColor: "#D0DCE8", blobColor1: "#8AACCF", blobColor2: "#B8D0E8", textColor: "#0A1828" },
+  { id: "primavera", name: "Spring Bloom",       subtitle: "Renovação Capilar",     description: "Florescimento capilar com ingredientes que revitalizam e renovam.",     image: "/products/gelatina-primavera.png", season: "Primavera", bgColor: "#F2D8E4", blobColor1: "#E8A0BC", blobColor2: "#F5C8DA", textColor: "#3D1828" },
 ];
 
-const produtos: Product[] = [
-  {
-    id: "1",
-    name: "SunShield Shampoo",
-    description: "Limpeza suave com proteção UV para cabelos expostos ao sol e maresia.",
-    price: 29.90,
-    originalPrice: 39.90,
-    rating: 4.8,
-    reviews: 234,
-    image: "/products/verao-produtos/verao-shampoo.png",
-    badge: "Best Seller",
-    category: "Shampoo",
-  },
-  {
-    id: "2",
-    name: "Autumn Repair Mask",
-    description: "Tratamento intensivo para recuperar fios danificados e ressecados pela queda de temperatura.",
-    price: 44.90,
-    originalPrice: 54.90,
-    rating: 4.9,
-    reviews: 312,
-    image: "/products/outono-produtos/outono-mascara.png",
-    badge: "Best Seller",
-    category: "Máscara",
-  },
-  {
-    id: "3",
-    name: "Winter Protective Leave-in Cream",
-    description: "Cria um escudo protetor contra o frio e o vento, mantendo a hidratação e a definição dos fios.",
-    price: 32.90,
-    originalPrice: 42.90,
-    rating: 4.8,
-    reviews: 267,
-    image: "/products/inverno-produtos/inverno-creme.png",
-    badge: "Best Seller",
-    category: "Leave-in",
-  },
-  {
-    id: "4",
-    name: "Primavera Bloom Styling Gelatin",
-    description: "Gelatina modeladora que ajuda a definir cachos e ondas com efeito natural.",
-    price: 38.90,
-    originalPrice: 48.90,
-    rating: 4.7,
-    reviews: 189,
-    image: "/products/primavera-produtos/primavera-gelatina.png",
-    badge: "Novo",
-    category: "Óleo",
-  },
+const products: Product[] = [
+  { id: "1", name: "SunShield Shampoo",      description: "Limpeza suave com proteção UV para cabelos expostos ao sol.",      price: 29.9, originalPrice: 39.9, rating: 4.8, reviews: 234, image: "/products/verao-produtos/verao-shampoo.png",        badge: "Best Seller", category: "Shampoo"  },
+  { id: "2", name: "Autumn Repair Mask",     description: "Tratamento intensivo para recuperar fios danificados.",             price: 44.9, originalPrice: 54.9, rating: 4.9, reviews: 312, image: "/products/outono-produtos/outono-mascara.png",      badge: "Best Seller", category: "Máscara"  },
+  { id: "3", name: "Winter Protective Cream",description: "Escudo protetor contra o frio mantendo hidratação dos fios.",      price: 32.9, originalPrice: 42.9, rating: 4.8, reviews: 267, image: "/products/inverno-produtos/inverno-creme.png",      badge: "Best Seller", category: "Leave-in" },
+  { id: "4", name: "Spring Bloom Gelatin",   description: "Gelatina modeladora que define cachos com efeito natural.",        price: 38.9, originalPrice: 48.9, rating: 4.7, reviews: 189, image: "/products/primavera-produtos/primavera-gelatina.png",badge: "Novo",        category: "Styling"  },
 ];
 
-const marqueeTexts = [
-  "Ingredientes Naturais",
-  "Fórmulas Sazonais",
-  "Cabelos Saudáveis",
-  "Hidratação Profunda",
-  "Proteção UV",
-  "Cruelty Free",
-  "Sustentável",
-  "Nutrição Intensa",
-];
+const marquee = ["Ingredientes Naturais","Fórmulas Sazonais","Cabelos Saudáveis","Hidratação Profunda","Proteção UV","Cruelty Free","Sustentável","Nutrição Intensa"];
 
-// Helper function
-const formatPrice = (price: number): string => {
-  return price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-};
+const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// ── Component ──────────────────────────────────────────────────────
 export default function Home() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const estacao = searchParams?.get("estacao");
-
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [slide, setSlide] = useState(0);
+  const [tab, setTab] = useState("verao");
 
-  // Redirect to new App Router routes for season pages
+  // carousel auto-play
   useEffect(() => {
-    if (estacao === "verao") {
-      router.push("/estacoes/verao");
-    } else if (estacao === "outono") {
-      router.push("/estacoes/outono");
-    } else if (estacao === "inverno") {
-      router.push("/estacoes/inverno");
-    } else if (estacao === "primavera") {
-      router.push("/estacoes/primavera");
-    }
-  }, [estacao, router]);
+    const t = setInterval(() => setSlide(p => (p + 1) % slides.length), 6000);
+    return () => clearInterval(t);
+  }, []);
 
-  // Auto-play carousel
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % gelatinSlides.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  const notify = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(null), 2500); };
 
-  // Navigate carousel
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 10000);
-  };
+  const toggleFav = useCallback((id: string) => {
+    setFavorites(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  }, []);
 
-  const nextSlide = () => {
-    goToSlide((currentSlide + 1) % gelatinSlides.length);
-  };
-
-  const prevSlide = () => {
-    goToSlide((currentSlide - 1 + gelatinSlides.length) % gelatinSlides.length);
-  };
-
-  // Toggle favorite
-  const toggleFavorite = useCallback((productId: string) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(productId)) {
-        newFavorites.delete(productId);
-        showNotification("Removido dos favoritos");
-      } else {
-        newFavorites.add(productId);
-        showNotification("Adicionado aos favoritos");
-      }
-      return newFavorites;
+  const addToCart = useCallback((p: Product) => {
+    setCart(prev => {
+      const ex = prev.find(i => i.id === p.id);
+      return ex ? prev.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i) : [...prev, { ...p, quantity: 1 }];
     });
+    notify(`${p.name} adicionado`);
   }, []);
 
-  // Add to cart
-  const addToCart = useCallback((product: Product) => {
-    setCart((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-    showNotification(`${product.name} adicionado à sacola`);
+  const updateQty = useCallback((id: string, d: number) => {
+    setCart(p => p.map(i => i.id === id ? { ...i, quantity: i.quantity + d } : i).filter(i => i.quantity > 0));
   }, []);
 
-  // Update cart quantity
-  const updateQuantity = useCallback((productId: string, delta: number) => {
-    setCart((prev) => {
-      return prev
-        .map((item) => {
-          if (item.id === productId) {
-            const newQuantity = item.quantity + delta;
-            return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
-          }
-          return item;
-        })
-        .filter((item): item is CartItem => item !== null);
-    });
+  const removeItem = useCallback((id: string) => {
+    setCart(p => p.filter(i => i.id !== id));
+    notify("Item removido");
   }, []);
 
-  // Remove from cart
-  const removeFromCart = useCallback((productId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
-    showNotification("Item removido da sacola");
-  }, []);
+  const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+  const count = cart.reduce((s, i) => s + i.quantity, 0);
+  const cur = slides[slide];
+  const activeSeason = seasons.find(s => s.id === tab)!;
 
-  // Show notification
-  const showNotification = (message: string) => {
-    setNotification(message);
-    setTimeout(() => setNotification(null), 2500);
-  };
-
-  // Calculate cart total
-  const cartTotal = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
-
-  const currentGelatina = gelatinSlides[currentSlide];
-
-  // Home page padrão com carrinho e produtos
   return (
-    <main className="home-main">
+    <main className="hm">
+
       {/* Notification */}
       <AnimatePresence>
-        {notification && (
-          <motion.div
-            className="notification"
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
+        {notice && (
+          <motion.div className="hm-notice"
+            initial={{ opacity: 0, y: -14, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
+            exit={{ opacity: 0, y: -14, x: "-50%" }}
           >
-            <Check size={16} />
-            <span>{notification}</span>
+            <Check size={13} />{notice}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Floating Cart Button */}
-      <button
-        className="floating-cart-button"
-        onClick={() => setIsCartOpen(true)}
-        aria-label="Abrir sacola"
-      >
-        <ShoppingBag size={22} />
-        {cartItemsCount > 0 && (
-          <span className="cart-badge">{cartItemsCount}</span>
-        )}
+      {/* Cart button */}
+      <button className="hm-cart-btn" onClick={() => setCartOpen(true)}>
+        <ShoppingBag size={20} />
+        {count > 0 && <span className="hm-cart-badge">{count}</span>}
       </button>
 
-      {/* Cart Sidebar */}
+      {/* Cart drawer */}
       <AnimatePresence>
-        {isCartOpen && (
+        {cartOpen && (
           <>
-            <motion.div
-              className="cart-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsCartOpen(false)}
-            />
-            <motion.aside
-              className="cart-sidebar"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            >
-              <div className="cart-header">
+            <motion.div className="hm-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCartOpen(false)} />
+            <motion.aside className="hm-drawer" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 240 }}>
+              <div className="hm-drawer-head">
                 <h2>Sua Sacola</h2>
-                <button
-                  className="cart-close"
-                  onClick={() => setIsCartOpen(false)}
-                  aria-label="Fechar sacola"
-                >
-                  <X size={20} />
-                </button>
+                <button onClick={() => setCartOpen(false)}><X size={18} /></button>
               </div>
 
-              <div className="cart-content">
-                {cart.length === 0 ? (
-                  <div className="cart-empty">
-                    <ShoppingBag size={48} strokeWidth={1} />
-                    <p>Sua sacola está vazia</p>
-                    <span>Adicione produtos para continuar</span>
-                  </div>
-                ) : (
-                  <ul className="cart-items">
-                    {cart.map((item) => (
-                      <motion.li
-                        key={item.id}
-                        className="cart-item"
-                        layout
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                      >
-                        <div className="cart-item-image">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            width={80}
-                            height={80}
-                            style={{ objectFit: "cover" }}
-                          />
+              <div className="hm-drawer-body">
+                {cart.length === 0
+                  ? <div className="hm-empty"><ShoppingBag size={40} strokeWidth={1} /><p>Sacola vazia</p><span>Adicione produtos para continuar</span></div>
+                  : <ul>{cart.map(item => (
+                    <motion.li key={item.id} className="hm-cart-item" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <div className="hm-cart-thumb"><Image src={item.image} alt={item.name} width={64} height={64} style={{ objectFit: "cover" }} /></div>
+                      <div className="hm-cart-info">
+                        <p>{item.name}</p>
+                        <span>{fmt(item.price)}</span>
+                        <div className="hm-qty">
+                          <button onClick={() => updateQty(item.id, -1)}><Minus size={12} /></button>
+                          <span>{item.quantity}</span>
+                          <button onClick={() => updateQty(item.id, 1)}><Plus size={12} /></button>
                         </div>
-                        <div className="cart-item-details">
-                          <h4>{item.name}</h4>
-                          <span className="cart-item-price">
-                            {formatPrice(item.price)}
-                          </span>
-                          <div className="cart-item-quantity">
-                            <button
-                              onClick={() => updateQuantity(item.id, -1)}
-                              aria-label="Diminuir quantidade"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span>{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, 1)}
-                              aria-label="Aumentar quantidade"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                        </div>
-                        <button
-                          className="cart-item-remove"
-                          onClick={() => removeFromCart(item.id)}
-                          aria-label="Remover item"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </motion.li>
-                    ))}
-                  </ul>
-                )}
+                      </div>
+                      <button className="hm-cart-rm" onClick={() => removeItem(item.id)}><Trash2 size={14} /></button>
+                    </motion.li>
+                  ))}</ul>
+                }
               </div>
 
               {cart.length > 0 && (
-                <div className="cart-footer">
-                  <div className="cart-total">
-                    <span>Total</span>
-                    <strong>{formatPrice(cartTotal)}</strong>
-                  </div>
-                  <button className="cart-checkout-button">
-                    Finalizar Compra
-                  </button>
+                <div className="hm-drawer-foot">
+                  <div className="hm-total"><span>Total</span><strong>{fmt(total)}</strong></div>
+                  <button className="hm-checkout">Finalizar Compra <ArrowRight size={15} /></button>
                 </div>
               )}
             </motion.aside>
@@ -457,311 +156,168 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Hero Section */}
-      <section className="home-hero">
-        <div className="home-hero-content">
-          <motion.span
-            className="home-hero-badge"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Cuidados sazonais
-          </motion.span>
-          <motion.h1
-            className="home-hero-title"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            Cabelos saudáveis
-            <br />
-            <span>em cada estação</span>
-          </motion.h1>
-          <motion.p
-            className="home-hero-description"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            Descubra a rotina perfeita para seu tipo de cabelo, adaptada para
-            cada época do ano com produtos que promovem saúde, beleza e
-            autoestima.
-          </motion.p>
-          <motion.div
-            className="home-hero-actions"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Link href="/quiz" className="home-button home-button-primary">
-              Descobrir rotina
-            </Link>
-            <Link href="#produtos" className="home-button home-button-secondary">
-              Conhecer produtos
-            </Link>
-          </motion.div>
-        </div>
-        <div className="home-hero-image">
-          <motion.div
-            className="home-product-rotating"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-          >
-            
-          </motion.div>
-        </div>
-      </section>
+      {/* ── HERO ── */}
+      <section className="hm-hero">
+        <div className="hm-hero-inner">
 
-      {/* Gelatin Carousel Section */}
-      <section className="gelatin-carousel-section">
-        <div className="gelatin-carousel-header">
-          <h2 className="gelatin-carousel-title">Novos Produtos</h2>
-          <p className="gelatin-carousel-subtitle">
-            Definição e cuidado especial para cada época do ano
-          </p>
-        </div>
-
-        <div 
-          className="gelatin-carousel"
-          style={{ 
-            "--bg-color": currentGelatina.bgColor,
-            "--blob-color-1": currentGelatina.blobColor1,
-            "--blob-color-2": currentGelatina.blobColor2,
-            "--text-color": currentGelatina.textColor,
-          } as React.CSSProperties}
-        >
-          {/* Carousel Content */}
-          <div className="gelatin-carousel-content">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide}
-                className="gelatin-slide"
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="gelatin-info">
-                  <span className="gelatin-season-badge">{currentGelatina.season}</span>
-                  <h3 className="gelatin-name">{currentGelatina.name}</h3>
-                  <p className="gelatin-subtitle">{currentGelatina.subtitle}</p>
-                  <p className="gelatin-description">{currentGelatina.description}</p>
-                  <Link
-                    href={`/estacoes/${currentGelatina.id}`}
-                    className="gelatin-cta"
-                  >
-                    Ver Produtos da Estação
-                    <ArrowRight size={18} />
-                  </Link>
-                </div>
-                <div className="gelatin-image-wrapper">
-                  <Image
-                    src={currentGelatina.image}
-                    alt={currentGelatina.name}
-                    width={450}
-                    height={450}
-                    className="gelatin-image"
-                    priority
-                  />
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Navigation */}
-          <div className="gelatin-nav">
-            <button 
-              className="gelatin-nav-btn" 
-              onClick={prevSlide}
-              aria-label="Slide anterior"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <div className="gelatin-dots">
-              {gelatinSlides.map((_, index) => (
-                <button
-                  key={index}
-                  className={`gelatin-dot ${index === currentSlide ? "active" : ""}`}
-                  onClick={() => goToSlide(index)}
-                  aria-label={`Ir para slide ${index + 1}`}
-                />
-              ))}
+          {/* Copy */}
+          <motion.div className="hm-hero-copy"
+            initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+           
+            <h1>A ciência que<br /><em>transforma</em><br />seus cabelos</h1>
+            <p>Fórmulas desenvolvidas para cada estação do ano. Ingredientes naturais de alta performance que se adaptam ao clima e potencializam a beleza natural dos seus fios.</p>
+            <div className="hm-hero-actions">
+              <Link href="/quiz" className="hm-btn-primary">Descobrir Minha Rotina <ArrowRight size={15} /></Link>
+              <Link href="#colecoes" className="hm-btn-ghost">Ver Coleções</Link>
             </div>
-            <button 
-              className="gelatin-nav-btn" 
-              onClick={nextSlide}
-              aria-label="Próximo slide"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
-        </div>
-      </section>
+          </motion.div>
 
-      {/* Estações Section */}
-      <section className="home-estacoes">
-        <div className="home-estacoes-header">
-          <h2 className="home-estacoes-title">Kits por Estação</h2>
-          <p className="home-estacoes-description">
-            Cada estação pede um cuidado diferente. Encontre o ideal para seus
-            fios.
-          </p>
-        </div>
+          {/* Visual with frame */}
+          <motion.div className="hm-hero-visual"
+            initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="hm-frame">
+              <div className="hm-frame-border" />
+              <div className="hm-frame-corner hm-fc-tl" />
+              <div className="hm-frame-corner hm-fc-tr" />
+              <div className="hm-frame-corner hm-fc-bl" />
+              <div className="hm-frame-corner hm-fc-br" />
+              <Image src="/products/verao-produtos/verao-shampoo.png" alt="Wave Care" width={480} height={560} priority className="hm-hero-img" />
+            </div>
 
-        <div className="home-estacoes-grid">
-          {estacoes.map(({ id, label, description, image }, index) => (
-            <motion.div
-              key={id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link href={`/estacoes/${id}`} className="home-estacao-card">
-                <div className="estacao-image-wrapper">
-                  <Image
-                    src={image}
-                    alt={label}
-                    width={300}
-                    height={200}
-                    className="estacao-image"
-                  />
-                </div>
-                <div className="home-estacao-card-content">
-                  <h3 className="home-estacao-label">{label}</h3>
-                  <p className="home-estacao-description">{description}</p>
-                  <span className="home-estacao-link">
-                    Ver produtos <ArrowRight size={14} />
-                  </span>
-                </div>
-              </Link>
+            {/* Floating badges */}
+            <motion.div className="hm-float hm-float-l" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1 }}>
+              <Leaf size={15} /><span>100% Natural</span>
             </motion.div>
+            <motion.div className="hm-float hm-float-r" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.1 }}>
+              <Award size={15} /><span>Premiado 2024</span>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Trust strip */}
+        <div className="hm-trust">
+          {["100% Natural","Premiado","Dermatologicamente Testado","Cruelty Free"].map(t => (
+            <div key={t} className="hm-trust-item"><span className="hm-dot" />{t}</div>
           ))}
         </div>
       </section>
 
-      {/* Quiz Section */}
-      <section className="quiz-section" id="quiz">
-        <div className="quiz-card">
-          <Sparkles className="quiz-icon" size={32} />
-          <h2 className="quiz-title">Descubra seu tipo de cabelo</h2>
-          <p className="quiz-description">
-            Faça nosso quiz inteligente e receba recomendações personalizadas
-            para seu tipo de fio, cidade e estação.
-          </p>
-          <Link href="/quiz" className="quiz-button">
-            <Sparkles size={18} />
-            Fazer o Quiz
-          </Link>
+      {/* ── MARQUEE ── */}
+      <div className="hm-marquee-wrap">
+        <div className="hm-marquee">
+          {[...marquee, ...marquee].map((t, i) => (
+            <span key={i} className="hm-marquee-item">{t}<span>◆</span></span>
+          ))}
         </div>
-      </section>
+      </div>
 
       
 
-      {/* Marquee Section */}
-      <section className="marquee-section">
-        <div className="marquee-wrapper">
-          <div className="marquee-track">
-            {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
-              <span key={index} className="marquee-item">
-                {text}
-                <span className="marquee-separator">•</span>
-              </span>
-            ))}
-          </div>
-          <div className="marquee-track marquee-track-reverse">
-            {[...marqueeTexts, ...marqueeTexts].map((text, index) => (
-              <span key={index} className="marquee-item">
-                {text}
-                <span className="marquee-separator">•</span>
-              </span>
-            ))}
+       
+
+      {/* ── CAROUSEL ── */}
+      <section className="hm-carousel-section">
+        <div className="hm-section-head">
+          <span className="hm-label">Lançamentos</span>
+          <h2>Novas Gelatinas <em>Sazonais</em></h2>
+        </div>
+
+        <div className="hm-carousel" style={{ "--gc": cur.bgColor, "--gt": cur.textColor, "--gb1": cur.blobColor1, "--gb2": cur.blobColor2 } as React.CSSProperties}>
+          <div className="hm-carousel-blob hm-carousel-blob-1" />
+          <div className="hm-carousel-blob hm-carousel-blob-2" />
+
+          <AnimatePresence mode="wait">
+            <motion.div key={slide} className="hm-carousel-slide"
+              initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="hm-carousel-info">
+                <span className="hm-carousel-tag">{cur.season}</span>
+                <h3>{cur.name}</h3>
+                <p className="hm-carousel-sub">{cur.subtitle}</p>
+                <p>{cur.description}</p>
+                <Link href={`/estacoes/${cur.id}`} className="hm-carousel-cta">Ver Produtos <ArrowRight size={14} /></Link>
+              </div>
+              <div className="hm-carousel-img">
+                <Image src={cur.image} alt={cur.name} width={380} height={380} priority style={{ objectFit: "contain" }} />
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="hm-carousel-nav">
+            <button onClick={() => setSlide(p => (p - 1 + slides.length) % slides.length)}><ChevronLeft size={20} /></button>
+            <div className="hm-carousel-dots">
+              {slides.map((_, i) => <button key={i} className={i === slide ? "active" : ""} onClick={() => setSlide(i)} />)}
+            </div>
+            <button onClick={() => setSlide(p => (p + 1) % slides.length)}><ChevronRight size={20} /></button>
           </div>
         </div>
       </section>
-    
 
-      {/* Produtos Section */}
-      <section className="home-produtos" id="produtos">
-        <div className="home-produtos-header">
-          <h2 className="home-produtos-title">Produtos em Destaque</h2>
-          <p className="home-produtos-description">
-            Os mais amados pela comunidade Wave Care
-          </p>
+      {/* ── PRODUCTS ── */}
+      <section className="hm-products" id="produtos">
+        <div className="hm-products-head">
+          <div>
+            <span className="hm-label">Mais Vendidos</span>
+            <h2>Produtos em <em>Destaque</em></h2>
+          </div>
+          <Link href="/produtos" className="hm-view-all">Ver todos <ArrowRight size={14} /></Link>
         </div>
 
-        <div className="home-produtos-grid">
-          {produtos.map((product, index) => (
-            <motion.article
-              key={product.id}
-              className="product-card"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+        <div className="hm-products-grid">
+          {products.map((p, i) => (
+            <motion.article key={p.id} className="hm-product"
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
             >
-              <div className="product-image-wrapper">
-                {product.badge && (
-                  <span className="product-badge">{product.badge}</span>
-                )}
-                <button
-                  className={`product-favorite ${favorites.has(product.id) ? "active" : ""}`}
-                  onClick={() => toggleFavorite(product.id)}
-                  aria-label={
-                    favorites.has(product.id)
-                      ? "Remover dos favoritos"
-                      : "Adicionar aos favoritos"
-                  }
-                >
-                  <Heart
-                    size={20}
-                    fill={favorites.has(product.id) ? "currentColor" : "none"}
-                  />
+              <div className="hm-product-img">
+                {p.badge && <span className="hm-badge">{p.badge}</span>}
+                <button className={`hm-fav ${favorites.has(p.id) ? "active" : ""}`} onClick={() => toggleFav(p.id)}>
+                  <Heart size={15} fill={favorites.has(p.id) ? "currentColor" : "none"} />
                 </button>
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  width={300}
-                  height={380}
-                  className="product-image"
-                />
+                <Image src={p.image} alt={p.name} fill style={{ objectFit: "cover" }} />
               </div>
-
-              <div className="product-info">
-                <div className="product-rating">
-                  <Star size={14} fill="currentColor" />
-                  <span>{product.rating}</span>
-                  <span className="product-reviews">({product.reviews})</span>
-                </div>
-
-                <h3 className="product-name">{product.name}</h3>
-                <p className="product-description">{product.description}</p>
-
-                <div className="product-footer">
-                  <div className="product-price">
-                    <span className="price-current">
-                      {formatPrice(product.price)}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="price-original">
-                        {formatPrice(product.originalPrice)}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    className="product-add-button"
-                    onClick={() => addToCart(product)}
-                  >
-                    Adicionar
-                  </button>
+              <div className="hm-product-info">
+                <div className="hm-stars"><Star size={12} fill="currentColor" /><span>{p.rating}</span><span className="hm-rev">({p.reviews})</span></div>
+                <p className="hm-product-cat">{p.category}</p>
+                <h3>{p.name}</h3>
+                <p className="hm-product-desc">{p.description}</p>
+                <div className="hm-product-foot">
+                  <div><span className="hm-price">{fmt(p.price)}</span>{p.originalPrice && <span className="hm-was">{fmt(p.originalPrice)}</span>}</div>
+                  <button className="hm-add" onClick={() => addToCart(p)}><Plus size={13} />Adicionar</button>
                 </div>
               </div>
             </motion.article>
           ))}
         </div>
       </section>
-      </main>
+
+      {/* ── QUIZ CTA ── */}
+      <section className="hm-quiz" id="quiz">
+        <motion.div className="hm-quiz-card"
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        >
+          <div className="hm-quiz-left">
+            <div className="hm-quiz-icon"><Sparkles size={22} /></div>
+            <span className="hm-label-light">Recomendação Personalizada</span>
+            <h2>Descubra o cuidado<br /><em>ideal para você</em></h2>
+            <p>Nosso quiz analisa seu tipo de fio e estação atual para criar uma rotina capilar completamente personalizada.</p>
+          </div>
+          <div className="hm-quiz-right">
+            <ul>
+              {["Análise em 2 minutos","Baseado no seu clima","Rotina completa de cuidados"].map(f => (
+                <li key={f}><Check size={13} />{f}</li>
+              ))}
+            </ul>
+            <Link href="/quiz" className="hm-quiz-btn"><Sparkles size={15} />Fazer o Quiz <ArrowRight size={15} /></Link>
+            <p className="hm-quiz-note">Gratuito · 2 min · Sem cadastro</p>
+          </div>
+        </motion.div>
+      </section>
+
+    </main>
   );
 }
