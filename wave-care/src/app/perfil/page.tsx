@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
-import { apiUpdateUser, apiGetOrdersByUser, type Order } from "@/lib/api"
+import { apiUpdateUser, apiGetOrdersByUser, apiGetMyQuizResult, type Order, type QuizResult } from "@/lib/api"
 import { AvatarUpload } from "@/components/AvatarUpload/Avatarupload";
 
 // ─── Paleta ───────────────────────────────────────────────────────
@@ -48,6 +48,19 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 };
 const TRACK_STEPS = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 
+const DIAGNOSIS_LABELS: Record<string, string> = {
+  hydration: "Hidratação Intensiva",
+  reconstruction: "Reconstrução Capilar",
+  nutrition: "Nutrição Profunda",
+  maintenance: "Manutenção Preventiva",
+};
+const HAIR_TYPE_LABELS: Record<string, string> = {
+  liso: "Liso", ondulado: "Ondulado", cacheado: "Cacheado", crespo: "Crespo",
+};
+const SEASON_LABELS: Record<string, string> = {
+  verao: "Verão", outono: "Outono", inverno: "Inverno", primavera: "Primavera",
+};
+
 // ─── Ícones ───────────────────────────────────────────────────────
 const Icon = {
   User:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
@@ -75,6 +88,7 @@ const Icon = {
   Back:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>,
   Right:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>,
 };
+
 
 // ─── Toggle Switch ────────────────────────────────────────────────
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
@@ -144,6 +158,26 @@ export default function PerfilPage() {
   const [orders,       setOrders]       = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError,  setOrdersError]  = useState<string | null>(null);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+const [quizLoading, setQuizLoading] = useState(false);
+
+useEffect(() => {
+  const loadQuiz = async () => {
+    if (!isLoggedIn || !user?.id) {
+      setQuizResult(null);
+      return;
+    }
+    setQuizLoading(true);
+    try {
+      setQuizResult(await apiGetMyQuizResult());
+    } catch {
+      setQuizResult(null);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+  loadQuiz();
+}, [isLoggedIn, user?.id]);
 
   // Settings
   const [showSettings,      setShowSettings]      = useState(false);
@@ -670,33 +704,45 @@ useEffect(() => {
         )}
 
         {/* ═══ CAPILAR ═══ */}
-        {tab === "capilar" && (
-          <section>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-color, #1a2e28)" }}>Perfil Capilar</h1>
-              <p style={{ margin: "0.2rem 0 0", fontSize: "0.83rem", color: C.muted }}>Suas preferências de cuidado com o cabelo</p>
+{tab === "capilar" && (
+  <section>
+    <div style={{ marginBottom: "1.5rem" }}>
+      <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-color, #1a2e28)" }}>Perfil Capilar</h1>
+      <p style={{ margin: "0.2rem 0 0", fontSize: "0.83rem", color: C.muted }}>Suas preferências de cuidado com o cabelo</p>
+    </div>
+    {quizLoading ? (
+      <div style={{ textAlign: "center", padding: "3rem", color: C.muted }}>Carregando perfil capilar...</div>
+    ) : !quizResult ? (
+      <EmptyState icon="🌿" title="Perfil capilar não preenchido" text="Faça nosso quiz para descobrir a rotina ideal para o seu cabelo." cta={{ href: "/quiz", label: "Fazer o quiz" }} />
+    ) : (
+      <div style={s.card}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+          {([
+            ["Diagnóstico", DIAGNOSIS_LABELS[quizResult.diagnosis] ?? quizResult.diagnosis],
+            ["Tipo de cabelo", HAIR_TYPE_LABELS[quizResult.hairType] ?? quizResult.hairType],
+            ["Estação do quiz", SEASON_LABELS[quizResult.season] ?? quizResult.season],
+            ["Kit recomendado", quizResult.recommendedKit],
+          ] as const).map(([label, value]) => (
+            <div key={label}>
+              <span style={s.label}>{label}</span>
+              <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 500, color: "var(--text-color, #1a2e28)" }}>{value || "—"}</p>
             </div>
-            {!user!.capilar ? (
-              <EmptyState icon="🌿" title="Perfil capilar não preenchido" text="Faça nosso quiz para descobrir a rotina ideal para o seu cabelo." cta={{ href: "/quiz", label: "Fazer o quiz" }} />
-            ) : (
-              <div style={s.card}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
-                  {([["Tipo de cabelo", user!.capilar.tipo], ["Preocupação", user!.capilar.preocupacao], ["Frequência de peia", user!.capilar.frequenciaPreia], ["Estação crítica", user!.capilar.estacaoCritica]] as const).map(([label, value]) => (
-                    <div key={label}>
-                      <span style={s.label}>{label}</span>
-                      <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 500, color: "var(--text-color, #1a2e28)" }}>{value}</p>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: `1px solid ${C.border}` }}>
-                  <Link href="/quiz" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1.1rem", borderRadius: "9px", border: `1.5px solid ${C.primary}`, background: "transparent", color: C.primary, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
-                    <Icon.Edit /> Refazer quiz
-                  </Link>
-                </div>
-              </div>
-            )}
-          </section>
+          ))}
+        </div>
+        {quizResult.createdAt && (
+          <p style={{ marginTop: "1rem", fontSize: "0.72rem", color: C.muted, textAlign: "right" }}>
+            Realizado em {new Date(quizResult.createdAt).toLocaleDateString("pt-BR")}
+          </p>
         )}
+        <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: `1px solid ${C.border}` }}>
+          <Link href="/quiz" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.55rem 1.1rem", borderRadius: "9px", border: `1.5px solid ${C.primary}`, background: "transparent", color: C.primary, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none" }}>
+            <Icon.Edit /> Refazer quiz
+          </Link>
+        </div>
+      </div>
+    )}
+  </section>
+)}
       </main>
     </div>
   );

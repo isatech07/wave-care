@@ -301,3 +301,19 @@ export async function apiSubmitQuiz(payload: QuizPayload): Promise<QuizApiResult
   if (!res.ok) throw new Error(data.message || 'Erro ao enviar quiz')
   return data
 }
+
+export interface QuizResult extends QuizApiResult {
+  hairType: string
+  createdAt: string
+}
+
+/** GET /quiz/me — busca o resultado salvo do quiz do usuário logado (via JWT) */
+export async function apiGetMyQuizResult(): Promise<QuizResult | null> {
+  try {
+    return await authFetch(`${API_URL}/quiz/me`)
+  } catch (err: any) {
+    if (err.message?.includes('404') || err.message?.includes('não encontrado')) return null
+    throw err
+  }
+}
+
