@@ -16,7 +16,6 @@ function normalizeImage(path: string) {
 }
 
 interface CartProps {
-
   seasonColor?: string;
 }
 
@@ -30,26 +29,16 @@ export default function Cart({ seasonColor }: CartProps) {
     closeCart,
     updateQuantity,
     removeItem,
-    checkout,
-    checkoutLoading,
     error,
-    orderSummary,
-    dismissOrderSummary,
     cartTotal,
     loading,
   } = useCart();
 
-  const handleFinalizarPedido = async () => {
-    try {
-      await checkout();
-    } catch {
-    }
-  };
-
-  const handleContinuar = () => {
-    dismissOrderSummary();
+  const handleFinalizarPedido = () => {
+    // Salva snapshot dos items antes de fechar/navegar
+    sessionStorage.setItem("wc_checkout_items", JSON.stringify(items));
     closeCart();
-    router.push("/pedido/confirmado");
+    router.push("/checkout");
   };
 
   if (!isOpen) return null;
@@ -131,65 +120,23 @@ export default function Cart({ seasonColor }: CartProps) {
           )}
         </div>
 
-        {/* Resumo pós-pedido */}
-        {orderSummary ? (
-          <div className={styles.orderSummary}>
-            <div className={styles.orderSummaryHeader}>
-              <h3>Pedido Confirmado!</h3>
-              <span className={styles.orderNumber}>#{orderSummary.id}</span>
-            </div>
-            <div className={styles.orderSummaryItems}>
-              {orderSummary.items?.map((item) => (
-                <div key={item.id} className={styles.orderSummaryItem}>
-                  <span className={styles.orderItemName}>
-                    {item.product.name}
-                  </span>
-                  <span className={styles.orderItemQty}>x{item.quantity}</span>
-                  <span className={styles.orderItemPrice}>
-                    {formatPrice(item.price)}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className={styles.orderSummaryTotal}>
+        {/* Rodapé */}
+        {items.length > 0 && (
+          <div className={styles.footer}>
+            <div className={styles.total}>
               <span>Total</span>
-              <strong>{formatPrice(orderSummary.total)}</strong>
+              <strong>{formatPrice(cartTotal)}</strong>
             </div>
+            {error && <p className={styles.error}>{error}</p>}
             <button
               type="button"
               className={styles.checkout}
               style={{ background: accent }}
-              onClick={handleContinuar}
+              onClick={handleFinalizarPedido}
             >
-              Ver meu pedido
+              Finalizar Compra
             </button>
           </div>
-        ) : (
-          items.length > 0 && (
-            <div className={styles.footer}>
-              <div className={styles.total}>
-                <span>Total</span>
-                <strong>{formatPrice(cartTotal)}</strong>
-              </div>
-              {error && <p className={styles.error}>{error}</p>}
-              <button
-                type="button"
-                className={styles.checkout}
-                style={{ background: accent }}
-                onClick={handleFinalizarPedido}
-                disabled={checkoutLoading}
-              >
-                {checkoutLoading ? (
-                  <>
-                    <Loader2 size={16} className={styles.spinInline} />
-                    Processando...
-                  </>
-                ) : (
-                  "Finalizar Compra"
-                )}
-              </button>
-            </div>
-          )
         )}
       </aside>
     </>

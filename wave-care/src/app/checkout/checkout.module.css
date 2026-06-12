@@ -256,3 +256,140 @@
   padding-top: 0.75rem;
   border-top: 1px solid #f3f4f6;
 }
+
+/* ─── Modal de confirmação ─── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+  padding: 1rem;
+}
+
+.modalCard {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  padding: 2rem;
+  text-align: center;
+}
+
+.modalIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.modalIconSuccess {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.modalIconPending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.modalTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a2e28;
+}
+
+.modalSubtitle {
+  margin: 0 0 1.25rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.modalOrderBox {
+  background: #eef6f3;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalOrderBox span {
+  font-weight: 700;
+  color: #2d6a5a;
+}
+
+.modalItems {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  text-align: left;
+}
+
+.modalItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #1a2e28;
+  padding: 0.3rem 0;
+}
+
+.modalItem span:last-child {
+  color: inherit;
+}
+
+.modalItemQty {
+  color: #6b7280;
+}
+
+.modalPendingNote {
+  font-size: 0.78rem;
+  color: #92400e;
+  margin-bottom: 1.25rem;
+}
+
+.modalBtnPrimary {
+  width: 100%;
+  padding: 0.7rem 1.5rem;
+  border-radius: 9px;
+  border: none;
+  background: #2d6a5a;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 0.6rem;
+  font-family: inherit;
+}
+
+.modalBtnPrimary:hover {
+  background: #245047;
+}
+
+.modalBtnSecondary {
+  width: 100%;
+  padding: 0.7rem 1.5rem;
+  border-radius: 9px;
+  border: 1.5px solid #e5e7eb;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.modalBtnSecondary:hover {
+  background: #f3f4f6;
+}

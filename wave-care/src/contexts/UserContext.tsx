@@ -68,6 +68,7 @@ type LoginData = {
 interface UserContextType {
   user: UserData | null;
   isLoggedIn: boolean;
+  initializing: boolean;
   updateUser: (data: Partial<UserData>) => void;
   updateAvatar: (rawBase64OrEmpty: string) => void;
   updateCapilar: (capilar: CapilarProfile) => void;
@@ -143,6 +144,7 @@ const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
+   const [initializing, setInitializing] = useState(true); 
 
   useEffect(() => {
     const stored = loadUser();
@@ -150,6 +152,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const avatar = stored.avatar ?? loadAvatarForEmail(stored.email);
       setUser({ ...stored, avatar });
     }
+    setInitializing(false); // ← novo
   }, []);
 
 const login = (data: LoginData) => {
@@ -291,6 +294,7 @@ const login = (data: LoginData) => {
     <UserContext.Provider value={{
       user,
       isLoggedIn:    !!user,
+      initializing,
       updateUser,
       updateAvatar,
       updateCapilar,

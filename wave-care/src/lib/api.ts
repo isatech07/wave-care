@@ -211,8 +211,18 @@ export async function apiClearCart(userId: number): Promise<void> {
 
 // Pedidos 
 
-export async function apiCreateOrder(userId: number): Promise<Order> {
-  return authFetch(`${API_URL}/order/${userId}`, { method: 'POST' });
+export async function apiCreateOrder(
+  userId: number,
+  paymentMethod: 'pix' | 'card' | 'boleto' = 'card'
+): Promise<Order> {
+  return authFetch(`${API_URL}/order`, {
+    method: 'POST',
+    body: JSON.stringify({ paymentMethod }),
+  });
+}
+
+export async function apiConfirmPayment(orderId: number): Promise<Order> {
+  return authFetch(`${API_URL}/order/${orderId}/pay`, { method: 'PUT' });
 }
 
 /** GET /order — requer JWT + admin */
@@ -264,6 +274,25 @@ export async function apiGetOrdersByUser(userId: number): Promise<Order[]> {
   } catch {
     return []
   }
+}
+
+export async function getOrderDisplayNumber(userId: number, orderId: number): Promise<number> {
+  try {
+    const orders = await apiGetOrdersByUser(userId);
+    const chronological = [...orders].reverse(); // mais antigo primeiro
+    const idx = chronological.findIndex((o) => o.id === orderId);
+    return idx === -1 ? chronological.length : idx + 1;
+  } catch {
+    return orderId; // fallback
+  }
+}
+
+export function getOrderNumberForUser(userId: number, orderId: number): number {
+  if (typeof window === 'undefined') return orderId;
+  const orders = apiGetUserOrders(userId); // mais recente primeiro
+  const chronological = [...orders].reverse(); // mais antigo primeiro
+  const index = chronological.findIndex((o) => o.id === orderId);
+  return index === -1 ? chronological.length + 1 : index + 1;
 }
 
 // ── Quiz ─────────────────────────────────────────────────────────────────────

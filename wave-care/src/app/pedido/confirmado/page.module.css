@@ -57,3 +57,77 @@
   background: #B33A0A;
   transform: translateY(-1px);
 }
+
+.iconPending {
+  color: #d97706;
+}
+
+.orderBox {
+  background: #ffffff;
+  border: 1px solid #e7e2dc;
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin: 0 0 1.5rem;
+  text-align: left;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid #e7e2dc;
+}
+
+.orderNumber {
+  font-weight: 700;
+  color: #1C1917;
+  font-size: 1rem;
+}
+
+.orderTotal {
+  font-weight: 700;
+  color: #C2410C;
+  font-size: 1rem;
+}
+
+.orderItems {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #1C1917;
+  padding: 0.3rem 0;
+}
+
+.orderItemQty {
+  color: #78716C;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.buttonSecondary {
+  padding: 0.85rem 2rem;
+  border: 1.5px solid #e7e2dc;
+  border-radius: 10px;
+  background: transparent;
+  color: #5a5550;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.buttonSecondary:hover {
+  background: #f5f1ec;
+}

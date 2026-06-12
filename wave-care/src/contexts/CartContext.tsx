@@ -18,15 +18,15 @@ import {
   apiClearCart,
   apiCreateOrder,
   saveOrderLocally,
-  type CartItem,   
-  type Order,      
+  type CartItem,
+  type Order,
 } from "@/lib/api";
 
 import { useUser } from "@/contexts/UserContext";
 
 export interface CartLineItem {
-  id: number;           // productId
-  cartItemId?: number;  // id do CartItem no backend
+  id: number;
+  cartItemId?: number;
   name: string;
   price: number;
   image: string;
@@ -37,9 +37,8 @@ interface CartContextValue {
   items: CartLineItem[];
   isOpen: boolean;
   loading: boolean;
-  checkoutLoading: boolean;
+  createOrderLoading: boolean;
   error: string | null;
-  orderSummary: Order | null;
 
   openCart: () => void;
   closeCart: () => void;
@@ -47,13 +46,10 @@ interface CartContextValue {
   updateQuantity: (productId: number, delta: number) => Promise<void>;
   removeItem: (productId: number) => Promise<void>;
   clearCart: () => Promise<void>;
-  checkout: () => Promise<Order>;
-  dismissOrderSummary: () => void;
+  createOrder: () => Promise<Order>;
   cartCount: number;
   cartTotal: number;
 }
-
-// Context
 
 const CartContext = createContext<CartContextValue | null>(null);
 
@@ -74,21 +70,16 @@ function fromApiItem(i: CartItem): CartLineItem {
   };
 }
 
-// Provider 
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user, isLoggedIn } = useUser();
 
   const [items, setItems] = useState<CartLineItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [createOrderLoading, setCreateOrderLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [orderSummary, setOrderSummary] = useState<Order | null>(null);
 
   const syncedRef = useRef<number | null>(null);
-
-  // Sincroniza carrinho com backend ao logar 
 
   const syncWithBackend = useCallback(async (userId: number) => {
     if (syncedRef.current === userId) return;
@@ -112,7 +103,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     if (isLoggedIn && user?.id) {
@@ -120,9 +111,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } else if (!isLoggedIn) {
       syncedRef.current = null;
     }
-  }, [isLoggedIn, user?.id]); 
-
-  // ── Adicionar item 
+  }, [isLoggedIn, user?.id]);
 
   const addItem = useCallback(
     async (product: Omit<CartLineItem, "quantity" | "cartItemId">) => {
@@ -159,8 +148,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [isLoggedIn, user?.id]
   );
 
-  // Atualizar quantidade 
-
   const updateQuantity = useCallback(
     async (productId: number, delta: number) => {
       const item = items.find((i) => i.id === productId);
@@ -195,7 +182,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [items, isLoggedIn]
   );
 
-  //  Remover item
   const removeItem = useCallback(
     async (productId: number) => {
       const item = items.find((i) => i.id === productId);
@@ -212,8 +198,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [items, isLoggedIn]
   );
 
-  // Limpar carrinho 
-
   const clearCart = useCallback(async () => {
     setItems([]);
     if (isLoggedIn && user?.id) {
@@ -221,9 +205,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoggedIn, user?.id]);
 
-  //  Checkout 
-
-  const checkout = useCallback(async (): Promise<Order> => {
+  // Cria o pedido (PENDING) sem confirmar pagamento
+  const createOrder = useCallback(async (): Promise<Order> => {
     if (!isLoggedIn || !user?.id) {
       throw new Error("Você precisa estar logado para finalizar o pedido");
     }
@@ -231,26 +214,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new Error("Seu carrinho está vazio");
     }
 
-    setCheckoutLoading(true);
+    setCreateOrderLoading(true);
     setError(null);
 
     try {
       const order = await apiCreateOrder(user.id);
       saveOrderLocally(user.id, order);
-      setOrderSummary(order);
+      // Limpa o carrinho local e sinaliza re-sync
       setItems([]);
       syncedRef.current = null;
       return order;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao finalizar pedido";
+      const msg = err instanceof Error ? err.message : "Erro ao criar pedido";
       setError(msg);
       throw err;
     } finally {
-      setCheckoutLoading(false);
+      setCreateOrderLoading(false);
     }
   }, [isLoggedIn, user?.id, items]);
-
-  const dismissOrderSummary = useCallback(() => setOrderSummary(null), []);
 
   const cartCount = items.reduce((s, i) => s + i.quantity, 0);
   const cartTotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -261,17 +242,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items,
         isOpen,
         loading,
-        checkoutLoading,
+        createOrderLoading,
         error,
-        orderSummary,
-        openCart:  () => setIsOpen(true),
+        openCart: () => setIsOpen(true),
         closeCart: () => setIsOpen(false),
         addItem,
         updateQuantity,
         removeItem,
         clearCart,
-        checkout,
-        dismissOrderSummary,
+        createOrder,
         cartCount,
         cartTotal,
       }}

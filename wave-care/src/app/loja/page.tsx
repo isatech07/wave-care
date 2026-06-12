@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -69,19 +70,16 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 }
 
 export default function LojaPage() {
-  // ── Contexto global do carrinho ───────────────────────────────────────────
-  const {
-    addItem, openCart,
-    items, isOpen, closeCart,
-    updateQuantity, removeItem,
+  const router = useRouter();
+
+const {
+    items, isOpen, closeCart, openCart,
+    addItem, updateQuantity, removeItem,
     cartCount, cartTotal,
-    checkout, checkoutLoading,  
-    error: cartError,           //  (erro do checkout)
-    orderSummary,               // (resumo pós-pedido)
-    dismissOrderSummary,       
+    createOrder, createOrderLoading,
+    error: cartError,
   } = useCart();
 
-  // ── Estado local (só UI da loja) ─────────────────────────────────────────
   const [products,        setProducts]        = useState<Product[]>([]);
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState("");
@@ -151,17 +149,17 @@ export default function LojaPage() {
     showNotification(`${product.name} adicionado à sacola`);
   }, [addItem, showNotification]);
 
-  const handleCheckout = useCallback(async () => {
+const handleCheckout = useCallback(async () => {
     try {
-      await checkout();
+      const order = await createOrder();
+      sessionStorage.setItem("wc_checkout_items", JSON.stringify(items));
+      sessionStorage.setItem("wc_pending_order_id", String(order.id));
+      closeCart();
+      router.push("/checkout");
     } catch {
+      // erro já em cartError do contexto
     }
-  }, [checkout]);
-
-  const handleContinuarAposCompra = useCallback(() => {
-    dismissOrderSummary();
-    closeCart();
-  }, [dismissOrderSummary, closeCart]);
+  }, [createOrder, items, closeCart, router]);
 
   const clearFilters     = useCallback(() => { setFiltroEstacao("Todos"); setFiltroCategoria("Todos"); setOrdenacao("relevantes"); setSearchQuery(""); }, []);
   const openProductModal = useCallback((product: Product) => { setSelectedProduct(product); setIsModalOpen(true);  }, []);
@@ -248,47 +246,24 @@ export default function LojaPage() {
                 )}
               </div>
 
-              {/* ── Resumo pós-pedido ── */}
-              {orderSummary ? (
-                <div className="loja-cart-footer" style={{ background: "#f0fdf4" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                    <strong style={{ color: "#166534" }}>Pedido Confirmado!</strong>
-                    <span style={{ fontSize: "0.8rem", background: "#dcfce7", color: "#166534", padding: "0.2rem 0.5rem", borderRadius: 4, fontWeight: 600 }}>
-                      #{orderSummary.id}
-                    </span>
-                  </div>
+              {items.length > 0 && (
+                <div className="loja-cart-footer">
                   <div className="loja-cart-total">
                     <span>Total</span>
-                    <strong>{formatPrice(orderSummary.total)}</strong>
+                    <strong>{formatPrice(cartTotal)}</strong>
                   </div>
-                  <button className="loja-cart-checkout" onClick={handleContinuarAposCompra}>
-                    Continuar comprando
+                  {cartError && (
+                    <p style={{ color: "#dc3545", fontSize: "0.82rem", textAlign: "center", margin: "0 0 0.5rem" }}>
+                      {cartError}
+                    </p>
+                  )}
+                  <button
+                    className="loja-cart-checkout"
+                    onClick={handleCheckout}
+                  >
+                    Finalizar Compra
                   </button>
                 </div>
-              ) : (
-                items.length > 0 && (
-                  <div className="loja-cart-footer">
-                    <div className="loja-cart-total">
-                      <span>Total</span>
-                      <strong>{formatPrice(cartTotal)}</strong>
-                    </div>
-                    {cartError && (
-                      <p style={{ color: "#dc3545", fontSize: "0.82rem", textAlign: "center", margin: "0 0 0.5rem" }}>
-                        {cartError}
-                      </p>
-                    )}
-                    <button
-                      className="loja-cart-checkout"
-                      onClick={handleCheckout}
-                      disabled={checkoutLoading}
-                    >
-                      {checkoutLoading
-                        ? <><Loader2 size={16} style={{ animation: "spin 0.8s linear infinite" }} /> Processando...</>
-                        : "Finalizar Compra"
-                      }
-                    </button>
-                  </div>
-                )
               )}
             </motion.aside>
           </>
