@@ -114,7 +114,6 @@ export interface Order {
 
 //  Auth / Usuário 
 
-
 export async function apiLogin(email: string, password: string): Promise<MappedUser> {
   const res = await fetch(`${API_URL}/users/login`, {
     method: 'POST',
@@ -300,7 +299,7 @@ export function getOrderNumberForUser(userId: number, orderId: number): number {
 }
 
 // ── Quiz ─────────────────────────────────────────────────────────────────────
- 
+
 export interface QuizPayload {
   city: string
   hairType: string
@@ -311,14 +310,19 @@ export interface QuizPayload {
   chemicalProcess: string
   season: string
 }
- 
+
 export interface QuizApiResult {
   diagnosis: string
   scores: Record<string, number>
   season: string
   recommendedKit: string
 }
- 
+
+export interface QuizResult extends QuizApiResult {
+  hairType: string
+  createdAt: string
+}
+
 /** POST /quiz — envia resultado ao banco; userId vai via JWT no header */
 export async function apiSubmitQuiz(payload: QuizPayload): Promise<QuizApiResult> {
   const token = getToken()
@@ -335,11 +339,6 @@ export async function apiSubmitQuiz(payload: QuizPayload): Promise<QuizApiResult
   return data
 }
 
-export interface QuizResult extends QuizApiResult {
-  hairType: string
-  createdAt: string
-}
-
 /** GET /quiz/me — busca o resultado salvo do quiz do usuário logado (via JWT) */
 export async function apiGetMyQuizResult(): Promise<QuizResult | null> {
   try {
@@ -349,4 +348,41 @@ export async function apiGetMyQuizResult(): Promise<QuizResult | null> {
     throw err
   }
 }
+
+// ── Perfil unificado (user + capilar) ────────────────────────────────────────
+
+export interface MyProfile {
+  id: number
+  name: string
+  email: string
+  telefone: string | null
+  cidade: string | null
+  foto?: string | null
+  role: string
+  capilar: {
+    tipo: string
+    preocupacao: string
+    frequenciaPreia: string
+    estacaoCritica: string
+    diagnosis: string
+    recommendedKit: string
+    updatedAt: string
+  } | null
+}
+
+/** GET /users/me/profile — user + quiz result mais recente mapeado como capilar */
+export async function apiGetMyProfile(): Promise<MyProfile | null> {
+  try {
+    return await authFetch(`${API_URL}/users/me/profile`)
+  } catch (err: any) {
+    if (
+      err.message?.includes('401') ||
+      err.message?.includes('403') ||
+      err.message?.includes('Unauthorized')
+    ) return null
+    throw err
+  }
+}
+
+
 

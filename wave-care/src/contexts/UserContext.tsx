@@ -1,9 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { apiDeleteUser, clearToken,  API_URL, getToken, mapUser } from "@/lib/api";
-
-
+import {
+  createContext, useContext, useEffect, useState, ReactNode
+} from "react";
+import {
+  apiDeleteUser, clearToken, getToken, mapUser,
+  apiGetMyProfile, API_URL,
+} from "@/lib/api";
 
 export interface CapilarProfile {
   tipo: string;
@@ -49,7 +52,6 @@ export interface UserData {
   capilar: CapilarProfile | null;
   favorites: Product[];
   orders: Order[];
-  // role vem do backend: 'admin' | 'user'
   role?: string;
   isAdmin?: boolean;
 }
@@ -82,11 +84,12 @@ interface UserContextType {
   isAdmin: boolean;
 }
 
-
-const STORAGE_KEY = "wavecare_user";
-const AVATARS_KEY = "wavecare_avatars";
+const STORAGE_KEY  = "wavecare_user";
+const AVATARS_KEY  = "wavecare_avatars";
 
 type AvatarStore = Record<string, string>;
+
+// ── helpers de localStorage ───────────────────────────────────────────────────
 
 function loadUser(): UserData | null {
   if (typeof window === "undefined") return null;
@@ -98,11 +101,8 @@ function loadUser(): UserData | null {
 
 function saveUser(data: UserData): void {
   if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (e) {
-    console.warn("Erro ao salvar usuário (localStorage cheio?):", e);
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  catch (e) { console.warn("Erro ao salvar usuário:", e); }
 }
 
 function removeUser(): void {
@@ -124,9 +124,7 @@ function saveAvatarForEmail(email: string, base64: string): void {
     const store = loadAvatarStore();
     store[email] = base64;
     localStorage.setItem(AVATARS_KEY, JSON.stringify(store));
-  } catch (e) {
-    console.warn("Erro ao salvar avatar:", e);
-  }
+  } catch (e) { console.warn("Erro ao salvar avatar:", e); }
 }
 
 function loadAvatarForEmail(email: string): string | undefined {
@@ -140,72 +138,146 @@ function removeAvatarForEmail(email: string): void {
   localStorage.setItem(AVATARS_KEY, JSON.stringify(store));
 }
 
+// ── Provider ──────────────────────────────────────────────────────────────────
+
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserData | null>(null);
-   const [initializing, setInitializing] = useState(true); 
+  const [user,         setUser]         = useState<UserData | null>(null);
+  const [initializing, setInitializing] = useState(true);
 
+  // ── Inicialização: localStorage → banco ──────────────────────────────────
   useEffect(() => {
     const stored = loadUser();
-    if (stored) {
-      const avatar = stored.avatar ?? loadAvatarForEmail(stored.email);
-      setUser({ ...stored, avatar });
+    const token  = getToken();
+
+    if (!token) {
+      // sem sessão ativa: apenas o que tiver em cache local
+      if (stored) {
+        setUser({ ...stored, avatar: stored.avatar ?? loadAvatarForEmail(stored.email) });
+      }
+      setInitializing(false);
+      return;
     }
-    setInitializing(false); // ← novo
+
+    // tem token: valida e sincroniza com o banco
+    apiGetMyProfile()
+      .then(profile => {
+        if (!profile) {
+          // token expirado ou inválido — limpa tudo
+          removeUser();
+          clearToken();
+          setUser(null);
+          return;
+        }
+
+        // base: o que estava em cache (preserva favorites, orders, avatar)
+        const base = stored ?? {
+          id: profile.id, nome: profile.name, email: profile.email,
+          telefone: profile.telefone ?? "", cidade: profile.cidade ?? "",
+          capilar: null, favorites: [], orders: [],
+          role: profile.role, isAdmin: profile.role === "admin",
+        };
+
+        const merged: UserData = {
+          ...base,
+          // campos sempre atualizados do banco
+          id:       profile.id,
+          nome:     profile.name,
+          email:    profile.email,
+          telefone: profile.telefone ?? base.telefone,
+          cidade:   profile.cidade   ?? base.cidade,
+          role:     profile.role,
+          isAdmin:  profile.role === "admin",
+          // capilar: banco tem precedência; fallback para cache local
+          capilar:  profile.capilar
+            ? {
+                tipo:            profile.capilar.tipo,
+                preocupacao:     profile.capilar.preocupacao,
+                frequenciaPreia: profile.capilar.frequenciaPreia,
+                estacaoCritica:  profile.capilar.estacaoCritica,
+                diagnosis:       profile.capilar.diagnosis,
+                recommendedKit:  profile.capilar.recommendedKit,
+              }
+            : base.capilar,
+          // avatar só existe no cliente
+          avatar:    base.avatar ?? loadAvatarForEmail(profile.email),
+          favorites: base.favorites ?? [],
+          orders:    base.orders    ?? [],
+        };
+
+        setUser(merged);
+        saveUser(merged);
+      })
+      .catch(() => {
+        // rede offline ou erro inesperado: usa cache sem deslogar
+        if (stored) {
+          setUser({ ...stored, avatar: stored.avatar ?? loadAvatarForEmail(stored.email) });
+        }
+      })
+      .finally(() => setInitializing(false));
   }, []);
 
-const login = (data: LoginData) => {
-  const existing = loadUser();
-  const sameAccount = existing?.email === data.email;
+  // ── login ────────────────────────────────────────────────────────────────
+  const login = (data: LoginData) => {
+    const existing    = loadUser();
+    const sameAccount = existing?.email === data.email;
+    const isAdmin     = data.role === "admin" || data.email === "admin@wavecare.com";
 
-  const isAdmin =
-    data.role === 'admin' || data.email === 'admin@wavecare.com';
+    const full: UserData = {
+      ...data,
+      avatar:    loadAvatarForEmail(data.email),
+      favorites: sameAccount ? (existing?.favorites ?? []) : [],
+      orders:    sameAccount ? (existing?.orders    ?? []) : [],
+      role:      data.role ?? "user",
+      isAdmin,
+    };
+    setUser(full);
+    saveUser(full);
 
-  const full: UserData = {
-    ...data,
-    avatar:    loadAvatarForEmail(data.email),
-    favorites: sameAccount ? (existing?.favorites ?? []) : [],
-    orders:    sameAccount ? (existing?.orders    ?? []) : [],
-    role:      data.role ?? 'user',
-    isAdmin,
+    // Depois do login, sincroniza imediatamente com o banco
+    // (pega capilar, telefone, cidade atualizados)
+    if (data.id) {
+      apiGetMyProfile()
+        .then(profile => {
+          if (!profile) return;
+          setUser(prev => {
+            if (!prev) return null;
+            const updated: UserData = {
+              ...prev,
+              telefone: profile.telefone ?? prev.telefone,
+              cidade:   profile.cidade   ?? prev.cidade,
+              capilar:  profile.capilar
+                ? {
+                    tipo:            profile.capilar.tipo,
+                    preocupacao:     profile.capilar.preocupacao,
+                    frequenciaPreia: profile.capilar.frequenciaPreia,
+                    estacaoCritica:  profile.capilar.estacaoCritica,
+                    diagnosis:       profile.capilar.diagnosis,
+                    recommendedKit:  profile.capilar.recommendedKit,
+                  }
+                : prev.capilar,
+            };
+            saveUser(updated);
+            return updated;
+          });
+        })
+        .catch(() => {/* silencioso */});
+    }
   };
-  setUser(full);
-  saveUser(full);
 
-  // Busca dados completos (telefone, cidade) do backend
-  if (data.id) {
-    fetch(`${API_URL}/users/${data.id}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
-      .then(r => r.json())
-      .then(raw => {
-        const mapped = mapUser(raw);
-        setUser(prev => {
-          if (!prev) return null;
-          const updated = {
-            ...prev,
-            telefone: mapped.telefone ?? prev.telefone,
-            cidade:   mapped.cidade   ?? prev.cidade,
-          };
-          saveUser(updated);
-          return updated;
-        });
-      })
-      .catch(() => {/* fallback silencioso */});
-  }
-};
-
+  // ── logout ───────────────────────────────────────────────────────────────
   const logout = () => {
-    setUser(null)
-    removeUser()
-    clearToken()
-    localStorage.removeItem("wavecare_quiz_v1") // ← adiciona essa linha
-    localStorage.removeItem("wavecare_quiz_enviado")
-  }
+    setUser(null);
+    removeUser();
+    clearToken();
+    localStorage.removeItem("wavecare_quiz_v1");
+    localStorage.removeItem("wavecare_quiz_enviado");
+  };
 
+  // ── helpers de estado ────────────────────────────────────────────────────
   const updateUser = (data: Partial<UserData>) => {
-    setUser((prev) => {
+    setUser(prev => {
       if (!prev) return null;
       const updated = { ...prev, ...data };
       saveUser(updated);
@@ -215,7 +287,7 @@ const login = (data: LoginData) => {
 
   const updateAvatar = (rawBase64: string) => {
     if (!rawBase64) {
-      setUser((prev) => {
+      setUser(prev => {
         if (!prev) return null;
         if (prev.email) removeAvatarForEmail(prev.email);
         const updated = { ...prev, avatar: undefined };
@@ -239,7 +311,7 @@ const login = (data: LoginData) => {
       canvas.height = height;
       canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
       const compressed = canvas.toDataURL("image/jpeg", 0.82);
-      setUser((prev) => {
+      setUser(prev => {
         if (!prev) return null;
         if (prev.email) saveAvatarForEmail(prev.email, compressed);
         const updated = { ...prev, avatar: compressed };
@@ -253,9 +325,9 @@ const login = (data: LoginData) => {
   const updateCapilar = (capilar: CapilarProfile) => updateUser({ capilar });
 
   const addFavorite = (product: Product) => {
-    setUser((prev) => {
+    setUser(prev => {
       if (!prev) return null;
-      if (prev.favorites.some((f) => f.id === product.id)) return prev;
+      if (prev.favorites.some(f => f.id === product.id)) return prev;
       const updated = { ...prev, favorites: [...prev.favorites, product] };
       saveUser(updated);
       return updated;
@@ -263,19 +335,19 @@ const login = (data: LoginData) => {
   };
 
   const removeFavorite = (productId: string) => {
-    setUser((prev) => {
+    setUser(prev => {
       if (!prev) return null;
-      const updated = { ...prev, favorites: prev.favorites.filter((f) => f.id !== productId) };
+      const updated = { ...prev, favorites: prev.favorites.filter(f => f.id !== productId) };
       saveUser(updated);
       return updated;
     });
   };
 
   const isFavorite = (productId: string) =>
-    user?.favorites.some((f) => f.id === productId) ?? false;
+    user?.favorites.some(f => f.id === productId) ?? false;
 
   const addOrder = (order: Order) => {
-    setUser((prev) => {
+    setUser(prev => {
       if (!prev) return null;
       const updated = { ...prev, orders: [order, ...prev.orders] };
       saveUser(updated);
@@ -287,7 +359,7 @@ const login = (data: LoginData) => {
     if (user?.id) await apiDeleteUser(user.id);
     setUser(null);
     removeUser();
-    clearToken(); 
+    clearToken();
   };
 
   return (

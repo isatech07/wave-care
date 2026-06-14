@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import "./quiz.css"
 import { useUser } from "@/contexts/UserContext"
-import { apiSubmitQuiz, type QuizApiResult } from "@/lib/api"
+import { apiSubmitQuiz, apiGetMyProfile, type QuizApiResult } from "@/lib/api"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface Opcao {
@@ -361,16 +361,25 @@ export default function QuizCapilar() {
   // ── Salva no perfil ───────────────────────────────────────────────────────
   const salvarNoPerfil = useCallback(() => {
     if (!resultado || !isLoggedIn) return
+
+    // O POST /quiz já salvou no banco ao concluir.
+    // Aqui apenas atualiza o contexto local com os dados já retornados.
     updateCapilar({
       tipo:            resultado.tipoCabelo,
       preocupacao:     resultado.condicao,
       frequenciaPreia: resultado.frequencia,
       estacaoCritica:  resultado.estacao,
-      // enriquece com dados do back se disponíveis
-      diagnosis:      backResult?.diagnosis,
-      recommendedKit: backResult?.recommendedKit,
+      diagnosis:       backResult?.diagnosis,
+      recommendedKit:  backResult?.recommendedKit,
     })
     setSavedPerfil(true)
+
+    // Confirma com o banco (garante consistência para o mobile também)
+    apiGetMyProfile()
+      .then(profile => {
+        if (profile?.capilar) updateCapilar(profile.capilar)
+      })
+      .catch(() => {/* silencioso — o contexto local já foi atualizado */})
   }, [resultado, isLoggedIn, updateCapilar, backResult])
 
   // ── Transição animada ─────────────────────────────────────────────────────
