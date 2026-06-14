@@ -74,7 +74,7 @@ export default function PedidoConfirmado() {
           </div>
 
           <ul className={styles.orderItems}>
-            {order.items.map((item) => (
+            {(order.items ?? []).map((item) => (
               <li key={item.id} className={styles.orderItem}>
                 <span>
                   {item.product.name}{" "}
@@ -95,7 +95,7 @@ export default function PedidoConfirmado() {
 
         <div className={styles.actions}>
           <button
-            onClick={() => router.push("/perfil")}
+            onClick={() => router.push("/perfil?tab=pedidos")}
             className={styles.button}
           >
             Ver meus pedidos

@@ -35,18 +35,18 @@ type Theme  = "light" | "dark" | "system";
 type SettingsSection = "main" | "appearance" | "notifications" | "privacy" | "language";
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING:   "Aguardando",
-  CONFIRMED: "Confirmado",
-  SHIPPED:   "Enviado",
-  DELIVERED: "Entregue",
+  pending:   "Aguardando",
+  confirmed: "Confirmado",
+  shipped:   "Enviado",
+  delivered: "Entregue",
 };
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  PENDING:   { bg: "#fef3c7", color: "#92400e" },
-  CONFIRMED: { bg: "#dbeafe", color: "#1e40af" },
-  SHIPPED:   { bg: "#ede9fe", color: "#5b21b6" },
-  DELIVERED: { bg: "#d1fae5", color: "#065f46" },
+  pending:   { bg: "#fef3c7", color: "#92400e" },
+  confirmed: { bg: "#dbeafe", color: "#1e40af" },
+  shipped:   { bg: "#ede9fe", color: "#5b21b6" },
+  delivered: { bg: "#d1fae5", color: "#065f46" },
 };
-const TRACK_STEPS = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
+const TRACK_STEPS = ["pending", "confirmed", "shipped", "delivered"];
 
 const DIAGNOSIS_LABELS: Record<string, string> = {
   hydration: "Hidratação Intensiva",
@@ -159,7 +159,8 @@ export default function PerfilPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError,  setOrdersError]  = useState<string | null>(null);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
-const [quizLoading, setQuizLoading] = useState(false);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>("ALL"); 
 
 useEffect(() => {
   const loadQuiz = async () => {
@@ -178,6 +179,15 @@ useEffect(() => {
   };
   loadQuiz();
 }, [isLoggedIn, user?.id]);
+
+// lê ?tab= da URL e ativa a aba correspondente
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const tabParam = params.get("tab") as Tab | null;
+  if (tabParam && ["dados", "pedidos", "favoritos", "capilar"].includes(tabParam)) {
+    setTab(tabParam);
+  }
+}, []);
 
   // Settings
   const [showSettings,      setShowSettings]      = useState(false);
@@ -233,6 +243,7 @@ useEffect(() => {
     try {
       const userOrders = await apiGetOrdersByUser(user.id)
       setOrders(userOrders);
+      console.log("pedidos:", JSON.stringify(userOrders.map(o => ({ id: o.id, status: o.status }))));
     } catch (err) {
       setOrdersError(err instanceof Error ? err.message : 'Erro ao carregar pedidos');
     } finally {
@@ -241,6 +252,7 @@ useEffect(() => {
   };
   loadOrders();
 }, [isLoggedIn, user?.id]);
+
 
   function applyTheme(t: Theme) {
     const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -586,93 +598,211 @@ useEffect(() => {
           </section>
         )}
 
-        {/* ═══ PEDIDOS ═══ */}
-          {tab === "pedidos" && (
-            <section>
-              <div style={{ marginBottom: "1.5rem" }}>
-                <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-color, #1a2e28)" }}>Meus Pedidos</h1>
-                <p style={{ margin: "0.2rem 0 0", fontSize: "0.83rem", color: C.muted }}>Acompanhe seus pedidos</p>
-              </div>
-              {ordersLoading ? (
-                <div style={{ textAlign: "center", padding: "3rem", color: C.muted }}>Carregando pedidos...</div>
-              ) : ordersError ? (
-                <div style={{ textAlign: "center", padding: "3rem", color: C.danger }}>{ordersError}</div>
-              ) : !orders || orders.length === 0 ? (
-                <EmptyState icon="📦" title="Nenhum pedido ainda" text="Explore nossos produtos e faça seu primeiro pedido." />
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {[...orders].reverse().map((order, index) => {
-                    const sc = STATUS_COLORS[order.status] ?? { bg: "#f3f4f6", color: "#374151" };
-                    const stepIdx = TRACK_STEPS.indexOf(order.status);
-                    const formattedDate = new Date(order.createdAt).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-                    return (
-                      <div key={order.id} style={s.card}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
-                          <div>
-                            <span style={{ fontWeight: 700, color: "var(--text-color, #1a2e28)", fontSize: "0.95rem", display: "block" }}>Pedido #{index + 1}</span>
-                            <span style={{ fontSize: "0.78rem", color: C.muted, display: "block" }}>{formattedDate}</span>
-                          </div>
-                          <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "0.3rem 0.75rem", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.5px", background: sc.bg, color: sc.color }}>
-                            {STATUS_LABELS[order.status] || order.status}
-                          </span>
-                        </div>
-                        <div style={{ marginBottom: "0.75rem" }}>
-                          {order.items.map(item => (
-                            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--text-color, #1a2e28)", padding: "0.2rem 0" }}>
-                              <span>{item.product.name} <span style={{ color: C.muted }}>x{item.quantity}</span></span>
-                              <span>R$ {(item.price * item.quantity).toFixed(2).replace(".", ",")}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.75rem", borderTop: `1px solid ${C.border}`, marginBottom: "1rem" }}>
-                          <span style={{ fontSize: "0.78rem", color: C.muted }}>{order.items.length} {order.items.length === 1 ? 'item' : 'itens'}</span>
-                          <span style={{ fontWeight: 700, color: C.primary, fontSize: "1rem" }}>R$ {order.total.toFixed(2).replace(".", ",")}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "flex-start", paddingTop: "0.5rem" }}>
-                          {TRACK_STEPS.map((step, i) => {
-                            const done = i <= stepIdx, isLast = i === TRACK_STEPS.length - 1;
-                            return (
-                              <div key={step} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
-                                {!isLast && (
-                                  <div style={{
-                                    position: "absolute",
-                                    top: 6,
-                                    left: "50%",
-                                    width: "100%",
-                                    height: 2,
-                                    background: done && i < stepIdx ? C.primary : C.border,
-                                    zIndex: 0
-                                  }} />
-                                )}
-                                <div style={{
-                                  width: 13, height: 13, borderRadius: "50%", zIndex: 1, flexShrink: 0,
-                                  background: done ? C.primary : C.border,
-                                  border: `2px solid ${done ? C.primary : C.border}`
-                                }} />
-                                <span style={{
-                                  fontSize: "0.6rem", marginTop: "0.3rem", textAlign: "center",
-                                  color: done ? C.primary : C.muted, fontWeight: done ? 600 : 400,
-                                  lineHeight: 1.3, maxWidth: "90%", wordBreak: "break-word"
-                                }}>
-                                  {STATUS_LABELS[step] || step}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
+{/* ═══ PEDIDOS ═══ */}
+{tab === "pedidos" && (
+  <section>
+    <div style={{ marginBottom: "1.5rem" }}>
+      <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-color, #1a2e28)" }}>Meus Pedidos</h1>
+      <p style={{ margin: "0.2rem 0 0", fontSize: "0.83rem", color: C.muted }}>Acompanhe seus pedidos</p>
+    </div>
+
+    {ordersLoading ? (
+      <div style={{ textAlign: "center", padding: "3rem", color: C.muted }}>Carregando pedidos...</div>
+    ) : ordersError ? (
+      <div style={{ textAlign: "center", padding: "3rem", color: C.danger }}>{ordersError}</div>
+    ) : !orders || orders.length === 0 ? (
+      <EmptyState icon="📦" title="Nenhum pedido ainda" text="Explore nossos produtos e faça seu primeiro pedido." />
+    ) : (
+      <>
+        {/* ── Filtros ── */}
+        {(() => {
+        const filterOptions = [
+          { key: "ALL",       label: "Todos",       count: orders.length },
+          { key: "pending",   label: "Pendentes",   count: orders.filter(o => o.status === "pending").length },
+          { key: "confirmed", label: "Confirmados", count: orders.filter(o => o.status === "confirmed").length },
+          { key: "shipped",   label: "Enviados",    count: orders.filter(o => o.status === "shipped").length },
+          { key: "delivered", label: "Entregues",   count: orders.filter(o => o.status === "delivered").length },
+        ].filter(opt => opt.key === "ALL" || opt.count > 0);
+
+          return (
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+              {filterOptions.map(opt => {
+                const active = filterStatus === opt.key;
+                const isPendingFilter = opt.key === "PENDING" && opt.count > 0;
+                return (
+                  <button key={opt.key} onClick={() => setFilterStatus(opt.key)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "0.35rem",
+                      padding: "0.35rem 0.85rem", borderRadius: "20px",
+                      border: `1.5px solid ${active ? C.primary : isPendingFilter && !active ? "#fbbf24" : C.border}`,
+                      background: active ? C.primaryPale : "transparent",
+                      color: active ? C.primary : isPendingFilter && !active ? "#92400e" : C.muted,
+                      fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                      cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+                    }}
+                  >
+                    {isPendingFilter && !active && <span style={{ fontSize: "0.65rem" }}>⚠</span>}
+                    {opt.label}
+                    <span style={{
+                      background: active ? C.primary : isPendingFilter && !active ? "#fbbf24" : C.borderLight,
+                      color: active ? "#fff" : isPendingFilter && !active ? "#78350f" : C.muted,
+                      borderRadius: "10px", fontSize: "0.65rem", padding: "0.05rem 0.4rem", fontWeight: 700,
+                    }}>
+                      {opt.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
+
+        {/* ── Lista de pedidos ── */}
+        {(() => {
+          const filteredOrders = filterStatus === "ALL"
+            ? [...orders].reverse()
+            : [...orders].filter(o => o.status === filterStatus).reverse();
+
+          if (filteredOrders.length === 0) {
+            return <EmptyState icon="📦" title="Nenhum pedido nessa categoria" text="Tente selecionar outro filtro." />;
+          }
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {filteredOrders.map((order, index) => {
+                const sc = STATUS_COLORS[order.status] ?? { bg: "#f3f4f6", color: "#374151" };
+                const stepIdx = TRACK_STEPS.indexOf(order.status);
+                const isPending = order.status === "pending";
+                const formattedDate = new Date(order.createdAt).toLocaleDateString('pt-BR', {
+                  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const orderNumber = [...orders].reverse().indexOf(order) + 1;
+
+                return (
+                  <div key={order.id} style={{
+                    ...s.card,
+                    border: isPending
+                      ? "1.5px solid #fbbf24"
+                      : `1px solid ${C.border}`,
+                  }}>
+                    {/* Faixa de aviso no topo do card pendente */}
+                    {isPending && (
+                      <div style={{
+                        background: "#fef3c7", color: "#92400e", fontSize: "0.75rem", fontWeight: 600,
+                        padding: "0.45rem 1rem", margin: "-1.75rem -1.75rem 1rem -1.75rem",
+                        borderRadius: `${C.radius} ${C.radius} 0 0`,
+                        display: "flex", alignItems: "center", gap: "0.4rem",
+                      }}>
+                        <span>⚠</span> Pagamento pendente — conclua para confirmar seu pedido
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          )}
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
+                      <div>
+                        <span style={{ fontWeight: 700, color: "var(--text-color, #1a2e28)", fontSize: "0.95rem", display: "block" }}>
+                          Pedido #{orderNumber}
+                        </span>
+                        <span style={{ fontSize: "0.78rem", color: C.muted, display: "block" }}>{formattedDate}</span>
+                      </div>
+                      <span style={{
+                        fontSize: "0.72rem", fontWeight: 700, padding: "0.3rem 0.75rem",
+                        borderRadius: "20px", textTransform: "uppercase" as const, letterSpacing: "0.5px",
+                        background: sc.bg, color: sc.color,
+                      }}>
+                        {STATUS_LABELS[order.status] || order.status}
+                      </span>
+                    </div>
+
+                    <div style={{ marginBottom: "0.75rem" }}>
+                      {order.items.map(item => (
+                        <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--text-color, #1a2e28)", padding: "0.2rem 0" }}>
+                          <span>{item.product.name} <span style={{ color: C.muted }}>x{item.quantity}</span></span>
+                          <span>R$ {(item.price * item.quantity).toFixed(2).replace(".", ",")}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.75rem", borderTop: `1px solid ${C.border}`, marginBottom: "1rem" }}>
+                      <span style={{ fontSize: "0.78rem", color: C.muted }}>
+                        {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
+                      </span>
+                      <span style={{ fontWeight: 700, color: C.primary, fontSize: "1rem" }}>
+                        R$ {order.total.toFixed(2).replace(".", ",")}
+                      </span>
+                    </div>
+
+                    {/* Botão finalizar pagamento */}
+                      {isPending && (
+                        <button
+                          onClick={() => {
+                            sessionStorage.setItem("wc_pending_order_id", String(order.id));
+                            sessionStorage.setItem(
+                              "wc_checkout_items",
+                              JSON.stringify(
+                                order.items.map(i => ({
+                                  id: i.product.id,
+                                  name: i.product.name,
+                                  price: i.price,
+                                  quantity: i.quantity,
+                                  image: i.product.image ?? "",
+                                }))
+                              )
+                            );
+                            router.push("/checkout");
+                          }}
+                          style={{
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+                            padding: "0.65rem 1rem", borderRadius: "9px", width: "100%",
+                            background: C.primary, color: "#fff", border: "none",
+                            fontWeight: 700, fontSize: "0.85rem", cursor: "pointer",
+                            fontFamily: "inherit", marginBottom: "1rem", transition: "background 0.15s",
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = C.primaryLight)}
+                          onMouseLeave={e => (e.currentTarget.style.background = C.primary)}
+                        >
+                          💳 Finalizar pagamento
+                        </button>
+                      )}
+
+                    {/* Tracker de progresso */}
+                    <div style={{ display: "flex", alignItems: "flex-start", paddingTop: "0.5rem" }}>
+                      {TRACK_STEPS.map((step, i) => {
+                        const done = i <= stepIdx;
+                        const isLast = i === TRACK_STEPS.length - 1;
+                        return (
+                          <div key={step} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+                            {!isLast && (
+                              <div style={{
+                                position: "absolute", top: 6, left: "50%", width: "100%", height: 2,
+                                background: done && i < stepIdx ? C.primary : C.border, zIndex: 0,
+                              }} />
+                            )}
+                            <div style={{
+                              width: 13, height: 13, borderRadius: "50%", zIndex: 1, flexShrink: 0,
+                              background: done ? C.primary : C.border,
+                              border: `2px solid ${done ? C.primary : C.border}`,
+                            }} />
+                            <span style={{
+                              fontSize: "0.6rem", marginTop: "0.3rem", textAlign: "center",
+                              color: done ? C.primary : C.muted, fontWeight: done ? 600 : 400,
+                              lineHeight: 1.3, maxWidth: "90%", wordBreak: "break-word" as const,
+                            }}>
+                              {STATUS_LABELS[step] || step}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </>
+    )}
+  </section>
+)}
 
         {/* ═══ FAVORITOS ═══ */}
         {tab === "favoritos" && (

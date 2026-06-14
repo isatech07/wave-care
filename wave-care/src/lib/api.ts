@@ -221,8 +221,12 @@ export async function apiCreateOrder(
   });
 }
 
-export async function apiConfirmPayment(orderId: number): Promise<Order> {
-  return authFetch(`${API_URL}/order/${orderId}/pay`, { method: 'PUT' });
+export async function apiConfirmPayment(orderId: number, paymentMethod: string): Promise<Order> {
+  console.log("apiConfirmPayment chamado com:", { orderId, paymentMethod });
+  return authFetch(`${API_URL}/order/${orderId}/pay`, {
+    method: 'PUT',
+    body: JSON.stringify({ paymentMethod }),
+  });
 }
 
 /** GET /order — requer JWT + admin */

@@ -37,9 +37,11 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Lê snapshot dos items e orderId gerado no "Finalizar Compra"
-    const storedItems = sessionStorage.getItem("wc_checkout_items");
+    const storedItems  = sessionStorage.getItem("wc_checkout_items");
     const storedOrderId = sessionStorage.getItem("wc_pending_order_id");
+
+    console.log("storedOrderId:", storedOrderId);
+    console.log("storedItems:", storedItems);
 
     if (!storedItems && items.length === 0) {
       router.replace("/");
@@ -49,10 +51,10 @@ export default function CheckoutPage() {
     if (storedItems) {
       try { setSnapshotItems(JSON.parse(storedItems)); } catch { /* ignora */ }
     }
-    if (storedOrderId) {
-      setPendingOrderId(Number(storedOrderId));
-    }
 
+    // ← lê direto da variável local, não depende do estado
+    const orderId = storedOrderId ? Number(storedOrderId) : null;
+    setPendingOrderId(orderId);
     setReady(true);
   }, [initializing, loading, isLoggedIn, items.length]);
 
@@ -72,8 +74,13 @@ export default function CheckoutPage() {
     ? cartTotal
     : snapshotItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
-  const handlePagar = async () => {
-    if (!pendingOrderId) {
+    const handlePagar = async () => {
+    const orderIdToUse = pendingOrderId ?? Number(sessionStorage.getItem("wc_pending_order_id"));
+
+    console.log("pendingOrderId estado:", pendingOrderId);
+    console.log("orderIdToUse:", orderIdToUse);
+
+    if (!orderIdToUse) {
       setPayError("Pedido não encontrado. Volte ao carrinho e tente novamente.");
       return;
     }
@@ -82,20 +89,44 @@ export default function CheckoutPage() {
     setPayError(null);
 
     try {
-      // PUT /order/:id/pay — confirma o pagamento
-      const confirmedOrder: Order = await apiConfirmPayment(pendingOrderId);
+      const confirmedOrder: Order = await apiConfirmPayment(orderIdToUse, method);
 
-      // Atualiza pedido salvo localmente com status confirmado
+      const orderWithItems: Order = {
+        ...confirmedOrder,
+        items: confirmedOrder.items?.length
+          ? confirmedOrder.items
+          : displayItems.map((i, idx) => ({
+              id: idx,
+              orderId: confirmedOrder.id,
+              productId: i.id,
+              quantity: i.quantity,
+              price: i.price,
+              product: {
+                id: i.id,
+                name: i.name,
+                price: i.price,
+                image: i.image ?? "",
+                description: "",
+                category: "",
+                season: "",
+              },
+            })),
+      };
+
       if (user?.id) {
-        saveOrderLocally(user.id, confirmedOrder);
-        const number = getOrderNumberForUser(user.id, confirmedOrder.id);
-        sessionStorage.setItem("wc_last_order", JSON.stringify({ order: confirmedOrder, number }));
+        saveOrderLocally(user.id, orderWithItems);
+        const number = getOrderNumberForUser(user.id, orderWithItems.id);
+        sessionStorage.setItem(
+          "wc_last_order",
+          JSON.stringify({ order: orderWithItems, number })
+        );
       }
 
-      // Limpa dados temporários
       sessionStorage.removeItem("wc_checkout_items");
       sessionStorage.removeItem("wc_pending_order_id");
 
+      console.log("método escolhido:", method);
+      console.log("orderIdToUse:", orderIdToUse);
       router.push("/pedido/confirmado");
     } catch (err) {
       setPayError(err instanceof Error ? err.message : "Erro ao processar pagamento");
