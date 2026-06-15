@@ -18,31 +18,28 @@ export function formatPriceBRL(price: number): string {
 }
 
 export function mapToCarouselProduct(product: ApiProduct): CarouselProduct {
-
-  const imageUrl = product.image ?? undefined;
- 
   return {
     id: product.id,
     name: product.name,
     desc: product.description,
     price: formatPriceBRL(product.price),
-    rating: product.rating ?? 4.5,
-    reviews: product.reviews ?? 0,
-    img: imageUrl,
+    rating: 4.5,
+    reviews: 0,
+    img: product.image ?? undefined,
   };
 }
 
 export function filterProductsBySeason(products: ApiProduct[], seasonSlug: string): ApiProduct[] {
   const slug = seasonSlug.toLowerCase();
-  return products.filter((p) => p.season?.toLowerCase() === slug);
+  return products.filter((p) => p.season.toLowerCase() === slug);
 }
 
 export function splitProductsAndKits(products: ApiProduct[]) {
   const kits = products
-    .filter((p) => p.category?.toLowerCase() === "kit")
+    .filter((p) => p.category.toLowerCase() === "kit")
     .map(mapToCarouselProduct);
   const lineProducts = products
-    .filter((p) => p.category?.toLowerCase() !== "kit")
+    .filter((p) => p.category.toLowerCase() !== "kit")
     .map(mapToCarouselProduct);
   return { products: lineProducts, kits };
 }

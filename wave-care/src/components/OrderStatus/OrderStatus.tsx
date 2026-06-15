@@ -109,20 +109,21 @@ export default function OrderStatus() {
   const [error, setError] = useState<string | null>(null);
 
   const loadOrders = async () => {
-    if (!isLoggedIn || !user?.id) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = isAdmin
-        ? await apiGetAllOrders()
-        : await apiGetUserOrders(user.id);
-      setOrders(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar pedidos");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!isLoggedIn || !user?.id) return;
+  setLoading(true);
+  setError(null);
+  try {
+    const data = isAdmin
+      ? await apiGetAllOrders()
+      : await apiGetUserOrders(user.id);
+    // Normaliza status para maiúsculo
+    setOrders(data.map(o => ({ ...o, status: o.status.toUpperCase() as any })));
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Erro ao carregar pedidos");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadOrders();

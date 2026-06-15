@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import Link from "next/link";
+import AdminProducts from "@/components/Admin/AdminProducts";
+import { apiGetAllOrders, apiUpdateOrderStatus } from "@/lib/api";
+import type { Order, OrderStatus } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,17 +29,6 @@ interface ChatConversation {
   status: "open" | "resolved";
 }
 
-interface AdminOrder {
-  id: string;
-  client: string;
-  email: string;
-  total: number;
-  status: "aguardando" | "confirmado" | "enviado" | "entregue" | "cancelado";
-  date: string;
-  items: string[];
-  address: string;
-}
-
 interface AdminProduct {
   id: string;
   name: string;
@@ -55,14 +47,7 @@ interface BlogPost {
   views: number;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const mockOrders: AdminOrder[] = [
-  { id: "ord-001", client: "Ana Lima", email: "ana@email.com", total: 189.9, status: "aguardando", date: "2025-01-10", items: ["Shampoo Wave", "Condicionador Deep"], address: "Rua das Flores, 123 - SP" },
-  { id: "ord-002", client: "Carlos Melo", email: "carlos@email.com", total: 95.0, status: "confirmado", date: "2025-01-09", items: ["Máscara Hidratante"], address: "Av. Paulista, 1000 - SP" },
-  { id: "ord-003", client: "Beatriz Costa", email: "bia@email.com", total: 320.5, status: "enviado", date: "2025-01-08", items: ["Kit Verão", "Óleo Capilar"], address: "Rua do Comércio, 55 - RJ" },
-  { id: "ord-004", client: "Diego Silva", email: "diego@email.com", total: 65.0, status: "entregue", date: "2025-01-05", items: ["Finalizador Wave"], address: "Rua Nova, 77 - MG" },
-];
+// ─── Mock Data (blog, chat, products) ────────────────────────────────────────
 
 const mockProducts: AdminProduct[] = [
   { id: "p-001", name: "Shampoo Wave Care", price: 89.9, category: "Cabelos", stock: 42, active: true },
@@ -98,21 +83,27 @@ const mockChats: ChatConversation[] = [
   },
 ];
 
-// ─── Configs ──────────────────────────────────────────────────────────────────
+// ─── Order Status Config ──────────────────────────────────────────────────────
 
-const orderStatusConfig = {
-  aguardando: { label: "Aguardando", bg: "#fef9ec", color: "#92400e", dot: "#f59e0b" },
-  confirmado: { label: "Confirmado", bg: "#eff6ff", color: "#1e40af", dot: "#3b82f6" },
-  enviado:    { label: "Enviado",    bg: "#f5f3ff", color: "#5b21b6", dot: "#8b5cf6" },
-  entregue:   { label: "Entregue",   bg: "#ecfdf5", color: "#065f46", dot: "#10b981" },
-  cancelado:  { label: "Cancelado",  bg: "#fef2f2", color: "#991b1b", dot: "#ef4444" },
+const orderStatusMap: Record<OrderStatus, { label: string; bg: string; color: string; dot: string }> = {
+  PENDING:   { label: "Aguardando",    bg: "#fef9ec", color: "#92400e", dot: "#f59e0b" },
+  CONFIRMED: { label: "Confirmado",    bg: "#eff6ff", color: "#1e40af", dot: "#3b82f6" },
+  SHIPPED:   { label: "Em transporte", bg: "#f5f3ff", color: "#5b21b6", dot: "#8b5cf6" },
+  DELIVERED: { label: "Entregue",      bg: "#ecfdf5", color: "#065f46", dot: "#10b981" },
+  CANCELLED: { label: "Cancelado",     bg: "#fef2f2", color: "#991b1b", dot: "#ef4444" },
 };
 
-const nextStatus: Record<string, AdminOrder["status"]> = {
-  aguardando: "confirmado",
-  confirmado: "enviado",
-  enviado:    "entregue",
+const nextStatusMap: Partial<Record<OrderStatus, OrderStatus>> = {
+  PENDING: "CONFIRMED",
+  CONFIRMED: "SHIPPED",
+  SHIPPED: "DELIVERED",
 };
+
+const formatPrice = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const formatDate = (d: string) =>
+  new Date(d).toLocaleDateString("pt-BR");
 
 // ─── Icons (SVG Components) ──────────────────────────────────────────────────
 
@@ -212,30 +203,19 @@ const Icons = {
       <circle cx="12" cy="7" r="4" />
     </svg>
   ),
-
-  AdminBadge: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path d="M12 2L3 7v7c0 5 9 8 9 8s9-3 9-8V7l-9-5z" />
-      <path d="M12 8v4" />
-      <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="none" />
-    </svg>
-  ),
-  
   AdminShield: () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       <polyline points="9 12 11 14 15 10" />
     </svg>
   ),
-  
-  AdminCrown: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path d="M2 19l2-12 4 4 4-6 4 6 4-4 2 12H2z" />
-      <line x1="4" y1="19" x2="20" y2="19" />
+  Refresh: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="23 4 23 10 17 10" />
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
   ),
 };
-
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -243,7 +223,13 @@ export default function AdminPage() {
   const { user, isLoggedIn, logout } = useUser();
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
-  const [orders, setOrders] = useState<AdminOrder[]>(mockOrders);
+
+  // Orders — dados reais
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  // Mock data
   const [products, setProducts] = useState<AdminProduct[]>(mockProducts);
   const [blogs, setBlogs] = useState<BlogPost[]>(mockBlogs);
   const [chats, setChats] = useState<ChatConversation[]>(mockChats);
@@ -252,11 +238,25 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  async function loadOrders() {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      const data = await apiGetAllOrders();
+      setOrders(data);
+    } catch (err: any) {
+      setOrdersError(err.message || "Erro ao carregar pedidos");
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/");
     } else {
       setIsLoading(false);
+      loadOrders();
     }
   }, [isLoggedIn, router]);
 
@@ -275,16 +275,22 @@ export default function AdminPage() {
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
-  function advanceOrder(id: string) {
-    setOrders(prev => prev.map(o => {
-      if (o.id !== id) return o;
-      const next = nextStatus[o.status];
-      return next ? { ...o, status: next } : o;
-    }));
+  async function handleAdvanceOrder(orderId: number, next: OrderStatus) {
+    try {
+      const updated = await apiUpdateOrderStatus(orderId, next);
+      setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+    } catch (err: any) {
+      alert(err.message || "Erro ao atualizar pedido");
+    }
   }
 
-  function cancelOrder(id: string) {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: "cancelado" } : o));
+  async function handleCancelOrder(orderId: number) {
+    try {
+      const updated = await apiUpdateOrderStatus(orderId, "CANCELLED");
+      setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+    } catch (err: any) {
+      alert(err.message || "Erro ao cancelar pedido");
+    }
   }
 
   function toggleProduct(id: string) {
@@ -301,25 +307,31 @@ export default function AdminPage() {
       id: Date.now().toString(), from: "admin", text: chatInput.trim(),
       time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
     };
-    const update = (c: ChatConversation) => c.id === selectedChat.id ? { ...c, messages: [...c.messages, msg], lastMessage: chatInput.trim(), unread: 0 } : c;
+    const update = (c: ChatConversation) => c.id === selectedChat.id
+      ? { ...c, messages: [...c.messages, msg], lastMessage: chatInput.trim(), unread: 0 }
+      : c;
     setChats(prev => prev.map(update));
     setSelectedChat(prev => prev ? update(prev) : null);
     setChatInput("");
   }
 
-  const totalRevenue = orders.filter(o => o.status !== "cancelado").reduce((s, o) => s + o.total, 0);
-  const pendingOrders = orders.filter(o => o.status === "aguardando").length;
+  // ── Stats ─────────────────────────────────────────────────────────────────
+
+  const totalRevenue = orders
+    .filter(o => o.status !== "CANCELLED")
+    .reduce((s, o) => s + o.total, 0);
+  const pendingOrders = orders.filter(o => o.status === "PENDING").length;
   const totalUnread = chats.reduce((s, c) => s + c.unread, 0);
   const openChats = chats.filter(c => c.status === "open").length;
 
   // ── Nav items ─────────────────────────────────────────────────────────────
   const navItems: { id: AdminSection; label: string; Icon: () => JSX.Element; badge?: number }[] = [
-    { id: "dashboard", label: "Dashboard",  Icon: Icons.Dashboard },
-    { id: "pedidos",   label: "Pedidos",    Icon: Icons.Package,  badge: pendingOrders || undefined },
-    { id: "produtos",  label: "Produtos",   Icon: Icons.Product },
-    { id: "blog",      label: "Blog",       Icon: Icons.Blog },
-    { id: "chat",      label: "Suporte",    Icon: Icons.Chat,     badge: totalUnread || undefined },
-    { id: "usuarios",  label: "Usuários",   Icon: Icons.Users },
+    { id: "dashboard", label: "Dashboard", Icon: Icons.Dashboard },
+    { id: "pedidos",   label: "Pedidos",   Icon: Icons.Package, badge: pendingOrders || undefined },
+    { id: "produtos",  label: "Produtos",  Icon: Icons.Product },
+    { id: "blog",      label: "Blog",      Icon: Icons.Blog },
+    { id: "chat",      label: "Suporte",   Icon: Icons.Chat, badge: totalUnread || undefined },
+    { id: "usuarios",  label: "Usuários",  Icon: Icons.Users },
   ];
 
   const sectionLabel: Record<AdminSection, string> = {
@@ -329,7 +341,7 @@ export default function AdminPage() {
 
   return (
     <div className="adminContainer">
-        {/* Sidebar */}
+      {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebarHeader">
           <h1 className="logo">Wave Care</h1>
@@ -388,59 +400,45 @@ export default function AdminPage() {
           </div>
         </header>
 
-
         {/* Dynamic Content */}
         <div className="contentArea">
-          {/* Dashboard */}
+
+          {/* ── Dashboard ── */}
           {activeSection === "dashboard" && (
             <div>
-              {/* Stats Grid */}
               <div className="statsGrid">
                 <div className="statCard">
                   <div className="statCardHeader">
                     <span className="statLabel">Receita Total</span>
-                    <div className="statIcon statIconGreen">
-                      <Icons.TrendingUp />
-                    </div>
+                    <div className="statIcon statIconGreen"><Icons.TrendingUp /></div>
                   </div>
-                  <div className="statValue">
-                    R$ {totalRevenue.toFixed(2).replace(".", ",")}
-                  </div>
+                  <div className="statValue">{formatPrice(totalRevenue)}</div>
                 </div>
-
                 <div className="statCard">
                   <div className="statCardHeader">
                     <span className="statLabel">Pedidos Pendentes</span>
-                    <div className="statIcon statIconOrange">
-                      <Icons.Package />
-                    </div>
+                    <div className="statIcon statIconOrange"><Icons.Package /></div>
                   </div>
                   <div className="statValue">{pendingOrders}</div>
                 </div>
-
                 <div className="statCard">
                   <div className="statCardHeader">
                     <span className="statLabel">Produtos Ativos</span>
-                    <div className="statIcon statIconBlue">
-                      <Icons.Product />
-                    </div>
+                    <div className="statIcon statIconBlue"><Icons.Product /></div>
                   </div>
                   <div className="statValue">{products.filter(p => p.active).length}</div>
                 </div>
-
                 <div className="statCard">
                   <div className="statCardHeader">
                     <span className="statLabel">Chats Abertos</span>
-                    <div className="statIcon statIconPurple">
-                      <Icons.Chat />
-                    </div>
+                    <div className="statIcon statIconPurple"><Icons.Chat /></div>
                   </div>
                   <div className="statValue">{openChats}</div>
                 </div>
               </div>
 
-              {/* Recent Orders & Support */}
               <div className="dashboardGrid">
+                {/* Pedidos Recentes */}
                 <div className="recentCard">
                   <div className="cardHeader">
                     <h3>Pedidos Recentes</h3>
@@ -449,19 +447,19 @@ export default function AdminPage() {
                     </button>
                   </div>
                   <div className="recentList">
-                    {orders.slice(0, 4).map(order => {
-                      const st = orderStatusConfig[order.status];
+                    {ordersLoading ? (
+                      <p style={{ padding: "1rem", color: "var(--color-text-muted)", fontSize: "0.85rem" }}>
+                        Carregando...
+                      </p>
+                    ) : orders.slice(0, 4).map(order => {
+                      const st = orderStatusMap[order.status as OrderStatus] ?? orderStatusMap.PENDING;
                       return (
                         <div key={order.id} className="recentItem">
                           <div className="recentItemInfo">
-                            <div className="recentItemAvatar">
-                              {order.client.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                            </div>
+                            <div className="recentItemAvatar">U{order.userId}</div>
                             <div>
-                              <p className="recentItemName">{order.client}</p>
-                              <p className="recentItemDate">
-                                {new Date(order.date).toLocaleDateString("pt-BR")}
-                              </p>
+                              <p className="recentItemName">Usuário #{order.userId}</p>
+                              <p className="recentItemDate">{formatDate(order.createdAt)}</p>
                             </div>
                           </div>
                           <div className="recentItemStatus">
@@ -469,9 +467,7 @@ export default function AdminPage() {
                               <span className="statusDot" style={{ background: st.dot }} />
                               {st.label}
                             </span>
-                            <p className="recentItemTotal">
-                              R$ {order.total.toFixed(2).replace(".", ",")}
-                            </p>
+                            <p className="recentItemTotal">{formatPrice(order.total)}</p>
                           </div>
                         </div>
                       );
@@ -479,6 +475,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Suporte */}
                 <div className="recentCard">
                   <div className="cardHeader">
                     <h3>Suporte ao Cliente</h3>
@@ -499,9 +496,7 @@ export default function AdminPage() {
                         <div className="chatInfo">
                           <div className="chatHeader">
                             <span className="chatName">{chat.clientName}</span>
-                            {chat.unread > 0 && (
-                              <span className="unreadBadge">{chat.unread}</span>
-                            )}
+                            {chat.unread > 0 && <span className="unreadBadge">{chat.unread}</span>}
                           </div>
                           <p className="chatMessage">{chat.lastMessage}</p>
                           <span className={`chatStatus ${chat.status === "open" ? "chatStatusOpen" : "chatStatusResolved"}`}>
@@ -516,160 +511,118 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Orders Section */}
+          {/* ── Pedidos ── */}
           {activeSection === "pedidos" && (
             <div className="tableCard">
               <div className="tableHeader">
                 <h3>Todos os Pedidos</h3>
-                <span className="tableCount">{orders.length} pedidos</span>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <span className="tableCount">{orders.length} pedido{orders.length !== 1 ? "s" : ""}</span>
+                  <button onClick={loadOrders} className="actionBtnSecondary" title="Recarregar">
+                    <Icons.Refresh />
+                  </button>
+                </div>
               </div>
-              <div className="tableWrapper">
-                <table className="dataTable">
-                  <thead>
-                    <tr>
-                      <th>Pedido</th>
-                      <th>Cliente</th>
-                      <th>Itens</th>
-                      <th>Total</th>
-                      <th>Status</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map(order => {
-                      const st = orderStatusConfig[order.status];
-                      const can = nextStatus[order.status];
-                      return (
-                        <tr key={order.id} className="tableRow">
-                          <td className="orderId">
-                            #{order.id.slice(-4).toUpperCase()}
-                            <span className="orderDate">
-                              {new Date(order.date).toLocaleDateString("pt-BR")}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="clientCell">
-                              <div className="clientAvatar">
-                                {order.client.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                              </div>
-                              <div>
-                                <p className="clientName">{order.client}</p>
-                                <p className="clientEmail">{order.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="itemsCell">
-                            <span className="itemsList">{order.items.join(", ")}</span>
-                          </td>
-                          <td className="orderTotal">
-                            R$ {order.total.toFixed(2).replace(".", ",")}
-                          </td>
-                          <td>
-                            <span className="statusBadge" style={{ background: st.bg, color: st.color }}>
-                              <span className="statusDot" style={{ background: st.dot }} />
-                              {st.label}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="actionButtons">
-                              {can && (
-                                <button
-                                  onClick={() => advanceOrder(order.id)}
-                                  className="actionBtn actionBtnPrimary"
-                                >
-                                  <Icons.Check /> {orderStatusConfig[can].label}
-                                </button>
-                              )}
-                              {order.status !== "cancelado" && order.status !== "entregue" && (
-                                <button
-                                  onClick={() => cancelOrder(order.id)}
-                                  className="actionBtn actionBtnDanger"
-                                >
-                                  Cancelar
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
-          {/* Products Section */}
-          {activeSection === "produtos" && (
-            <div>
-              <div className="sectionHeader">
-                <button className="primaryButton">
-                  <Icons.Plus /> Novo Produto
-                </button>
-              </div>
-              <div className="tableCard">
+              {ordersLoading ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                  Carregando pedidos...
+                </div>
+              ) : ordersError ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444" }}>
+                  {ordersError}
+                  <br />
+                  <button onClick={loadOrders} className="actionBtnPrimary" style={{ marginTop: "1rem" }}>
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : orders.length === 0 ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                  Nenhum pedido encontrado.
+                </div>
+              ) : (
                 <div className="tableWrapper">
                   <table className="dataTable">
                     <thead>
                       <tr>
-                        <th>Produto</th>
-                        <th>Categoria</th>
-                        <th>Preço</th>
-                        <th>Estoque</th>
+                        <th>Pedido</th>
+                        <th>Usuário</th>
+                        <th>Itens</th>
+                        <th>Total</th>
                         <th>Status</th>
                         <th>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map(p => (
-                        <tr key={p.id} className="tableRow">
-                          <td className="productName">{p.name}</td>
-                          <td>
-                            <span className="categoryBadge">{p.category}</span>
-                          </td>
-                          <td className="productPrice">
-                            R$ {p.price.toFixed(2).replace(".", ",")}
-                          </td>
-                          <td>
-                            <span className={`stockValue ${p.stock === 0 ? "stockOut" : p.stock <= 10 ? "stockLow" : "stockOk"}`}>
-                              {p.stock === 0 ? "Esgotado" : `${p.stock} un.`}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={p.active ? "badgeActive" : "badgeInactive"}>
-                              <span className="statusDot" style={{ background: p.active ? "#10b981" : "#ef4444" }} />
-                              {p.active ? "Ativo" : "Inativo"}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="actionButtons">
-                              <button
-                                onClick={() => toggleProduct(p.id)}
-                                className={p.active ? "actionBtnDanger" : "actionBtnPrimary"}
-                              >
-                                {p.active ? "Desativar" : "Ativar"}
-                              </button>
-                              <button className="actionBtnSecondary">
-                                <Icons.Edit /> Editar
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {orders.map(order => {
+                        const statusKey = order.status as OrderStatus;
+                        const st = orderStatusMap[statusKey] ?? orderStatusMap.PENDING;
+                        const next = nextStatusMap[statusKey];
+
+                        return (
+                          <tr key={order.id} className="tableRow">
+                            <td className="orderId">
+                              #{order.id}
+                              <span className="orderDate">{formatDate(order.createdAt)}</span>
+                            </td>
+                            <td>
+                              <div className="clientCell">
+                                <div className="clientAvatar">U{order.userId}</div>
+                                <div>
+                                  <p className="clientName">Usuário #{order.userId}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="itemsCell">
+                              <span className="itemsList">
+                                {order.items.map(i => i.product?.name ?? `#${i.productId}`).join(", ")}
+                              </span>
+                            </td>
+                            <td className="orderTotal">{formatPrice(order.total)}</td>
+                            <td>
+                              <span className="statusBadge" style={{ background: st.bg, color: st.color }}>
+                                <span className="statusDot" style={{ background: st.dot }} />
+                                {st.label}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="actionButtons">
+                                {next && (
+                                  <button
+                                    onClick={() => handleAdvanceOrder(order.id, next)}
+                                    className="actionBtn actionBtnPrimary"
+                                  >
+                                    <Icons.Check /> {orderStatusMap[next].label}
+                                  </button>
+                                )}
+                                {statusKey !== "CANCELLED" && statusKey !== "DELIVERED" && (
+                                  <button
+                                    onClick={() => handleCancelOrder(order.id)}
+                                    className="actionBtn actionBtnDanger"
+                                  >
+                                    Cancelar
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {/* Blog Section */}
+          {/* ── Produtos ── */}
+          {activeSection === "produtos" && <AdminProducts />}
+
+          {/* ── Blog ── */}
           {activeSection === "blog" && (
             <div>
               <div className="sectionHeader">
-                <button className="primaryButton">
-                  <Icons.Plus /> Novo Artigo
-                </button>
+                <button className="primaryButton"><Icons.Plus /> Novo Artigo</button>
               </div>
               <div className="blogList">
                 {blogs.map(blog => (
@@ -692,9 +645,7 @@ export default function AdminPage() {
                             <Icons.Eye /> {blog.views.toLocaleString()} visualizações
                           </span>
                         )}
-                        <span className="blogDate">
-                          {new Date(blog.date).toLocaleDateString("pt-BR")}
-                        </span>
+                        <span className="blogDate">{new Date(blog.date).toLocaleDateString("pt-BR")}</span>
                       </div>
                       <h4 className="blogTitle">{blog.title}</h4>
                       <p className="blogExcerpt">{blog.excerpt}</p>
@@ -706,9 +657,7 @@ export default function AdminPage() {
                       >
                         {blog.status === "publicado" ? "Despublicar" : "Publicar"}
                       </button>
-                      <button className="actionBtnSecondary">
-                        <Icons.Edit /> Editar
-                      </button>
+                      <button className="actionBtnSecondary"><Icons.Edit /> Editar</button>
                     </div>
                   </div>
                 ))}
@@ -716,13 +665,11 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Chat Section */}
+          {/* ── Chat ── */}
           {activeSection === "chat" && (
             <div className="chatContainer">
               <div className="chatSidebar">
-                <div className="chatSidebarHeader">
-                  <h3>Conversas</h3>
-                </div>
+                <div className="chatSidebarHeader"><h3>Conversas</h3></div>
                 <div className="chatList">
                   {chats.map(chat => (
                     <div
@@ -736,9 +683,7 @@ export default function AdminPage() {
                       <div className="chatListInfo">
                         <div className="chatListHeader">
                           <span className="chatListName">{chat.clientName}</span>
-                          {chat.unread > 0 && (
-                            <span className="unreadBadgeSmall">{chat.unread}</span>
-                          )}
+                          {chat.unread > 0 && <span className="unreadBadgeSmall">{chat.unread}</span>}
                         </div>
                         <p className="chatListMessage">{chat.lastMessage}</p>
                         <span className={`chatListStatus ${chat.status === "open" ? "chatStatusOpen" : "chatStatusResolved"}`}>
@@ -755,36 +700,27 @@ export default function AdminPage() {
                   <>
                     <div className="chatWindowHeader">
                       <div className="chatWindowUser">
-                        <div className="chatWindowAvatar">
-                          {selectedChat.clientName[0]}
-                        </div>
+                        <div className="chatWindowAvatar">{selectedChat.clientName[0]}</div>
                         <div>
                           <h4>{selectedChat.clientName}</h4>
                           <p>{selectedChat.clientEmail}</p>
                         </div>
                       </div>
                       <button
-                        onClick={() => setChats(prev => prev.map(c => c.id === selectedChat.id ? { ...c, status: c.status === "open" ? "resolved" : "open" } : c))}
+                        onClick={() => setChats(prev => prev.map(c =>
+                          c.id === selectedChat.id ? { ...c, status: c.status === "open" ? "resolved" : "open" } : c
+                        ))}
                         className={selectedChat.status === "open" ? "primaryButtonSmall" : "secondaryButtonSmall"}
                       >
-                        {selectedChat.status === "open" ? (
-                          <><Icons.Check /> Resolver</>
-                        ) : (
-                          "Reabrir"
-                        )}
+                        {selectedChat.status === "open" ? <><Icons.Check /> Resolver</> : "Reabrir"}
                       </button>
                     </div>
 
                     <div className="chatMessages">
                       {selectedChat.messages.map(msg => (
-                        <div
-                          key={msg.id}
-                          className={`message ${msg.from === "admin" ? "messageAdmin" : "messageClient"}`}
-                        >
+                        <div key={msg.id} className={`message ${msg.from === "admin" ? "messageAdmin" : "messageClient"}`}>
                           {msg.from === "client" && (
-                            <div className="messageAvatar">
-                              {selectedChat.clientName[0]}
-                            </div>
+                            <div className="messageAvatar">{selectedChat.clientName[0]}</div>
                           )}
                           <div className="messageBubble">
                             <p>{msg.text}</p>
@@ -809,20 +745,16 @@ export default function AdminPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="chatEmpty">
-                    <p>Selecione uma conversa para começar</p>
-                  </div>
+                  <div className="chatEmpty"><p>Selecione uma conversa para começar</p></div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Users Section */}
+          {/* ── Usuários ── */}
           {activeSection === "usuarios" && (
             <div className="emptyModule">
-              <div className="emptyIcon">
-                <Icons.Users />
-              </div>
+              <div className="emptyIcon"><Icons.Users /></div>
               <h3>Gestão de Usuários</h3>
               <p>Módulo em desenvolvimento</p>
             </div>

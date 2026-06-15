@@ -1,7 +1,6 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
 //  Token 
-// Chave usada para salvar o JWT no localStorage
 const TOKEN_KEY = 'wavecare_token';
 
 export function getToken(): string | null {
@@ -59,20 +58,16 @@ export interface MappedUser {
   foto?: string;
   role?: string;
 }
+
 export interface ApiProduct {
   id: number;
   name: string;
   description: string;
   price: number;
-  image: string;
+  image?: string | null;
   category: string;
   season: string;
   stock?: number;
-  rating?: number;
-  reviews?: number;
-  originalPrice?: number;
-  badge?: string;
-  featured?: boolean;
   createdAt?: string;
 }
 
@@ -112,6 +107,8 @@ export interface Order {
   createdAt: string;
 }
 
+export interface OrderApi extends Order {}
+
 //  Auth / Usuário 
 
 export async function apiLogin(email: string, password: string): Promise<MappedUser> {
@@ -122,13 +119,10 @@ export async function apiLogin(email: string, password: string): Promise<MappedU
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'Erro ao fazer login');
-
   if (data.access_token) saveToken(data.access_token);
-
   return mapUser(data.user);
 }
 
-/** POST /users/register */
 export async function apiRegister(name: string, email: string, password: string) {
   const res = await fetch(`${API_URL}/users/register`, {
     method: 'POST',
@@ -140,7 +134,6 @@ export async function apiRegister(name: string, email: string, password: string)
   return data;
 }
 
-/** PUT /users/:id — requer JWT */
 export async function apiUpdateUser(
   id: number,
   fields: { name?: string; email?: string; telefone?: string; cidade?: string },
@@ -152,7 +145,6 @@ export async function apiUpdateUser(
   return mapUser(data);
 }
 
-/** DELETE /users/:id — requer JWT */
 export async function apiDeleteUser(id: number): Promise<true> {
   await authFetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
   return true;
@@ -165,6 +157,26 @@ export async function getProducts(): Promise<ApiProduct[]> {
   const data = await res.json();
   if (!res.ok) throw new Error('Erro ao buscar produtos');
   return data;
+}
+
+export async function createProduct(data: Omit<ApiProduct, 'id' | 'createdAt'>): Promise<ApiProduct> {
+  return authFetch(`${API_URL}/products`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateProduct(id: number, data: Partial<Omit<ApiProduct, 'id' | 'createdAt'>>): Promise<ApiProduct> {
+  return authFetch(`${API_URL}/products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteProduct(id: number): Promise<void> {
+  return authFetch(`${API_URL}/products/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 //  Carrinho 
@@ -180,7 +192,6 @@ export async function apiAddCartItem(
   });
 }
 
-/** GET /cart/:userId — requer JWT */
 export async function apiGetCart(userId: number): Promise<Cart | null> {
   try {
     return await authFetch(`${API_URL}/cart/${userId}`);
@@ -190,7 +201,6 @@ export async function apiGetCart(userId: number): Promise<Cart | null> {
   }
 }
 
-/** PUT /cart/:cartItemId — requer JWT */
 export async function apiUpdateCartItem(cartItemId: number, quantity: number): Promise<CartItem> {
   return authFetch(`${API_URL}/cart/${cartItemId}`, {
     method: 'PUT',
@@ -198,12 +208,10 @@ export async function apiUpdateCartItem(cartItemId: number, quantity: number): P
   });
 }
 
-/** DELETE /cart/:cartItemId — requer JWT */
 export async function apiRemoveCartItem(cartItemId: number): Promise<void> {
   return authFetch(`${API_URL}/cart/${cartItemId}`, { method: 'DELETE' });
 }
 
-/** DELETE /cart/clear/:userId — requer JWT */
 export async function apiClearCart(userId: number): Promise<void> {
   return authFetch(`${API_URL}/cart/clear/${userId}`, { method: 'DELETE' });
 }
@@ -221,19 +229,24 @@ export async function apiCreateOrder(
 }
 
 export async function apiConfirmPayment(orderId: number, paymentMethod: string): Promise<Order> {
-  console.log("apiConfirmPayment chamado com:", { orderId, paymentMethod });
   return authFetch(`${API_URL}/order/${orderId}/pay`, {
     method: 'PUT',
     body: JSON.stringify({ paymentMethod }),
   });
 }
 
-/** GET /order — requer JWT + admin */
-export async function apiGetAllOrders(): Promise<Order[]> {
-  return authFetch(`${API_URL}/order`);
+function normalizeOrder(o: any): Order {
+  return {
+    ...o,
+    status: (o.status as string).toUpperCase() as OrderStatus,
+  };
 }
 
-/** GET /order/:id — requer JWT */
+export async function apiGetAllOrders(): Promise<Order[]> {
+  const data = await authFetch(`${API_URL}/order`);
+  return data.map(normalizeOrder);
+}
+
 export async function apiGetOrder(orderId: number): Promise<Order | null> {
   try {
     return await authFetch(`${API_URL}/order/${orderId}`);
@@ -242,7 +255,6 @@ export async function apiGetOrder(orderId: number): Promise<Order | null> {
   }
 }
 
-/** PUT /order/:id — requer JWT + admin */
 export async function apiUpdateOrderStatus(orderId: number, status: OrderStatus): Promise<Order> {
   return authFetch(`${API_URL}/order/${orderId}`, {
     method: 'PUT',
@@ -250,50 +262,54 @@ export async function apiUpdateOrderStatus(orderId: number, status: OrderStatus)
   });
 }
 
-/** DELETE /order/:id — requer JWT + admin */
 export async function apiDeleteOrder(orderId: number): Promise<void> {
   return authFetch(`${API_URL}/order/${orderId}`, { method: 'DELETE' });
 }
 
-const ordersKey = (userId: number) => `wavecare_orders_${userId}`;
+// ✅ Agora busca do backend em vez do localStorage
+export async function apiGetUserOrders(userId: number): Promise<Order[]> {
+  try {
+    const data = await authFetch(`${API_URL}/order/user/${userId}`);
+    return data.map(normalizeOrder);
+  } catch {
+    return [];
+  }
+}
 
+export async function apiGetOrdersByUser(userId: number): Promise<Order[]> {
+  try {
+    const data = await authFetch(`${API_URL}/order/user/${userId}`);
+    return data.map(normalizeOrder);
+  } catch {
+    return [];
+  }
+}
+
+// Mantido como fallback para compatibilidade
 export function saveOrderLocally(userId: number, order: Order): void {
   if (typeof window === 'undefined') return;
-  const key = ordersKey(userId);
+  const key = `wavecare_orders_${userId}`;
   const existing: Order[] = JSON.parse(localStorage.getItem(key) ?? '[]');
   const updated = [order, ...existing.filter((o) => o.id !== order.id)];
   localStorage.setItem(key, JSON.stringify(updated));
 }
 
-export function apiGetUserOrders(userId: number): Order[] {
-  if (typeof window === 'undefined') return [];
-  const key = ordersKey(userId);
-  return JSON.parse(localStorage.getItem(key) ?? '[]');
-}
-
-export async function apiGetOrdersByUser(userId: number): Promise<Order[]> {
-  try {
-    return await authFetch(`${API_URL}/order/user/${userId}`)
-  } catch {
-    return []
-  }
-}
-
 export async function getOrderDisplayNumber(userId: number, orderId: number): Promise<number> {
   try {
     const orders = await apiGetOrdersByUser(userId);
-    const chronological = [...orders].reverse(); // mais antigo primeiro
+    const chronological = [...orders].reverse();
     const idx = chronological.findIndex((o) => o.id === orderId);
     return idx === -1 ? chronological.length : idx + 1;
   } catch {
-    return orderId; // fallback
+    return orderId;
   }
 }
 
 export function getOrderNumberForUser(userId: number, orderId: number): number {
   if (typeof window === 'undefined') return orderId;
-  const orders = apiGetUserOrders(userId); // mais recente primeiro
-  const chronological = [...orders].reverse(); // mais antigo primeiro
+  const key = `wavecare_orders_${userId}`;
+  const orders: Order[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+  const chronological = [...orders].reverse();
   const index = chronological.findIndex((o) => o.id === orderId);
   return index === -1 ? chronological.length + 1 : index + 1;
 }
@@ -323,9 +339,8 @@ export interface QuizResult extends QuizApiResult {
   createdAt: string
 }
 
-/** POST /quiz — envia resultado ao banco; userId vai via JWT no header */
 export async function apiSubmitQuiz(payload: QuizPayload): Promise<QuizApiResult> {
-  const token = getToken()
+  const token = getToken();
   const res = await fetch(`${API_URL}/quiz`, {
     method: 'POST',
     headers: {
@@ -333,23 +348,22 @@ export async function apiSubmitQuiz(payload: QuizPayload): Promise<QuizApiResult
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(payload),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.message || 'Erro ao enviar quiz')
-  return data
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Erro ao enviar quiz');
+  return data;
 }
 
-/** GET /quiz/me — busca o resultado salvo do quiz do usuário logado (via JWT) */
 export async function apiGetMyQuizResult(): Promise<QuizResult | null> {
   try {
-    return await authFetch(`${API_URL}/quiz/me`)
+    return await authFetch(`${API_URL}/quiz/me`);
   } catch (err: any) {
-    if (err.message?.includes('404') || err.message?.includes('não encontrado')) return null
-    throw err
+    if (err.message?.includes('404') || err.message?.includes('não encontrado')) return null;
+    throw err;
   }
 }
 
-// ── Perfil unificado (user + capilar) ────────────────────────────────────────
+// ── Perfil unificado ──────────────────────────────────────────────────────────
 
 export interface MyProfile {
   id: number
@@ -370,19 +384,15 @@ export interface MyProfile {
   } | null
 }
 
-/** GET /users/me/profile — user + quiz result mais recente mapeado como capilar */
 export async function apiGetMyProfile(): Promise<MyProfile | null> {
   try {
-    return await authFetch(`${API_URL}/users/me/profile`)
+    return await authFetch(`${API_URL}/users/me/profile`);
   } catch (err: any) {
     if (
       err.message?.includes('401') ||
       err.message?.includes('403') ||
       err.message?.includes('Unauthorized')
-    ) return null
-    throw err
+    ) return null;
+    throw err;
   }
 }
-
-
-

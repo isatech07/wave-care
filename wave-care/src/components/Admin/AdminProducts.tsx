@@ -1,187 +1,306 @@
-// components/Admin/AdminProducts.tsx
 "use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Package, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Eye, 
-  Tag, 
-  Image as ImageIcon,
-  DollarSign,
-  Star
-} from 'lucide-react';
-import Image from 'next/image';
+import { useState, useEffect } from "react";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "@/lib/api";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Edit3, Trash2, Tag } from "lucide-react";
+import Image from "next/image";
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;
-  originalPrice?: number;
   image: string;
   category: string;
+  season: string;
   stock: number;
-  status: 'active' | 'inactive' | 'out-of-stock';
-  rating: number;
-  sales: number;
 }
 
-const products: Product[] = [
-  {
-    id: '1',
-    name: 'SunShield Shampoo',
-    description: 'Limpeza suave com proteção UV',
-    price: 29.90,
-    originalPrice: 39.90,
-    image: '/products/verao-produtos/verão-shampoo.png',
-    category: 'Shampoo',
-    stock: 127,
-    status: 'active',
-    rating: 4.8,
-    sales: 234
-  },
-  {
-    id: '2',
-    name: 'Autumn Repair Mask',
-    description: 'Tratamento intensivo reparador',
-    price: 44.90,
-    image: '/products/outono-produtos/outono-mascara.png',
-    category: 'Máscara',
-    stock: 89,
-    status: 'active',
-    rating: 4.9,
-    sales: 312
-  },
-  {
-    id: '3',
-    name: 'Winter Leave-in',
-    description: 'Proteção contra frio e vento',
-    price: 32.90,
-    image: '/products/inverno-produtos/inverno-creme.png',
-    category: 'Leave-in',
-    stock: 0,
-    status: 'out-of-stock',
-    rating: 4.7,
-    sales: 189
-  },
-  {
-    id: '4',
-    name: 'Primavera Gelatin',
-    description: 'Modelagem natural para cachos',
-    price: 38.90,
-    image: '/products/primavera-produtos/primavera-gelatina.png',
-    category: 'Gelatina',
-    stock: 45,
-    status: 'inactive',
-    rating: 4.6,
-    sales: 67
-  }
-];
-
-const categories = ['Shampoo', 'Máscara', 'Leave-in', 'Gelatina', 'Óleo', 'Kit'];
-const statusConfig = {
-  active: { label: 'Ativo', color: 'green' },
-  inactive: { label: 'Inativo', color: 'gray' },
-  'out-of-stock': { label: 'Sem estoque', color: 'red' }
+type ProductForm = {
+  name: string;
+  description: string;
+  price: string;
+  image: string;
+  category: string;
+  season: string;
+  stock: string;
 };
 
+const emptyForm: ProductForm = {
+  name: "",
+  description: "",
+  price: "",
+  image: "",
+  category: "",
+  season: "",
+  stock: "",
+};
+
+const categories = [
+  "Shampoo",
+  "Máscara",
+  "Leave-in",
+  "Gelatina",
+  "Óleo",
+  "Kit",
+];
+const seasons = ["verao", "outono", "inverno", "primavera"];
+
+// ✅ FORA do AdminProducts — isso resolve o bug de perder foco a cada letra
+interface FormFieldsProps {
+  form: ProductForm;
+  setForm: (f: ProductForm) => void;
+  error: string | null;
+}
+
+function ProductFormFields({ form, setForm, error }: FormFieldsProps) {
+  return (
+    <>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Nome *</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Categoria *</label>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            required
+          >
+            <option value="">Selecione...</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Estação *</label>
+          <select
+            value={form.season}
+            onChange={(e) => setForm({ ...form, season: e.target.value })}
+            required
+          >
+            <option value="">Selecione...</option>
+            {seasons.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Estoque *</label>
+          <input
+            type="number"
+            value={form.stock}
+            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+            required
+          />
+        </div>
+      </div>
+      <div className="form-group">
+        <label>Descrição</label>
+        <textarea
+          rows={3}
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+        />
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Preço (R$) *</label>
+          <input
+            type="number"
+            step="0.01"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Imagem</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                setForm({ ...form, image: reader.result as string });
+              };
+              reader.readAsDataURL(file);
+            }}
+          />
+          {form.image && (
+            <img
+              src={form.image}
+              alt="preview"
+              style={{
+                width: 80,
+                height: 80,
+                objectFit: "cover",
+                borderRadius: 8,
+                marginTop: 8,
+              }}
+            />
+          )}
+        </div>
+      </div>
+      {error && (
+        <p style={{ color: "var(--color-danger)", fontSize: "0.8rem" }}>
+          {error}
+        </p>
+      )}
+    </>
+  );
+}
+
 export default function AdminProducts() {
-  const [productsList, setProductsList] = useState(products);
+  const [productsList, setProductsList] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: '',
-    description: '',
-    price: '',
-    originalPrice: '',
-    image: '',
-    category: '',
-    stock: ''
-  });
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredProducts = productsList.filter(product => {
-    const matchesCategory = filterCategory === 'all' || product.category === filterCategory;
-    const matchesStatus = filterStatus === 'all' || product.status === filterStatus;
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesStatus && matchesSearch;
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  async function loadProducts() {
+    try {
+      const data = await getProducts();
+      setProductsList(data as Product[]);
+    } catch (err) {
+      console.error("Erro ao carregar produtos:", err);
+    }
+  }
+
+  const filteredProducts = productsList.filter((p) => {
+    const matchesCategory =
+      filterCategory === "all" || p.category === filterCategory;
+    const matchesSearch = p.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
   });
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(price);
-  };
 
-  const handleStatusChange = (productId: string, newStatus: Product['status']) => {
-    setProductsList(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, status: newStatus }
-          : product
-      )
-    );
-  };
-
-  const handleStockUpdate = (productId: string, newStock: number) => {
-    setProductsList(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, stock: newStock, status: newStock > 0 ? 'active' : 'out-of-stock' }
-          : product
-      )
-    );
-  };
-
-  const handleDelete = (productId: string) => {
-    setProductsList(prev => prev.filter(product => product.id !== productId));
-    setSelectedProduct(null);
-  };
-
-  const handleCreateProduct = (e: React.FormEvent) => {
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    const product: Product = {
-      id: Date.now().toString(),
-      name: newProduct.name,
-      description: newProduct.description,
-      price: parseFloat(newProduct.price),
-      originalPrice: newProduct.originalPrice ? parseFloat(newProduct.originalPrice) : undefined,
-      image: newProduct.image || '/default-product.jpg',
-      category: newProduct.category,
-      stock: parseInt(newProduct.stock),
-      status: parseInt(newProduct.stock) > 0 ? 'active' : 'out-of-stock',
-      rating: 0,
-      sales: 0
-    };
-    
-    setProductsList([product, ...productsList]);
-    setNewProduct({
-      name: '',
-      description: '',
-      price: '',
-      originalPrice: '',
-      image: '',
-      category: '',
-      stock: ''
+    setLoading(true);
+    setError(null);
+    try {
+      const created = await createProduct({
+        name: form.name,
+        description: form.description,
+        price: parseFloat(form.price),
+        image: form.image || "/default-product.jpg",
+        category: form.category,
+        season: form.season,
+        stock: parseInt(form.stock),
+      });
+      setProductsList([created as Product, ...productsList]);
+      setForm(emptyForm);
+      setIsCreating(false);
+    } catch (err: any) {
+      setError(err.message || "Erro ao criar produto");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openEdit(product: Product) {
+    setSelectedProduct(product);
+    setForm({
+      name: product.name,
+      description: product.description,
+      price: String(product.price),
+      image: product.image || "",
+      category: product.category,
+      season: product.season,
+      stock: String(product.stock),
     });
-    setIsCreating(false);
-  };
+    setIsEditing(true);
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const updated = await updateProduct(selectedProduct.id, {
+        name: form.name,
+        description: form.description,
+        price: parseFloat(form.price),
+        image: form.image || "/default-product.jpg",
+        category: form.category,
+        season: form.season,
+        stock: parseInt(form.stock),
+      });
+      setProductsList((prev) =>
+        prev.map((p) =>
+          p.id === selectedProduct.id ? (updated as Product) : p,
+        ),
+      );
+      setIsEditing(false);
+      setSelectedProduct(null);
+      setForm(emptyForm);
+    } catch (err: any) {
+      setError(err.message || "Erro ao atualizar produto");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    try {
+      await deleteProduct(id);
+      setProductsList((prev) => prev.filter((p) => p.id !== id));
+      setSelectedProduct(null);
+    } catch (err: any) {
+      alert(err.message || "Erro ao deletar produto");
+    }
+  }
 
   return (
     <div className="admin-products">
       <div className="products-header">
         <div>
           <h2>Gerenciar Produtos</h2>
-          <p>{filteredProducts.length} produtos {filteredProducts.length !== productsList.length && `de ${productsList.length}`}</p>
+          <p>
+            {filteredProducts.length} produtos
+            {filteredProducts.length !== productsList.length &&
+              ` de ${productsList.length}`}
+          </p>
         </div>
-        
         <div className="header-actions">
           <input
             type="text"
@@ -190,35 +309,27 @@ export default function AdminProducts() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
-          
-          <select 
-            value={filterCategory} 
+          <select
+            value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             className="filter-select"
           >
             <option value="all">Todas categorias</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
           </select>
-          
-          <select 
-            value={filterStatus} 
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="filter-select"
-          >
-            <option value="all">Todos status</option>
-            <option value="active">Ativos</option>
-            <option value="inactive">Inativos</option>
-            <option value="out-of-stock">Sem estoque</option>
-          </select>
-          
-          <button 
+          <button
             className="create-product-btn"
-            onClick={() => setIsCreating(true)}
+            onClick={() => {
+              setForm(emptyForm);
+              setError(null);
+              setIsCreating(true);
+            }}
           >
-            <Plus size={20} />
-            Novo Produto
+            <Plus size={20} /> Novo Produto
           </button>
         </div>
       </div>
@@ -233,49 +344,34 @@ export default function AdminProducts() {
           >
             <div className="product-image-wrapper">
               <Image
-                src={product.image}
+                src={product.image || "/default-product.jpg"}
                 alt={product.name}
                 width={120}
                 height={120}
                 className="product-image-admin"
               />
-              <span className={`product-status status-${product.status}`}>
-                {statusConfig[product.status].label}
-              </span>
+              <span className="product-season">{product.season}</span>
             </div>
-            
             <div className="product-info-admin">
               <h3 className="product-name-admin">{product.name}</h3>
               <div className="product-category">
                 <Tag size={14} />
                 <span>{product.category}</span>
               </div>
-              
               <div className="product-price-admin">
-                <span className="price-current">{formatPrice(product.price)}</span>
-                {product.originalPrice && (
-                  <span className="price-original">{formatPrice(product.originalPrice)}</span>
-                )}
+                <span className="price-current">
+                  {formatPrice(product.price)}
+                </span>
               </div>
-              
               <div className="product-stats">
-                <div className="stat-item">
-                  <span>Estoque: {product.stock}</span>
-                </div>
-                <div className="stat-item">
-                  <Star size={14} fill="currentColor" />
-                  <span>{product.rating}</span>
-                </div>
-                <div className="stat-item">
-                  <span>{product.sales} vendas</span>
-                </div>
+                <span>Estoque: {product.stock}</span>
               </div>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Modal Novo Produto */}
+      {/* Modal Criar */}
       <AnimatePresence>
         {isCreating && (
           <motion.div
@@ -293,95 +389,23 @@ export default function AdminProducts() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="modal-header">
-                <h3><Plus size={24} /> Novo Produto</h3>
-                <button onClick={() => setIsCreating(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <h3>
+                  <Plus size={24} /> Novo Produto
+                </h3>
+                <button onClick={() => setIsCreating(false)}>✕</button>
               </div>
-
-              <form onSubmit={handleCreateProduct} className="create-form">
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Nome *</label>
-                    <input
-                      type="text"
-                      value={newProduct.name}
-                      onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Categoria *</label>
-                    <select
-                      value={newProduct.category}
-                      onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                      required
-                    >
-                      <option value="">Selecione...</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Descrição</label>
-                  <textarea
-                    rows={3}
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Preço (R$) *</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={newProduct.price}
-                      onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Preço Antigo (opcional)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={newProduct.originalPrice}
-                      onChange={(e) => setNewProduct({...newProduct, originalPrice: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Estoque *</label>
-                    <input
-                      type="number"
-                      value={newProduct.stock}
-                      onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Imagem (URL)</label>
-                    <input
-                      type="url"
-                      value={newProduct.image}
-                      onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                      placeholder="https://exemplo.com/produto.jpg"
-                    />
-                  </div>
-                </div>
-
-                <button type="submit" className="btn-primary">
-                  Criar Produto
+              <form onSubmit={handleCreate} className="create-form">
+                <ProductFormFields
+                  form={form}
+                  setForm={setForm}
+                  error={error}
+                />
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={loading}
+                >
+                  {loading ? "Criando..." : "Criar Produto"}
                 </button>
               </form>
             </motion.div>
@@ -389,9 +413,58 @@ export default function AdminProducts() {
         )}
       </AnimatePresence>
 
-      {/* Modal Detalhes Produto */}
+      {/* Modal Editar */}
       <AnimatePresence>
-        {selectedProduct && (
+        {isEditing && selectedProduct && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsEditing(false)}
+          >
+            <motion.div
+              className="modal-content create-modal"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <h3>
+                  <Edit3 size={24} /> Editar Produto
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    setError(null);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleUpdate} className="create-form">
+                <ProductFormFields
+                  form={form}
+                  setForm={setForm}
+                  error={error}
+                />
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={loading}
+                >
+                  {loading ? "Salvando..." : "Salvar Alterações"}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Detalhes */}
+      <AnimatePresence>
+        {selectedProduct && !isEditing && (
           <motion.div
             className="modal-overlay"
             initial={{ opacity: 0 }}
@@ -409,26 +482,13 @@ export default function AdminProducts() {
               <div className="modal-header">
                 <h3>{selectedProduct.name}</h3>
                 <div className="modal-actions">
-                  <select 
-                    value={selectedProduct.status}
-                    onChange={(e) => handleStatusChange(selectedProduct.id, e.target.value as any)}
-                    className="status-select"
+                  <button
+                    className="btn-edit"
+                    onClick={() => openEdit(selectedProduct)}
                   >
-                    <option value="active">Ativo</option>
-                    <option value="inactive">Inativo</option>
-                    <option value="out-of-stock">Sem estoque</option>
-                  </select>
-                  <input
-                    type="number"
-                    value={selectedProduct.stock}
-                    onChange={(e) => handleStockUpdate(selectedProduct.id, parseInt(e.target.value))}
-                    className="stock-input"
-                    min="0"
-                  />
-                  <button className="btn-edit">
                     <Edit3 size={18} />
                   </button>
-                  <button 
+                  <button
                     className="btn-delete"
                     onClick={() => handleDelete(selectedProduct.id)}
                   >
@@ -436,40 +496,34 @@ export default function AdminProducts() {
                   </button>
                 </div>
               </div>
-
               <div className="modal-body">
                 <div className="product-detail-image">
                   <Image
-                    src={selectedProduct.image}
+                    src={selectedProduct.image || "/default-product.jpg"}
                     alt={selectedProduct.name}
                     width={400}
                     height={400}
                     className="product-detail-img"
                   />
                 </div>
-                
                 <div className="product-detail-info">
-                  <div className="product-prices">
-                    <span className="price-current-large">{formatPrice(selectedProduct.price)}</span>
-                    {selectedProduct.originalPrice && (
-                      <span className="price-original-large">{formatPrice(selectedProduct.originalPrice)}</span>
-                    )}
-                  </div>
-                  
+                  <span className="price-current-large">
+                    {formatPrice(selectedProduct.price)}
+                  </span>
                   <div className="product-stats-large">
                     <div className="stat-item">
                       <span>Categoria: {selectedProduct.category}</span>
                     </div>
                     <div className="stat-item">
-                      <span>Estoque: {selectedProduct.stock}</span>
+                      <span>Estação: {selectedProduct.season}</span>
                     </div>
                     <div className="stat-item">
-                      <Star size={18} fill="currentColor" />
-                      <span>{selectedProduct.rating} ( {selectedProduct.sales} vendas )</span>
+                      <span>Estoque: {selectedProduct.stock}</span>
                     </div>
                   </div>
-                  
-                  <p className="product-description-large">{selectedProduct.description}</p>
+                  <p className="product-description-large">
+                    {selectedProduct.description}
+                  </p>
                 </div>
               </div>
             </motion.div>
