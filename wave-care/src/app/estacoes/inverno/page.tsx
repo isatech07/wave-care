@@ -96,7 +96,7 @@ export default function Winter() {
         <div className={styles.heroGrain}   aria-hidden="true" />
         <div className={styles.heroOverlay} aria-hidden="true" />
         <div className={styles.heroContent}>
-          <span className={styles.heroEyebrow}>Winter Protection</span>
+          <span className={styles.heroEyebrow}>Winter Frost</span>
           <h1 className={styles.heroTitle}>Inverno</h1>
           <p className={styles.heroSub}>
             Proteja seus fios do frio intenso e do ar seco. Nutrição profunda e selamento de

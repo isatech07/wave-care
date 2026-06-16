@@ -1,6 +1,8 @@
+// app/page.tsx
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,18 +11,44 @@ import {
   X, Plus, Minus, Check, Trash2, ChevronLeft, ChevronRight, Award,
   Sun, CloudSnow, Flower2, TreeDeciduous,
 } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 import "./home.css";
 
 // ── Types ──────────────────────────────────────────────────────────
 interface Product {
-  id: string; name: string; description: string;
-  price: number; originalPrice?: number;
-  rating: number; reviews: number;
-  image: string; badge?: string; category: string;
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviews: number;
+  image: string;
+  badge?: string;
+  category: string;
+  season: string;
+  stock: number;
 }
-interface CartItem extends Product { quantity: number }
-interface Season { id: string; label: string; description: string; image: string; color: string; icon: React.ReactNode }
-interface GelatinSlide { id: string; name: string; subtitle: string; description: string; image: string; season: string; bgColor: string; blobColor1: string; blobColor2: string; textColor: string }
+interface Season {
+  id: string;
+  label: string;
+  description: string;
+  image: string;
+  color: string;
+  icon: React.ReactNode;
+}
+interface GelatinSlide {
+  id: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  season: string;
+  bgColor: string;
+  blobColor1: string;
+  blobColor2: string;
+  textColor: string;
+}
 
 // ── Data ───────────────────────────────────────────────────────────
 const seasons: Season[] = [
@@ -38,22 +66,44 @@ const slides: GelatinSlide[] = [
 ];
 
 const products: Product[] = [
-  { id: "1", name: "SunShield Shampoo",      description: "Limpeza suave com proteção UV para cabelos expostos ao sol.",      price: 29.9, originalPrice: 39.9, rating: 4.8, reviews: 234, image: "/products/verao-produtos/verao-shampoo.png",        badge: "Best Seller", category: "Shampoo"  },
-  { id: "2", name: "Autumn Repair Mask",     description: "Tratamento intensivo para recuperar fios danificados.",             price: 44.9, originalPrice: 54.9, rating: 4.9, reviews: 312, image: "/products/outono-produtos/outono-mascara.png",      badge: "Best Seller", category: "Máscara"  },
-  { id: "3", name: "Winter Protective Cream",description: "Escudo protetor contra o frio mantendo hidratação dos fios.",      price: 32.9, originalPrice: 42.9, rating: 4.8, reviews: 267, image: "/products/inverno-produtos/inverno-creme.png",      badge: "Best Seller", category: "Leave-in" },
-  { id: "4", name: "Spring Bloom Gelatin",   description: "Gelatina modeladora que define cachos com efeito natural.",        price: 38.9, originalPrice: 48.9, rating: 4.7, reviews: 189, image: "/products/primavera-produtos/primavera-gelatina.png",badge: "Novo",        category: "Styling"  },
+  { id: 1, name: "SunShield Shampoo",      description: "Limpeza suave com proteção UV para cabelos expostos ao sol.",      price: 29.9, originalPrice: 39.9, rating: 4.8, reviews: 234, image: "/products/verao-produtos/verao-shampoo.png",        badge: "Best Seller", category: "Shampoo",  season: "Verão",     stock: 10 },
+  { id: 2, name: "Autumn Repair Mask",     description: "Tratamento intensivo para recuperar fios danificados.",             price: 44.9, originalPrice: 54.9, rating: 4.9, reviews: 312, image: "/products/outono-produtos/outono-mascara.png",      badge: "Best Seller", category: "Máscara",  season: "Outono",    stock: 8 },
+  { id: 3, name: "Winter Protective Cream",description: "Escudo protetor contra o frio mantendo hidratação dos fios.",      price: 32.9, originalPrice: 42.9, rating: 4.8, reviews: 267, image: "/products/inverno-produtos/inverno-creme.png",      badge: "Best Seller", category: "Leave-in", season: "Inverno",   stock: 6 },
+  { id: 4, name: "Spring Bloom Gelatin",   description: "Gelatina modeladora que define cachos com efeito natural.",        price: 38.9, originalPrice: 48.9, rating: 4.7, reviews: 189, image: "/products/primavera-produtos/primavera-gelatina.png",badge: "Novo",        category: "Styling",  season: "Primavera", stock: 12 },
 ];
 
 const marquee = ["Ingredientes Naturais","Fórmulas Sazonais","Cabelos Saudáveis","Hidratação Profunda","Proteção UV","Cruelty Free","Sustentável","Nutrição Intensa"];
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const normalizeImagePath = (path: string): string => {
+  if (!path) return "/products/placeholder.png";
+  let n = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
+  n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!n.startsWith("/")) n = "/" + n;
+  return n;
+};
+
 // ── Component ──────────────────────────────────────────────────────
 export default function Home() {
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const router = useRouter();
+  const {
+    items,
+    isOpen,
+    closeCart,
+    openCart,
+    addItem,
+    updateQuantity,
+    removeItem,
+    cartCount,
+    cartTotal,
+    createOrder,
+    createOrderLoading,
+    error: cartError,
+    notice: globalNotice,
+  } = useCart();
+
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [slide, setSlide] = useState(0);
   const [tab, setTab] = useState("verao");
 
@@ -63,92 +113,122 @@ export default function Home() {
     return () => clearInterval(t);
   }, []);
 
-  const notify = (msg: string) => { setNotice(msg); setTimeout(() => setNotice(null), 2500); };
-
-  const toggleFav = useCallback((id: string) => {
-    setFavorites(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  }, []);
-
-  const addToCart = useCallback((p: Product) => {
-    setCart(prev => {
-      const ex = prev.find(i => i.id === p.id);
-      return ex ? prev.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i) : [...prev, { ...p, quantity: 1 }];
+  const toggleFav = useCallback((id: number) => {
+    setFavorites(p => {
+      const n = new Set(p);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
     });
-    notify(`${p.name} adicionado`);
   }, []);
 
-  const updateQty = useCallback((id: string, d: number) => {
-    setCart(p => p.map(i => i.id === id ? { ...i, quantity: i.quantity + d } : i).filter(i => i.quantity > 0));
-  }, []);
+  const addToCart = useCallback((product: Product) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+    });
+  }, [addItem]);
 
-  const removeItem = useCallback((id: string) => {
-    setCart(p => p.filter(i => i.id !== id));
-    notify("Item removido");
-  }, []);
+  const handleCheckout = useCallback(async () => {
+    try {
+      const order = await createOrder();
+      sessionStorage.setItem("wc_checkout_items", JSON.stringify(items));
+      sessionStorage.setItem("wc_pending_order_id", String(order.id));
+      closeCart();
+      router.push("/checkout");
+    } catch {
+      // erro já em cartError do contexto
+    }
+  }, [createOrder, items, closeCart, router]);
 
-  const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const count = cart.reduce((s, i) => s + i.quantity, 0);
+  const total = cartTotal;
+  const count = cartCount;
   const cur = slides[slide];
   const activeSeason = seasons.find(s => s.id === tab)!;
 
   return (
     <main className="hm">
 
-      {/* Notification */}
+      {/* Global Notification */}
       <AnimatePresence>
-        {notice && (
+        {globalNotice && (
           <motion.div className="hm-notice"
             initial={{ opacity: 0, y: -14, x: "-50%" }}
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: -14, x: "-50%" }}
           >
-            <Check size={13} />{notice}
+            <Check size={13} />{globalNotice}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Cart button */}
-      <button className="hm-cart-btn" onClick={() => setCartOpen(true)}>
+      {/* Floating Cart Button */}
+      <button className="hm-cart-btn" onClick={openCart} aria-label="Abrir sacola">
         <ShoppingBag size={20} />
         {count > 0 && <span className="hm-cart-badge">{count}</span>}
       </button>
 
-      {/* Cart drawer */}
+      {/* Cart Drawer */}
       <AnimatePresence>
-        {cartOpen && (
+        {isOpen && (
           <>
-            <motion.div className="hm-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCartOpen(false)} />
-            <motion.aside className="hm-drawer" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 240 }}>
+            <motion.div className="hm-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeCart} />
+            <motion.aside className="hm-drawer" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}>
               <div className="hm-drawer-head">
-                <h2>Sua Sacola</h2>
-                <button onClick={() => setCartOpen(false)}><X size={18} /></button>
+                <div>
+                  <h2>Sua Sacola</h2>
+                  <span className="hm-count">{count} {count === 1 ? "item" : "itens"}</span>
+                </div>
+                <button className="hm-close" onClick={closeCart}><X size={18} /></button>
               </div>
 
               <div className="hm-drawer-body">
-                {cart.length === 0
-                  ? <div className="hm-empty"><ShoppingBag size={40} strokeWidth={1} /><p>Sacola vazia</p><span>Adicione produtos para continuar</span></div>
-                  : <ul>{cart.map(item => (
-                    <motion.li key={item.id} className="hm-cart-item" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <div className="hm-cart-thumb"><Image src={item.image} alt={item.name} width={64} height={64} style={{ objectFit: "cover" }} /></div>
-                      <div className="hm-cart-info">
-                        <p>{item.name}</p>
-                        <span>{fmt(item.price)}</span>
-                        <div className="hm-qty">
-                          <button onClick={() => updateQty(item.id, -1)}><Minus size={12} /></button>
-                          <span>{item.quantity}</span>
-                          <button onClick={() => updateQty(item.id, 1)}><Plus size={12} /></button>
+                {items.length === 0
+                  ? <div className="hm-empty"><ShoppingBag size={40} strokeWidth={1} /><p>Sua sacola está vazia</p><span>Adicione produtos para continuar</span></div>
+                  : <ul>{items.map(item => (
+                      <motion.li key={item.id} className="hm-cart-item" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <div className="hm-cart-thumb">
+                          <Image
+                            src={normalizeImagePath(item.image)}
+                            alt={item.name}
+                            width={64}
+                            height={64}
+                            style={{ objectFit: "cover" }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = "/products/placeholder.png"; }}
+                          />
                         </div>
-                      </div>
-                      <button className="hm-cart-rm" onClick={() => removeItem(item.id)}><Trash2 size={14} /></button>
-                    </motion.li>
-                  ))}</ul>
+                        <div className="hm-cart-info">
+                          <p>{item.name}</p>
+                          <span>{fmt(item.price)}</span>
+                          <div className="hm-qty">
+                            <button onClick={() => updateQuantity(item.id, -1)}><Minus size={12} /></button>
+                            <span>{item.quantity}</span>
+                            <button onClick={() => updateQuantity(item.id, 1)}><Plus size={12} /></button>
+                          </div>
+                        </div>
+                        <button className="hm-cart-rm" onClick={() => removeItem(item.id)}><Trash2 size={14} /></button>
+                      </motion.li>
+                    ))}</ul>
                 }
               </div>
 
-              {cart.length > 0 && (
+              {items.length > 0 && (
                 <div className="hm-drawer-foot">
+                  {cartError && (
+                    <p style={{ color: "#dc3545", fontSize: "0.82rem", textAlign: "center", margin: "0 0 0.5rem" }}>
+                      {cartError}
+                    </p>
+                  )}
                   <div className="hm-total"><span>Total</span><strong>{fmt(total)}</strong></div>
-                  <button className="hm-checkout">Finalizar Compra <ArrowRight size={15} /></button>
+                  <button 
+                    className="hm-checkout" 
+                    onClick={handleCheckout}
+                    disabled={createOrderLoading}
+                  >
+                    {createOrderLoading ? "Processando..." : "Finalizar Compra"}
+                    {!createOrderLoading && <ArrowRight size={15} />}
+                  </button>
                 </div>
               )}
             </motion.aside>
@@ -165,7 +245,6 @@ export default function Home() {
             initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-           
             <h1>A ciência que<br /><em>transforma</em><br />seus cabelos</h1>
             <p>Fórmulas desenvolvidas para cada estação do ano. Ingredientes naturais de alta performance que se adaptam ao clima e potencializam a beleza natural dos seus fios.</p>
             <div className="hm-hero-actions">
@@ -214,10 +293,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-
-      
-
-       
 
       {/* ── CAROUSEL ── */}
       <section className="hm-carousel-section">
@@ -278,7 +353,7 @@ export default function Home() {
                 <button className={`hm-fav ${favorites.has(p.id) ? "active" : ""}`} onClick={() => toggleFav(p.id)}>
                   <Heart size={15} fill={favorites.has(p.id) ? "currentColor" : "none"} />
                 </button>
-                <Image src={p.image} alt={p.name} fill style={{ objectFit: "cover" }} />
+                <Image src={normalizeImagePath(p.image)} alt={p.name} fill style={{ objectFit: "cover" }} />
               </div>
               <div className="hm-product-info">
                 <div className="hm-stars"><Star size={12} fill="currentColor" /><span>{p.rating}</span><span className="hm-rev">({p.reviews})</span></div>
@@ -287,7 +362,9 @@ export default function Home() {
                 <p className="hm-product-desc">{p.description}</p>
                 <div className="hm-product-foot">
                   <div><span className="hm-price">{fmt(p.price)}</span>{p.originalPrice && <span className="hm-was">{fmt(p.originalPrice)}</span>}</div>
-                  <button className="hm-add" onClick={() => addToCart(p)}><Plus size={13} />Adicionar</button>
+                  <button className="hm-add" onClick={() => addToCart(p)} disabled={p.stock === 0}>
+                    <Plus size={13} />{p.stock === 0 ? "Esgotado" : "Adicionar"}
+                  </button>
                 </div>
               </div>
             </motion.article>

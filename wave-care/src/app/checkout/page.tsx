@@ -14,6 +14,7 @@ const formatPrice = (n: number) =>
 
 type PaymentMethod = "credit" | "pix" | "boleto";
 
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, cartTotal, loading } = useCart();
