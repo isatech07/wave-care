@@ -11,8 +11,9 @@ import {
   Loader2,
 } from "lucide-react";
 import ProductModal from "@/components/ProductModal/ProductModal";
-import { getProducts, type ApiProduct } from "@/lib/api";
+import { getProducts, apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite, type ApiProduct } from "@/lib/api";
 import { useCart } from "@/contexts/CartContext";
+import { useUser } from "@/contexts/UserContext";
 import "./loja.css";
 
 type Product = ApiProduct & {
@@ -71,6 +72,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 export default function LojaPage() {
   const router = useRouter();
+  const { isLoggedIn } = useUser();
 
 const {
     items, isOpen, closeCart, openCart,
@@ -109,6 +111,23 @@ const {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
+  // Carrega favoritos reais do usuário ao montar / logar
+  useEffect(() => {
+    async function loadFavorites() {
+      if (!isLoggedIn) {
+        setFavorites(new Set());
+        return;
+      }
+      try {
+        const favProducts = await apiGetMyFavorites();
+        setFavorites(new Set(favProducts.map((p) => p.id)));
+      } catch {
+        // se falhar, mantém vazio silenciosamente
+      }
+    }
+    loadFavorites();
+  }, [isLoggedIn]);
+
   const filtrosEstacao   = useMemo(() => ["Todos", ...[...new Set(products.map((p) => p.season))].sort()],   [products]);
   const filtrosCategoria = useMemo(() => ["Todos", ...[...new Set(products.map((p) => p.category))].sort()], [products]);
 
@@ -135,14 +154,41 @@ const {
     setTimeout(() => setNotification(null), 2500);
   }, []);
 
-  const toggleFavorite = useCallback((productId: number) => {
+  const toggleFavorite = useCallback(async (productId: number) => {
+    if (!isLoggedIn) {
+      showNotification("Faça login para favoritar produtos");
+      return;
+    }
+
+    const isCurrentlyFavorite = favorites.has(productId);
+
+    // Atualização otimista da UI
     setFavorites((prev) => {
       const next = new Set(prev);
-      if (next.has(productId)) { next.delete(productId); showNotification("Removido dos favoritos"); }
-      else                     { next.add(productId);    showNotification("Adicionado aos favoritos"); }
+      if (isCurrentlyFavorite) next.delete(productId);
+      else next.add(productId);
       return next;
     });
-  }, [showNotification]);
+
+    try {
+      if (isCurrentlyFavorite) {
+        await apiRemoveFavorite(productId);
+        showNotification("Removido dos favoritos");
+      } else {
+        await apiAddFavorite(productId);
+        showNotification("Adicionado aos favoritos");
+      }
+    } catch {
+      // reverte em caso de erro
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlyFavorite) next.add(productId);
+        else next.delete(productId);
+        return next;
+      });
+      showNotification("Erro ao atualizar favoritos");
+    }
+  }, [favorites, isLoggedIn, showNotification]);
 
   const addToCart = useCallback((product: Product) => {
     addItem({ id: product.id, name: product.name, price: product.price, image: product.image });

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
-import { apiUpdateUser, apiGetOrdersByUser, apiGetMyQuizResult, type Order, type QuizResult } from "@/lib/api"
+import { apiUpdateUser, apiGetOrdersByUser, apiGetMyQuizResult, apiGetMyFavorites, apiRemoveFavorite, type Order, type QuizResult, type ApiProduct } from "@/lib/api"
 import { AvatarUpload } from "@/components/AvatarUpload/Avatarupload";
 
 // ─── Paleta ───────────────────────────────────────────────────────
@@ -65,7 +65,8 @@ const SEASON_LABELS: Record<string, string> = {
 const Icon = {
   User:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Package:  () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>,
-  Heart:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  Heart:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  HeartOutline: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
   Leaf:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>,
   LogOut:   () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
   Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
@@ -160,7 +161,11 @@ export default function PerfilPage() {
   const [ordersError,  setOrdersError]  = useState<string | null>(null);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [quizLoading, setQuizLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("ALL"); 
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+
+  // Favoritos — dados reais
+  const [favorites, setFavorites] = useState<ApiProduct[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
 useEffect(() => {
   const loadQuiz = async () => {
@@ -242,8 +247,7 @@ useEffect(() => {
     setOrdersError(null);
     try {
       const userOrders = await apiGetOrdersByUser(user.id)
-      setOrders(userOrders);
-      console.log("pedidos:", JSON.stringify(userOrders.map(o => ({ id: o.id, status: o.status }))));
+      setOrders(userOrders.map(o => ({ ...o, status: o.status.toLowerCase() as any })));
     } catch (err) {
       setOrdersError(err instanceof Error ? err.message : 'Erro ao carregar pedidos');
     } finally {
@@ -252,6 +256,35 @@ useEffect(() => {
   };
   loadOrders();
 }, [isLoggedIn, user?.id]);
+
+// Carrega favoritos reais do usuário
+useEffect(() => {
+  const loadFavorites = async () => {
+    if (!isLoggedIn || !user?.id) {
+      setFavorites([]);
+      return;
+    }
+    setFavoritesLoading(true);
+    try {
+      const favs = await apiGetMyFavorites();
+      setFavorites(favs);
+    } catch {
+      setFavorites([]);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  };
+  loadFavorites();
+}, [isLoggedIn, user?.id]);
+
+async function handleRemoveFavorite(productId: number) {
+  try {
+    await apiRemoveFavorite(productId);
+    setFavorites(prev => prev.filter(p => p.id !== productId));
+  } catch {
+    alert("Erro ao remover favorito. Tente novamente.");
+  }
+}
 
 
   function applyTheme(t: Theme) {
@@ -339,7 +372,7 @@ useEffect(() => {
   const navItems = [
     { id: "dados"     as Tab, label: "Meus Dados",    icon: <Icon.User />    },
     { id: "pedidos"   as Tab, label: "Pedidos",        icon: <Icon.Package /> },
-    { id: "favoritos" as Tab, label: "Favoritos",      icon: <Icon.Heart />   },
+    { id: "favoritos" as Tab, label: "Favoritos",      icon: <Icon.HeartOutline />   },
     { id: "capilar"   as Tab, label: "Perfil Capilar", icon: <Icon.Leaf />    },
   ];
 
@@ -628,7 +661,7 @@ useEffect(() => {
             <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
               {filterOptions.map(opt => {
                 const active = filterStatus === opt.key;
-                const isPendingFilter = opt.key === "PENDING" && opt.count > 0;
+                const isPendingFilter = opt.key === "pending" && opt.count > 0;
                 return (
                   <button key={opt.key} onClick={() => setFilterStatus(opt.key)}
                     style={{
@@ -811,16 +844,38 @@ useEffect(() => {
               <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, color: "var(--text-color, #1a2e28)" }}>Favoritos</h1>
               <p style={{ margin: "0.2rem 0 0", fontSize: "0.83rem", color: C.muted }}>Produtos que você salvou</p>
             </div>
-            {!user!.favorites || user!.favorites.length === 0 ? (
+            {favoritesLoading ? (
+              <div style={{ textAlign: "center", padding: "3rem", color: C.muted }}>Carregando favoritos...</div>
+            ) : !favorites || favorites.length === 0 ? (
               <EmptyState icon="♡" title="Nenhum favorito ainda" text="Explore nossos produtos e salve os que você mais gostar." />
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: "1rem" }}>
-                {user!.favorites.map(product => (
-                  <div key={product.id} style={{ background: "var(--card-bg, #ffffff)", borderRadius: C.radius, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: C.shadow, transition: "transform 0.2s" }}
+                {favorites.map(product => (
+                  <div key={product.id} style={{ background: "var(--card-bg, #ffffff)", borderRadius: C.radius, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: C.shadow, transition: "transform 0.2s", position: "relative" }}
                     onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-3px)")}
                     onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}
                   >
-                    <div style={{ height: 130, background: C.primaryPale, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem" }}>🧴</div>
+                    <button
+                      onClick={() => handleRemoveFavorite(product.id)}
+                      style={{
+                        position: "absolute", top: "0.5rem", right: "0.5rem", zIndex: 1,
+                        width: 28, height: 28, borderRadius: "50%", border: "none",
+                        background: "rgba(255,255,255,0.92)", color: C.danger,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+                      }}
+                      title="Remover dos favoritos"
+                      aria-label="Remover dos favoritos"
+                    >
+                      <Icon.Heart />
+                    </button>
+                    <div style={{ height: 130, background: C.primaryPale, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      {product.image ? (
+                        <img src={product.image} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontSize: "2.5rem" }}>🧴</span>
+                      )}
+                    </div>
                     <div style={{ padding: "0.85rem 1rem" }}>
                       <p style={{ margin: "0 0 0.15rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--text-color, #1a2e28)" }}>{product.name}</p>
                       <p style={{ margin: "0 0 0.35rem", fontSize: "0.72rem", color: C.muted, textTransform: "capitalize" }}>{product.category}</p>

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import Link from "next/link";
 import AdminProducts from "@/components/Admin/AdminProducts";
-import { apiGetAllOrders, apiUpdateOrderStatus } from "@/lib/api";
-import type { Order, OrderStatus } from "@/lib/api";
+import { apiGetAllOrders, apiUpdateOrderStatus, apiDeleteOrder, apiGetAllUsers } from "@/lib/api";
+import type { Order, OrderStatus, AdminUserListItem } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -228,6 +228,12 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | "ALL">("ALL");
+
+  // Usuários — dados reais
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
 
   // Mock data
   const [products, setProducts] = useState<AdminProduct[]>(mockProducts);
@@ -251,12 +257,26 @@ export default function AdminPage() {
     }
   }
 
+  async function loadUsers() {
+    setUsersLoading(true);
+    setUsersError(null);
+    try {
+      const data = await apiGetAllUsers();
+      setUsers(data);
+    } catch (err: any) {
+      setUsersError(err.message || "Erro ao carregar usuários");
+    } finally {
+      setUsersLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/");
     } else {
       setIsLoading(false);
       loadOrders();
+      loadUsers();
     }
   }, [isLoggedIn, router]);
 
@@ -285,11 +305,12 @@ export default function AdminPage() {
   }
 
   async function handleCancelOrder(orderId: number) {
+    if (!confirm("Tem certeza que deseja excluir este pedido? Essa ação não pode ser desfeita.")) return;
     try {
-      const updated = await apiUpdateOrderStatus(orderId, "CANCELLED");
-      setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+      await apiDeleteOrder(orderId);
+      setOrders(prev => prev.filter(o => o.id !== orderId));
     } catch (err: any) {
-      alert(err.message || "Erro ao cancelar pedido");
+      alert(err.message || "Erro ao excluir pedido");
     }
   }
 
@@ -316,6 +337,10 @@ export default function AdminPage() {
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────────
+
+  const filteredOrders = filterStatus === "ALL"
+    ? orders
+    : orders.filter(o => o.status === filterStatus);
 
   const totalRevenue = orders
     .filter(o => o.status !== "CANCELLED")
@@ -517,7 +542,23 @@ export default function AdminPage() {
               <div className="tableHeader">
                 <h3>Todos os Pedidos</h3>
                 <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                  <span className="tableCount">{orders.length} pedido{orders.length !== 1 ? "s" : ""}</span>
+                  {/* Filtro de status */}
+                  <select
+                    value={filterStatus}
+                    onChange={e => setFilterStatus(e.target.value as OrderStatus | "ALL")}
+                    className="filter-select"
+                  >
+                    <option value="ALL">Todos</option>
+                    <option value="PENDING">Aguardando</option>
+                    <option value="CONFIRMED">Confirmado</option>
+                    <option value="SHIPPED">Enviado</option>
+                    <option value="DELIVERED">Entregue</option>
+                    <option value="CANCELLED">Cancelado</option>
+                  </select>
+                  <span className="tableCount">
+                    {filteredOrders.length} pedido{filteredOrders.length !== 1 ? "s" : ""}
+                    {filteredOrders.length !== orders.length && ` de ${orders.length}`}
+                  </span>
                   <button onClick={loadOrders} className="actionBtnSecondary" title="Recarregar">
                     <Icons.Refresh />
                   </button>
@@ -536,7 +577,7 @@ export default function AdminPage() {
                     Tentar novamente
                   </button>
                 </div>
-              ) : orders.length === 0 ? (
+              ) : filteredOrders.length === 0 ? (
                 <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
                   Nenhum pedido encontrado.
                 </div>
@@ -554,10 +595,9 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map(order => {
+                      {filteredOrders.map(order => {
                         const statusKey = order.status as OrderStatus;
                         const st = orderStatusMap[statusKey] ?? orderStatusMap.PENDING;
-                        const next = nextStatusMap[statusKey];
 
                         return (
                           <tr key={order.id} className="tableRow">
@@ -580,21 +620,38 @@ export default function AdminPage() {
                             </td>
                             <td className="orderTotal">{formatPrice(order.total)}</td>
                             <td>
-                              <span className="statusBadge" style={{ background: st.bg, color: st.color }}>
-                                <span className="statusDot" style={{ background: st.dot }} />
-                                {st.label}
-                              </span>
+                              <select
+                                value={statusKey}
+                                onChange={async e => {
+                                  const newStatus = e.target.value as OrderStatus;
+                                  try {
+                                    const updated = await apiUpdateOrderStatus(order.id, newStatus);
+                                    setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+                                  } catch (err: any) {
+                                    alert(err.message || "Erro ao atualizar status");
+                                  }
+                                }}
+                                style={{
+                                  background: st.bg,
+                                  color: st.color,
+                                  border: `1.5px solid ${st.dot}`,
+                                  borderRadius: "20px",
+                                  padding: "0.25rem 0.6rem",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  outline: "none",
+                                }}
+                              >
+                                <option value="PENDING">Aguardando</option>
+                                <option value="CONFIRMED">Confirmado</option>
+                                <option value="SHIPPED">Em transporte</option>
+                                <option value="DELIVERED">Entregue</option>
+                                <option value="CANCELLED">Cancelado</option>
+                              </select>
                             </td>
                             <td>
                               <div className="actionButtons">
-                                {next && (
-                                  <button
-                                    onClick={() => handleAdvanceOrder(order.id, next)}
-                                    className="actionBtn actionBtnPrimary"
-                                  >
-                                    <Icons.Check /> {orderStatusMap[next].label}
-                                  </button>
-                                )}
                                 {statusKey !== "CANCELLED" && statusKey !== "DELIVERED" && (
                                   <button
                                     onClick={() => handleCancelOrder(order.id)}
@@ -753,10 +810,79 @@ export default function AdminPage() {
 
           {/* ── Usuários ── */}
           {activeSection === "usuarios" && (
-            <div className="emptyModule">
-              <div className="emptyIcon"><Icons.Users /></div>
-              <h3>Gestão de Usuários</h3>
-              <p>Módulo em desenvolvimento</p>
+            <div className="tableCard">
+              <div className="tableHeader">
+                <h3>Todos os Usuários</h3>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <span className="tableCount">{users.length} usuário{users.length !== 1 ? "s" : ""}</span>
+                  <button onClick={loadUsers} className="actionBtnSecondary" title="Recarregar">
+                    <Icons.Refresh />
+                  </button>
+                </div>
+              </div>
+
+              {usersLoading ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                  Carregando usuários...
+                </div>
+              ) : usersError ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444" }}>
+                  {usersError}
+                  <br />
+                  <button onClick={loadUsers} className="actionBtnPrimary" style={{ marginTop: "1rem" }}>
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : users.length === 0 ? (
+                <div style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                  Nenhum usuário encontrado.
+                </div>
+              ) : (
+                <div className="tableWrapper">
+                  <table className="dataTable">
+                    <thead>
+                      <tr>
+                        <th>Usuário</th>
+                        <th>E-mail</th>
+                        <th>Telefone</th>
+                        <th>Cidade</th>
+                        <th>Função</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map(u => (
+                        <tr key={u.id} className="tableRow">
+                          <td>
+                            <div className="clientCell">
+                              <div className="clientAvatar">
+                                {u.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="clientName">{u.name}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td>{u.email}</td>
+                          <td>{u.telefone || "—"}</td>
+                          <td>{u.cidade || "—"}</td>
+                          <td>
+                            <span
+                              className="statusBadge"
+                              style={
+                                u.role === "admin"
+                                  ? { background: "#fef3c7", color: "#92400e" }
+                                  : { background: "#eff6ff", color: "#1e40af" }
+                              }
+                            >
+                              {u.role === "admin" ? "Admin" : "Cliente"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -10,6 +10,8 @@ import Cart, { CartFloatingButton } from "@/components/Cart/Cart";
 import ProductModal from "@/components/ProductModal/ProductModal";
 import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
 import { useCart } from "@/contexts/CartContext";
+import { useUser } from "@/contexts/UserContext";
+import { apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite } from "@/lib/api";
 
 import type { ApiProduct } from "@/lib/api";
 
@@ -41,6 +43,7 @@ const formatPrice = (price: number) => price.toLocaleString("pt-BR", { style: "c
 export default function Spring() {
   const seasonData = usePrimaveraProducts();
   const { addItem, openCart } = useCart();
+  const { isLoggedIn } = useUser();
 
   const [selectedProduct, setSelectedProduct] = useState<ModalProduct | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,6 +51,22 @@ export default function Spring() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => { setVisible(true); }, []);
+
+  useEffect(() => {
+    async function loadFavorites() {
+      if (!isLoggedIn) {
+        setFavorites(new Set());
+        return;
+      }
+      try {
+        const favs = await apiGetMyFavorites();
+        setFavorites(new Set(favs.map((f) => f.id)));
+      } catch {
+        setFavorites(new Set());
+      }
+    }
+    loadFavorites();
+  }, [isLoggedIn]);
 
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
@@ -63,9 +82,34 @@ export default function Spring() {
     openCart();
   }, [addItem, openCart]);
 
-  const toggleFavorite = useCallback((productId: number) => {
-    setFavorites((prev) => { const next = new Set(prev); next.has(productId) ? next.delete(productId) : next.add(productId); return next; });
-  }, []);
+  const toggleFavorite = useCallback(async (productId: number) => {
+    if (!isLoggedIn) {
+      alert("Faça login para favoritar produtos.");
+      return;
+    }
+
+    const isFav = favorites.has(productId);
+
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      isFav ? next.delete(productId) : next.add(productId);
+      return next;
+    });
+
+    try {
+      if (isFav) {
+        await apiRemoveFavorite(productId);
+      } else {
+        await apiAddFavorite(productId);
+      }
+    } catch {
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(productId) : next.delete(productId);
+        return next;
+      });
+    }
+  }, [favorites, isLoggedIn]);
 
   return (
     <div className={`${styles.container} ${poppins.variable} ${playfair.variable} ${visible ? styles.pageVisible : ""}`}>

@@ -109,6 +109,20 @@ export interface Order {
 
 export interface OrderApi extends Order {}
 
+export interface AdminUserListItem {
+  id: number;
+  name: string;
+  email: string;
+  telefone: string | null;
+  cidade: string | null;
+  foto: string | null;
+  role: string;
+}
+
+export async function apiGetAllUsers(): Promise<AdminUserListItem[]> {
+  return authFetch(`${API_URL}/users`);
+}
+
 //  Auth / Usuário 
 
 export async function apiLogin(email: string, password: string): Promise<MappedUser> {
@@ -256,10 +270,18 @@ export async function apiGetOrder(orderId: number): Promise<Order | null> {
 }
 
 export async function apiUpdateOrderStatus(orderId: number, status: OrderStatus): Promise<Order> {
-  return authFetch(`${API_URL}/order/${orderId}`, {
+  const statusMap: Record<OrderStatus, string> = {
+    PENDING: 'pending',
+    CONFIRMED: 'confirmed',
+    SHIPPED: 'shipped',
+    DELIVERED: 'delivered',
+    CANCELLED: 'canceled',
+  };
+  const data = await authFetch(`${API_URL}/order/${orderId}`, {
     method: 'PUT',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status: statusMap[status] }),
   });
+  return normalizeOrder(data);
 }
 
 export async function apiDeleteOrder(orderId: number): Promise<void> {
@@ -395,4 +417,22 @@ export async function apiGetMyProfile(): Promise<MyProfile | null> {
     ) return null;
     throw err;
   }
+}
+
+// ── favorito ──────────────────────────────────────────────────────────
+
+export async function apiGetMyFavorites(): Promise<ApiProduct[]> {
+  return authFetch(`${API_URL}/favorites`);
+}
+
+export async function apiAddFavorite(productId: number): Promise<void> {
+  return authFetch(`${API_URL}/favorites/${productId}`, { method: 'POST' });
+}
+
+export async function apiRemoveFavorite(productId: number): Promise<void> {
+  return authFetch(`${API_URL}/favorites/${productId}`, { method: 'DELETE' });
+}
+
+export async function apiCheckFavorite(productId: number): Promise<boolean> {
+  return authFetch(`${API_URL}/favorites/${productId}/check`);
 }

@@ -9,7 +9,9 @@ import { seasonThemes } from "@/lib/seasonThemes";
 import Cart, { CartFloatingButton } from "@/components/Cart/Cart";
 import ProductModal from "@/components/ProductModal/ProductModal";
 import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
-import { useCart } from "@/contexts/CartContext";   // ← context global
+import { useCart } from "@/contexts/CartContext";
+import { useUser } from "@/contexts/UserContext";
+import { apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite } from "@/lib/api";
 
 import type { ApiProduct } from "@/lib/api";
 
@@ -54,8 +56,8 @@ const formatPrice = (price: number) =>
 
 export default function Summer() {
   const seasonData = useVeraoProducts();
-
   const { addItem, openCart } = useCart();
+  const { isLoggedIn } = useUser();
 
   const [selectedProduct, setSelectedProduct] = useState<ModalProduct | null>(null);
   const [isModalOpen, setIsModalOpen]         = useState(false);
@@ -63,6 +65,22 @@ export default function Summer() {
   const [visible, setVisible]                 = useState(false);
 
   useEffect(() => { setVisible(true); }, []);
+
+  useEffect(() => {
+    async function loadFavorites() {
+      if (!isLoggedIn) {
+        setFavorites(new Set());
+        return;
+      }
+      try {
+        const favs = await apiGetMyFavorites();
+        setFavorites(new Set(favs.map((f) => f.id)));
+      } catch {
+        setFavorites(new Set());
+      }
+    }
+    loadFavorites();
+  }, [isLoggedIn]);
 
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
@@ -87,16 +105,37 @@ export default function Summer() {
       price: product.price,
       image: product.image,
     });
-    openCart(); // abre a sacola automaticamente
+    openCart();
   }, [addItem, openCart]);
 
-  const toggleFavorite = useCallback((productId: number) => {
+  const toggleFavorite = useCallback(async (productId: number) => {
+    if (!isLoggedIn) {
+      alert("Faça login para favoritar produtos.");
+      return;
+    }
+
+    const isFav = favorites.has(productId);
+
     setFavorites((prev) => {
       const next = new Set(prev);
-      next.has(productId) ? next.delete(productId) : next.add(productId);
+      isFav ? next.delete(productId) : next.add(productId);
       return next;
     });
-  }, []);
+
+    try {
+      if (isFav) {
+        await apiRemoveFavorite(productId);
+      } else {
+        await apiAddFavorite(productId);
+      }
+    } catch {
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(productId) : next.delete(productId);
+        return next;
+      });
+    }
+  }, [favorites, isLoggedIn]);
 
   return (
     <div
@@ -104,7 +143,6 @@ export default function Summer() {
         visible ? styles.pageVisible : ""
       }`}
     >
-      {/* ── HERO ── */}
       <section className={styles.hero}>
         <img
           src="/products/verao-produtos/banner-principal-verao.png"
@@ -123,7 +161,6 @@ export default function Summer() {
         </div>
       </section>
 
-      {/* ── MARQUEE ── */}
       <div className={styles.marqueeSection}>
         <SeasonMarquee
           words={MARQUEE_WORDS}
@@ -132,7 +169,6 @@ export default function Summer() {
         />
       </div>
 
-      {/* ── EDITORIAL ── */}
       <section className={styles.editorial}>
         <div className={styles.editorialImg}>
           <img src="/products/verao-produtos/propaganda-verao.jpg" alt="Summer Protection" />
@@ -150,7 +186,6 @@ export default function Summer() {
         </div>
       </section>
 
-      {/* ── PRODUTOS ── */}
       <section className={styles.productsSection}>
         <SeasonProductsSection
           seasonData={seasonData}
@@ -165,7 +200,6 @@ export default function Summer() {
         />
       </section>
 
-      {/* ── CARRINHO —  ── */}
       <CartFloatingButton seasonColor={theme.primary} />
       <Cart seasonColor={theme.primary} />
 

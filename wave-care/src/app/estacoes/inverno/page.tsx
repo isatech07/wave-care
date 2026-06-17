@@ -10,6 +10,8 @@ import Cart, { CartFloatingButton } from "@/components/Cart/Cart";
 import ProductModal from "@/components/ProductModal/ProductModal";
 import SeasonMarquee from "@/components/seasonal/SeasonMarquee";
 import { useCart } from "@/contexts/CartContext";
+import { useUser } from "@/contexts/UserContext";
+import { apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite } from "@/lib/api";
 
 import type { ApiProduct } from "@/lib/api";
 
@@ -40,8 +42,8 @@ const formatPrice = (price: number) =>
 
 export default function Winter() {
   const seasonData = useInvernoProducts();
-
   const { addItem, openCart } = useCart();
+  const { isLoggedIn } = useUser();
 
   const [selectedProduct, setSelectedProduct] = useState<ModalProduct | null>(null);
   const [isModalOpen, setIsModalOpen]         = useState(false);
@@ -49,6 +51,22 @@ export default function Winter() {
   const [visible, setVisible]                 = useState(false);
 
   useEffect(() => { setVisible(true); }, []);
+
+  useEffect(() => {
+    async function loadFavorites() {
+      if (!isLoggedIn) {
+        setFavorites(new Set());
+        return;
+      }
+      try {
+        const favs = await apiGetMyFavorites();
+        setFavorites(new Set(favs.map((f) => f.id)));
+      } catch {
+        setFavorites(new Set());
+      }
+    }
+    loadFavorites();
+  }, [isLoggedIn]);
 
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
@@ -66,13 +84,11 @@ export default function Winter() {
     setSelectedProduct(null);
   }, []);
 
-  // Usado pelo ProductModal
   const addToCart = useCallback((product: ModalProduct) => {
     addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
     openCart();
   }, [addItem, openCart]);
 
-  // Usado pelo SeasonProductsSection
   const addToCartById = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
     if (!found) return;
@@ -80,13 +96,34 @@ export default function Winter() {
     openCart();
   }, [seasonData.apiProducts, addItem, openCart]);
 
-  const toggleFavorite = useCallback((productId: number) => {
+  const toggleFavorite = useCallback(async (productId: number) => {
+    if (!isLoggedIn) {
+      alert("Faça login para favoritar produtos.");
+      return;
+    }
+
+    const isFav = favorites.has(productId);
+
     setFavorites((prev) => {
       const next = new Set(prev);
-      next.has(productId) ? next.delete(productId) : next.add(productId);
+      isFav ? next.delete(productId) : next.add(productId);
       return next;
     });
-  }, []);
+
+    try {
+      if (isFav) {
+        await apiRemoveFavorite(productId);
+      } else {
+        await apiAddFavorite(productId);
+      }
+    } catch {
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(productId) : next.delete(productId);
+        return next;
+      });
+    }
+  }, [favorites, isLoggedIn]);
 
   return (
     <div className={`${styles.container} ${poppins.variable} ${playfair.variable} ${visible ? styles.pageVisible : ""}`}>
