@@ -33,7 +33,6 @@ interface ProductModalProps {
   onAddToCart: (product: Product) => void;
   onToggleFavorite: (productId: number) => void;
   isFavorite: boolean;
-  /** Tema sazonal opcional — CSS vars no modal; omitir = cores originais */
   seasonTheme?: SeasonThemeProp;
 }
 

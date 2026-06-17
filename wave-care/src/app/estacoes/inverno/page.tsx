@@ -15,15 +15,23 @@ import { apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite } from "@/lib/api"
 
 import type { ApiProduct } from "@/lib/api";
 
+// ── Fontes ────────────────────────────────────────────────────────────────────
 const poppins  = Poppins({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-body" });
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-title" });
 
+// ── Tema da estação ──────────────────────────────────────────────────────────
 const theme = seasonThemes.inverno;
 
-const MARQUEE_WORDS = ["WINTER", "NUTRIÇÃO PROFUNDA", "HIDRATAÇÃO", "PROTEÇÃO TÉRMICA", "FRIO", "BRILHO", "CUIDADO", "CUTÍCULAS", "SUAVIDADE", "SELAMENTO", "INVERNO", "CABELOS SAUDÁVEIS"];
+// ── Palavras para o marquee ──────────────────────────────────────────────────
+const MARQUEE_WORDS = [
+  "WINTER", "NUTRIÇÃO PROFUNDA", "HIDRATAÇÃO", "PROTEÇÃO TÉRMICA", "FRIO", "BRILHO",
+  "CUIDADO", "CUTÍCULAS", "SUAVIDADE", "SELAMENTO", "INVERNO", "CABELOS SAUDÁVEIS"
+];
 
+// ── Tipo auxiliar ────────────────────────────────────────────────────────────
 type ModalProduct = ApiProduct & { stock: number; createdAt: string };
 
+// ── Ícone decorativo de inverno ──────────────────────────────────────────────
 const WinterIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <line x1="12" y1="2"     x2="12" y2="22"   stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -37,9 +45,11 @@ const WinterIcon = () => (
   </svg>
 );
 
+// ── Utilitário de formatação ─────────────────────────────────────────────────
 const formatPrice = (price: number) =>
   price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// ── Página principal de Inverno ──────────────────────────────────────────────
 export default function Winter() {
   const seasonData = useInvernoProducts();
   const { addItem, openCart } = useCart();
@@ -50,6 +60,7 @@ export default function Winter() {
   const [favorites, setFavorites]             = useState<Set<number>>(new Set());
   const [visible, setVisible]                 = useState(false);
 
+  // ── Efeitos ─────────────────────────────────────────────────────────────────
   useEffect(() => { setVisible(true); }, []);
 
   useEffect(() => {
@@ -68,6 +79,7 @@ export default function Winter() {
     loadFavorites();
   }, [isLoggedIn]);
 
+  // ── Handlers do modal de produto ──────────────────────────────────────────
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
     if (!found) return;
@@ -84,6 +96,7 @@ export default function Winter() {
     setSelectedProduct(null);
   }, []);
 
+  // ── Ações de carrinho ──────────────────────────────────────────────────────
   const addToCart = useCallback((product: ModalProduct) => {
     addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
     openCart();
@@ -96,6 +109,7 @@ export default function Winter() {
     openCart();
   }, [seasonData.apiProducts, addItem, openCart]);
 
+  // ── Favoritos (comportamento otimista) ─────────────────────────────────────
   const toggleFavorite = useCallback(async (productId: number) => {
     if (!isLoggedIn) {
       alert("Faça login para favoritar produtos.");
@@ -117,6 +131,7 @@ export default function Winter() {
         await apiAddFavorite(productId);
       }
     } catch {
+      // Reverte em caso de erro
       setFavorites((prev) => {
         const next = new Set(prev);
         isFav ? next.add(productId) : next.delete(productId);
@@ -125,9 +140,11 @@ export default function Winter() {
     }
   }, [favorites, isLoggedIn]);
 
+  // ── Renderização ───────────────────────────────────────────────────────────
   return (
     <div className={`${styles.container} ${poppins.variable} ${playfair.variable} ${visible ? styles.pageVisible : ""}`}>
 
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className={styles.hero}>
         <img src="/products/inverno-produtos/banner-principal-inverno.png" alt="Inverno" className={styles.heroImg} />
         <div className={styles.heroGrain}   aria-hidden="true" />
@@ -142,10 +159,12 @@ export default function Winter() {
         </div>
       </section>
 
+      {/* ── Marquee ────────────────────────────────────────────────────── */}
       <div className={styles.marqueeSection}>
         <SeasonMarquee words={MARQUEE_WORDS} highlightColor="#1d4ed8" icon={<WinterIcon />} />
       </div>
 
+      {/* ── Editorial Luxury ──────────────────────────────────────────── */}
       <section className={styles.editorial}>
         <div className={styles.editorialImg}>
           <img src="/products/inverno-produtos/propaganda-inverno.png" alt="Winter Frost" />
@@ -163,10 +182,12 @@ export default function Winter() {
         </div>
       </section>
 
+      {/* ── Seção de produtos ─────────────────────────────────────────── */}
       <section className={styles.productsSection}>
         <SeasonProductsSection
           seasonData={seasonData}
           seasonId="inverno"
+          lineTitle="O segredo para fios saudáveis"
           onProductClick={openProduct}
           lineBannerSrc="/products/inverno-produtos/banner-oleo-inverno.png"
           lineBannerAlt="Linha Winter Frost"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import Link from "next/link";
@@ -8,7 +8,9 @@ import AdminProducts from "@/components/Admin/AdminProducts";
 import { apiGetAllOrders, apiUpdateOrderStatus, apiDeleteOrder, apiGetAllUsers } from "@/lib/api";
 import type { Order, OrderStatus, AdminUserListItem } from "@/lib/api";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ============================================================
+// TIPOS
+// ============================================================
 
 type AdminSection = "dashboard" | "pedidos" | "produtos" | "blog" | "chat" | "usuarios";
 
@@ -47,7 +49,9 @@ interface BlogPost {
   views: number;
 }
 
-// ─── Mock Data (blog, chat, products) ────────────────────────────────────────
+// ============================================================
+// DADOS MOCK (BLOG, CHAT, PRODUTOS)
+// ============================================================
 
 const mockProducts: AdminProduct[] = [
   { id: "p-001", name: "Shampoo Wave Care", price: 89.9, category: "Cabelos", stock: 42, active: true },
@@ -83,7 +87,9 @@ const mockChats: ChatConversation[] = [
   },
 ];
 
-// ─── Order Status Config ──────────────────────────────────────────────────────
+// ============================================================
+// CONFIGURAÇÃO DE STATUS DOS PEDIDOS
+// ============================================================
 
 const orderStatusMap: Record<OrderStatus, { label: string; bg: string; color: string; dot: string }> = {
   PENDING:   { label: "Aguardando",    bg: "#fef9ec", color: "#92400e", dot: "#f59e0b" },
@@ -93,11 +99,9 @@ const orderStatusMap: Record<OrderStatus, { label: string; bg: string; color: st
   CANCELLED: { label: "Cancelado",     bg: "#fef2f2", color: "#991b1b", dot: "#ef4444" },
 };
 
-const nextStatusMap: Partial<Record<OrderStatus, OrderStatus>> = {
-  PENDING: "CONFIRMED",
-  CONFIRMED: "SHIPPED",
-  SHIPPED: "DELIVERED",
-};
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
 
 const formatPrice = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -105,7 +109,9 @@ const formatPrice = (n: number) =>
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("pt-BR");
 
-// ─── Icons (SVG Components) ──────────────────────────────────────────────────
+// ============================================================
+// ÍCONES SVG
+// ============================================================
 
 const Icons = {
   Dashboard: () => (
@@ -217,25 +223,29 @@ const Icons = {
   ),
 };
 
-// ─── Main Component ──────────────────────────────────────────────────────────
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
 
 export default function AdminPage() {
   const { user, isLoggedIn, logout } = useUser();
   const router = useRouter();
+
+  // Navegação
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
 
-  // Orders — dados reais
+  // Pedidos (dados reais)
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "ALL">("ALL");
 
-  // Usuários — dados reais
+  // Usuários (dados reais)
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState<string | null>(null);
 
-  // Mock data
+  // Dados mock
   const [products, setProducts] = useState<AdminProduct[]>(mockProducts);
   const [blogs, setBlogs] = useState<BlogPost[]>(mockBlogs);
   const [chats, setChats] = useState<ChatConversation[]>(mockChats);
@@ -243,6 +253,17 @@ export default function AdminPage() {
   const [chatInput, setChatInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Mapa de usuários para exibição nos pedidos
+  const userMap = useMemo(() => {
+    const map = new Map<number, { name: string; email: string }>();
+    users.forEach(u => map.set(u.id, { name: u.name, email: u.email }));
+    return map;
+  }, [users]);
+
+  // ============================================================
+  // CARREGAMENTO DE DADOS
+  // ============================================================
 
   async function loadOrders() {
     setOrdersLoading(true);
@@ -284,16 +305,9 @@ export default function AdminPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedChat?.messages]);
 
-  if (isLoading) {
-    return (
-      <div className="loadingScreen">
-        <div className="spinner" />
-        <span>Carregando painel administrativo...</span>
-      </div>
-    );
-  }
-
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // ============================================================
+  // AÇÕES DE PEDIDOS
+  // ============================================================
 
   async function handleAdvanceOrder(orderId: number, next: OrderStatus) {
     try {
@@ -313,6 +327,10 @@ export default function AdminPage() {
       alert(err.message || "Erro ao excluir pedido");
     }
   }
+
+  // ============================================================
+  // AÇÕES DE BLOG E CHAT (MOCK)
+  // ============================================================
 
   function toggleProduct(id: string) {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p));
@@ -336,7 +354,9 @@ export default function AdminPage() {
     setChatInput("");
   }
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
+  // ============================================================
+  // ESTATÍSTICAS
+  // ============================================================
 
   const filteredOrders = filterStatus === "ALL"
     ? orders
@@ -349,7 +369,10 @@ export default function AdminPage() {
   const totalUnread = chats.reduce((s, c) => s + c.unread, 0);
   const openChats = chats.filter(c => c.status === "open").length;
 
-  // ── Nav items ─────────────────────────────────────────────────────────────
+  // ============================================================
+  // NAVEGAÇÃO LATERAL
+  // ============================================================
+
   const navItems: { id: AdminSection; label: string; Icon: () => JSX.Element; badge?: number }[] = [
     { id: "dashboard", label: "Dashboard", Icon: Icons.Dashboard },
     { id: "pedidos",   label: "Pedidos",   Icon: Icons.Package, badge: pendingOrders || undefined },
@@ -364,9 +387,24 @@ export default function AdminPage() {
     blog: "Blog", chat: "Suporte ao Cliente", usuarios: "Usuários",
   };
 
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
+
+  if (isLoading) {
+    return (
+      <div className="loadingScreen">
+        <div className="spinner" />
+        <span>Carregando painel administrativo...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="adminContainer">
-      {/* Sidebar */}
+      {/* ============================================================ */}
+      {/* SIDEBAR */}
+      {/* ============================================================ */}
       <aside className="sidebar">
         <div className="sidebarHeader">
           <h1 className="logo">Wave Care</h1>
@@ -404,9 +442,11 @@ export default function AdminPage() {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* ============================================================ */}
+      {/* CONTEÚDO PRINCIPAL */}
+      {/* ============================================================ */}
       <main className="mainContent">
-        {/* Header */}
+        {/* Cabeçalho */}
         <header className="header">
           <div className="headerTitle">
             <h1>{sectionLabel[activeSection]}</h1>
@@ -425,10 +465,11 @@ export default function AdminPage() {
           </div>
         </header>
 
-        {/* Dynamic Content */}
         <div className="contentArea">
 
-          {/* ── Dashboard ── */}
+          {/* ============================================================ */}
+          {/* SEÇÃO: DASHBOARD */}
+          {/* ============================================================ */}
           {activeSection === "dashboard" && (
             <div>
               <div className="statsGrid">
@@ -478,12 +519,17 @@ export default function AdminPage() {
                       </p>
                     ) : orders.slice(0, 4).map(order => {
                       const st = orderStatusMap[order.status as OrderStatus] ?? orderStatusMap.PENDING;
+                      const cliente = userMap.get(order.userId);
                       return (
                         <div key={order.id} className="recentItem">
                           <div className="recentItemInfo">
-                            <div className="recentItemAvatar">U{order.userId}</div>
+                            <div className="recentItemAvatar">
+                              {cliente ? cliente.name.charAt(0).toUpperCase() : "?"}
+                            </div>
                             <div>
-                              <p className="recentItemName">Usuário #{order.userId}</p>
+                              <p className="recentItemName">
+                                {cliente ? cliente.name : `Usuário #${order.userId}`}
+                              </p>
                               <p className="recentItemDate">{formatDate(order.createdAt)}</p>
                             </div>
                           </div>
@@ -536,13 +582,14 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── Pedidos ── */}
+          {/* ============================================================ */}
+          {/* SEÇÃO: PEDIDOS */}
+          {/* ============================================================ */}
           {activeSection === "pedidos" && (
             <div className="tableCard">
               <div className="tableHeader">
                 <h3>Todos os Pedidos</h3>
                 <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                  {/* Filtro de status */}
                   <select
                     value={filterStatus}
                     onChange={e => setFilterStatus(e.target.value as OrderStatus | "ALL")}
@@ -587,7 +634,7 @@ export default function AdminPage() {
                     <thead>
                       <tr>
                         <th>Pedido</th>
-                        <th>Usuário</th>
+                        <th>Cliente</th>
                         <th>Itens</th>
                         <th>Total</th>
                         <th>Status</th>
@@ -598,6 +645,7 @@ export default function AdminPage() {
                       {filteredOrders.map(order => {
                         const statusKey = order.status as OrderStatus;
                         const st = orderStatusMap[statusKey] ?? orderStatusMap.PENDING;
+                        const cliente = userMap.get(order.userId);
 
                         return (
                           <tr key={order.id} className="tableRow">
@@ -607,9 +655,18 @@ export default function AdminPage() {
                             </td>
                             <td>
                               <div className="clientCell">
-                                <div className="clientAvatar">U{order.userId}</div>
+                                <div className="clientAvatar">
+                                  {cliente
+                                    ? cliente.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+                                    : "?"}
+                                </div>
                                 <div>
-                                  <p className="clientName">Usuário #{order.userId}</p>
+                                  <p className="clientName">
+                                    {cliente ? cliente.name : `Usuário #${order.userId}`}
+                                  </p>
+                                  {cliente && (
+                                    <p className="clientEmail">{cliente.email}</p>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -672,10 +729,14 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── Produtos ── */}
+          {/* ============================================================ */}
+          {/* SEÇÃO: PRODUTOS */}
+          {/* ============================================================ */}
           {activeSection === "produtos" && <AdminProducts />}
 
-          {/* ── Blog ── */}
+          {/* ============================================================ */}
+          {/* SEÇÃO: BLOG */}
+          {/* ============================================================ */}
           {activeSection === "blog" && (
             <div>
               <div className="sectionHeader">
@@ -722,7 +783,9 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── Chat ── */}
+          {/* ============================================================ */}
+          {/* SEÇÃO: CHAT / SUPORTE */}
+          {/* ============================================================ */}
           {activeSection === "chat" && (
             <div className="chatContainer">
               <div className="chatSidebar">
@@ -808,7 +871,9 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── Usuários ── */}
+          {/* ============================================================ */}
+          {/* SEÇÃO: USUÁRIOS */}
+          {/* ============================================================ */}
           {activeSection === "usuarios" && (
             <div className="tableCard">
               <div className="tableHeader">

@@ -2,7 +2,7 @@
    SeasonProductsSection.module.css
    ═══════════════════════════════════════════════ */
 
-/* ── Status Box (loading / erro / vazio) ── */
+
 .statusBox {
   display: flex;
   flex-direction: column;

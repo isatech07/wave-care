@@ -1099,34 +1099,57 @@
   padding: 10px;
 }
 
+
 /* ============================================
    RESPONSIVE
    ============================================ */
 
+/* ── Telas grandes (até 1200px) ─────────────────────────────────────────────── */
 @media (max-width: 1200px) {
+  .loja-content {
+    padding: 40px 40px 80px;
+  }
+
   .produtos-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
   }
 
   .produtos-grid--compact {
     grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  .loja-content {
-    grid-template-columns: 1fr;
-    padding: 32px 24px 64px;
+    gap: 18px;
   }
 
   .loja-hero {
-    padding: 64px 24px 48px;
+    padding: 72px 40px 56px;
+  }
+}
+
+/* ── Tablets (até 900px) ────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .loja-content {
+    grid-template-columns: 1fr;
+    padding: 32px 28px 64px;
   }
 
+  .loja-hero {
+    padding: 60px 28px 48px;
+  }
+
+  .loja-hero-title {
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
+  }
+
+  .loja-hero-sub {
+    font-size: 0.95rem;
+  }
+
+  /* Ativa o botão de abrir filtros */
   .loja-filter-toggle {
     display: flex;
   }
 
+  /* Sidebar de filtros vira offcanvas */
   .loja-filtros {
     position: fixed;
     top: 0;
@@ -1149,15 +1172,56 @@
 
   .produtos-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 18px;
   }
 
   .produtos-grid--compact {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .loja-top-bar {
+    gap: 12px;
+  }
+
+  .loja-sort {
+    min-width: 150px;
+  }
+
+  .loja-floating-cart {
+    bottom: 24px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
   }
 }
 
+/* ── Smartphones grandes (até 600px) ─────────────────────────────────────────── */
 @media (max-width: 600px) {
+  .loja-content {
+    padding: 24px 16px 48px;
+  }
+
+  .loja-hero {
+    padding: 48px 20px 40px;
+    gap: 12px;
+  }
+
+  .loja-hero-badge {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+
+  .loja-hero-title {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+  }
+
+  .loja-hero-sub {
+    font-size: 0.88rem;
+    max-width: 100%;
+  }
+
+  /* Barra superior em coluna */
   .loja-top-bar {
     flex-direction: column;
     align-items: stretch;
@@ -1165,22 +1229,82 @@
 
   .loja-top-left,
   .loja-top-right {
+    width: 100%;
     justify-content: space-between;
+  }
+
+  .loja-search {
+    flex: 1;
+  }
+
+  .loja-view-toggle {
+    display: none; /* Em telas pequenas, fixamos o modo grade */
   }
 
   .produtos-grid,
   .produtos-grid--compact {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
+  /* Garante que o texto do botão sempre apareça no mobile */
   .produto-card-btn span {
     display: inline;
+  }
+
+  .produto-card-nome {
+    font-size: 1rem;
+  }
+
+  .produto-card-descricao {
+    font-size: 0.82rem;
+  }
+
+  .loja-cart-sidebar {
+    max-width: 100%;
   }
 
   .loja-floating-cart {
     bottom: 20px;
     right: 20px;
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* ── Smartphones pequenos (até 400px) ────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .loja-hero {
+    padding: 40px 16px 32px;
+  }
+
+  .loja-hero-title {
+    font-size: 1.5rem;
+  }
+
+  .loja-hero-sub {
+    font-size: 0.82rem;
+  }
+
+  .loja-filter-toggle {
+    padding: 10px 16px;
+    font-size: 0.82rem;
+  }
+
+  .loja-sort {
+    min-width: 130px;
+    font-size: 0.8rem;
+  }
+
+  .produto-card-info {
+    padding: 14px;
+  }
+
+  .produto-card-nome {
+    font-size: 0.95rem;
+  }
+
+  .produto-card-btn {
+    padding: 8px 14px;
   }
 }

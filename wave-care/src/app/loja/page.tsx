@@ -16,6 +16,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useUser } from "@/contexts/UserContext";
 import "./loja.css";
 
+// Tipagem local estendida
 type Product = ApiProduct & {
   stock: number;
   originalPrice?: number;
@@ -23,25 +24,29 @@ type Product = ApiProduct & {
   featured?: boolean;
 };
 
+// Opções de ordenação
 const SORT_OPTIONS = [
-  { value: "relevantes",       label: "Mais relevantes"   },
-  { value: "menor-preco",      label: "Menor preço"        },
-  { value: "maior-preco",      label: "Maior preço"        },
-  { value: "mais-vendidos",    label: "Mais vendidos"      },
-  { value: "melhor-avaliados", label: "Melhor avaliados"   },
+  { value: "relevantes",       label: "Mais relevantes" },
+  { value: "menor-preco",      label: "Menor preço" },
+  { value: "maior-preco",      label: "Maior preço" },
+  { value: "mais-vendidos",    label: "Mais vendidos" },
+  { value: "melhor-avaliados", label: "Melhor avaliados" },
 ];
 
+// Formata preço para Real
 const formatPrice = (price: number): string =>
   price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// Normaliza caminho de imagem para evitar problemas de encoding
 const normalizeImagePath = (path: string): string => {
   if (!path) return "/products/placeholder.png";
-  let n = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
-  n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (!n.startsWith("/")) n = "/" + n;
-  return n;
+  let normalized = path.trim().replace(/\s+/g, "").replace(/\/+/g, "/");
+  normalized = normalized.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!normalized.startsWith("/")) normalized = "/" + normalized;
+  return normalized;
 };
 
+// Skeleton de carregamento para o card do produto
 function SkeletonCard() {
   return (
     <div className="produto-card produto-card--skeleton" aria-hidden="true">
@@ -57,6 +62,7 @@ function SkeletonCard() {
   );
 }
 
+// Estado de erro com botão de retry
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="loja-error">
@@ -70,11 +76,13 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   );
 }
 
+// Componente principal da página da loja
 export default function LojaPage() {
   const router = useRouter();
   const { isLoggedIn } = useUser();
 
-const {
+  // Contexto do carrinho
+  const {
     items, isOpen, closeCart, openCart,
     addItem, updateQuantity, removeItem,
     cartCount, cartTotal,
@@ -82,6 +90,7 @@ const {
     error: cartError,
   } = useCart();
 
+  // Estados locais
   const [products,        setProducts]        = useState<Product[]>([]);
   const [loading,         setLoading]         = useState(true);
   const [error,           setError]           = useState("");
@@ -96,6 +105,7 @@ const {
   const [isModalOpen,     setIsModalOpen]     = useState(false);
   const [searchQuery,     setSearchQuery]     = useState("");
 
+  // Busca produtos da API
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -111,7 +121,7 @@ const {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  // Carrega favoritos reais do usuário ao montar / logar
+  // Sincroniza favoritos com o backend ao montar/logar
   useEffect(() => {
     async function loadFavorites() {
       if (!isLoggedIn) {
@@ -122,38 +132,48 @@ const {
         const favProducts = await apiGetMyFavorites();
         setFavorites(new Set(favProducts.map((p) => p.id)));
       } catch {
-        // se falhar, mantém vazio silenciosamente
+        // silencia falha para não quebrar a UI
       }
     }
     loadFavorites();
   }, [isLoggedIn]);
 
+  // Conjuntos únicos de filtros derivados dos produtos
   const filtrosEstacao   = useMemo(() => ["Todos", ...[...new Set(products.map((p) => p.season))].sort()],   [products]);
   const filtrosCategoria = useMemo(() => ["Todos", ...[...new Set(products.map((p) => p.category))].sort()], [products]);
 
+  // Aplica filtros e ordenação
   const produtosFiltrados = useMemo(() => {
     let result = [...products];
+
     if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      result = result.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      const query = searchQuery.trim().toLowerCase();
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)
+      );
     }
+
     if (filtroEstacao   !== "Todos") result = result.filter((p) => p.season   === filtroEstacao);
     if (filtroCategoria !== "Todos") result = result.filter((p) => p.category === filtroCategoria);
+
     switch (ordenacao) {
       case "menor-preco":      result.sort((a, b) => a.price - b.price); break;
       case "maior-preco":      result.sort((a, b) => b.price - a.price); break;
       case "mais-vendidos":    result.sort((a, b) => (b.reviews ?? 0) - (a.reviews ?? 0)); break;
       case "melhor-avaliados": result.sort((a, b) => (b.rating  ?? 0) - (a.rating  ?? 0)); break;
-      default: result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+      default:                 result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     }
+
     return result;
   }, [products, searchQuery, filtroEstacao, filtroCategoria, ordenacao]);
 
+  // Notificação temporária
   const showNotification = useCallback((message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 2500);
   }, []);
 
+  // Alterna favorito (otimista + reversão em erro)
   const toggleFavorite = useCallback(async (productId: number) => {
     if (!isLoggedIn) {
       showNotification("Faça login para favoritar produtos");
@@ -162,7 +182,6 @@ const {
 
     const isCurrentlyFavorite = favorites.has(productId);
 
-    // Atualização otimista da UI
     setFavorites((prev) => {
       const next = new Set(prev);
       if (isCurrentlyFavorite) next.delete(productId);
@@ -179,7 +198,7 @@ const {
         showNotification("Adicionado aos favoritos");
       }
     } catch {
-      // reverte em caso de erro
+      // Reverte estado em caso de erro
       setFavorites((prev) => {
         const next = new Set(prev);
         if (isCurrentlyFavorite) next.add(productId);
@@ -190,12 +209,14 @@ const {
     }
   }, [favorites, isLoggedIn, showNotification]);
 
+  // Adiciona ao carrinho
   const addToCart = useCallback((product: Product) => {
     addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
     showNotification(`${product.name} adicionado à sacola`);
   }, [addItem, showNotification]);
 
-const handleCheckout = useCallback(async () => {
+  // Finaliza pedido e redireciona para checkout
+  const handleCheckout = useCallback(async () => {
     try {
       const order = await createOrder();
       sessionStorage.setItem("wc_checkout_items", JSON.stringify(items));
@@ -203,21 +224,37 @@ const handleCheckout = useCallback(async () => {
       closeCart();
       router.push("/checkout");
     } catch {
-      // erro já em cartError do contexto
+      // erro tratado pelo cartError no contexto
     }
   }, [createOrder, items, closeCart, router]);
 
-  const clearFilters     = useCallback(() => { setFiltroEstacao("Todos"); setFiltroCategoria("Todos"); setOrdenacao("relevantes"); setSearchQuery(""); }, []);
-  const openProductModal = useCallback((product: Product) => { setSelectedProduct(product); setIsModalOpen(true);  }, []);
-  const closeModal       = useCallback(()                  => { setIsModalOpen(false);       setSelectedProduct(null); }, []);
+  // Limpa filtros e busca
+  const clearFilters     = useCallback(() => {
+    setFiltroEstacao("Todos");
+    setFiltroCategoria("Todos");
+    setOrdenacao("relevantes");
+    setSearchQuery("");
+  }, []);
+
+  // Abre modal de detalhes do produto
+  const openProductModal = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  }, []);
+  const closeModal       = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  }, []);
 
   const hasActiveFilters = filtroEstacao !== "Todos" || filtroCategoria !== "Todos" || searchQuery.trim() !== "";
 
   return (
     <main className="loja-main">
+      {/* Notificação temporária */}
       <AnimatePresence>
         {notification && (
-          <motion.div className="loja-notification"
+          <motion.div
+            className="loja-notification"
             initial={{ opacity: 0, y: -20, x: "-50%" }}
             animate={{ opacity: 1, y:   0, x: "-50%" }}
             exit={{    opacity: 0, y: -20, x: "-50%" }}
@@ -228,21 +265,23 @@ const handleCheckout = useCallback(async () => {
         )}
       </AnimatePresence>
 
-      {/* Botão flutuante */}
+      {/* Botão flutuante do carrinho */}
       <button className="loja-floating-cart" onClick={openCart} aria-label="Abrir sacola">
         <ShoppingBag size={22} />
         {cartCount > 0 && <span className="loja-cart-badge">{cartCount}</span>}
       </button>
 
-      {/* Sacola lateral */}
+      {/* Drawer lateral do carrinho */}
       <AnimatePresence>
         {isOpen && (
           <>
-            <motion.div className="loja-cart-overlay"
+            <motion.div
+              className="loja-cart-overlay"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={closeCart}
             />
-            <motion.aside className="loja-cart-sidebar"
+            <motion.aside
+              className="loja-cart-sidebar"
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
@@ -263,7 +302,8 @@ const handleCheckout = useCallback(async () => {
                 ) : (
                   <ul className="loja-cart-items">
                     {items.map((item) => (
-                      <motion.li key={item.id} className="loja-cart-item" layout
+                      <motion.li
+                        key={item.id} className="loja-cart-item" layout
                         initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                       >
                         <div className="loja-cart-item-image">
@@ -303,10 +343,7 @@ const handleCheckout = useCallback(async () => {
                       {cartError}
                     </p>
                   )}
-                  <button
-                    className="loja-cart-checkout"
-                    onClick={handleCheckout}
-                  >
+                  <button className="loja-cart-checkout" onClick={handleCheckout}>
                     Finalizar Compra
                   </button>
                 </div>
@@ -316,6 +353,7 @@ const handleCheckout = useCallback(async () => {
         )}
       </AnimatePresence>
 
+      {/* Modal de detalhes do produto */}
       <ProductModal
         product={selectedProduct}
         isOpen={isModalOpen}
@@ -325,118 +363,220 @@ const handleCheckout = useCallback(async () => {
         isFavorite={selectedProduct ? favorites.has(selectedProduct.id) : false}
       />
 
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="loja-hero">
-        <motion.span className="loja-hero-badge" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>Nova coleção</motion.span>
-        <motion.h1 className="loja-hero-title" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>Cuide do seu cabelo<br />em cada estação</motion.h1>
-        <motion.p className="loja-hero-sub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>Produtos formulados para as necessidades reais de cada clima do verão intenso ao inverno seco.</motion.p>
+        <motion.span
+          className="loja-hero-badge"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        >
+          Nova coleção
+        </motion.span>
+        <motion.h1
+          className="loja-hero-title"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        >
+          Cuide do seu cabelo<br />em cada estação
+        </motion.h1>
+        <motion.p
+          className="loja-hero-sub"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+        >
+          Produtos formulados para as necessidades reais de cada clima — do verão intenso ao inverno seco.
+        </motion.p>
       </section>
 
-      {/* Filtros + Grid */}
+      {/* Conteúdo principal: filtros + grid de produtos */}
       <section className="loja-content">
+        {/* Toggle de filtros mobile */}
         <button className="loja-filter-toggle" onClick={() => setShowFilters(!showFilters)}>
           <SlidersHorizontal size={18} /> Filtros
           {hasActiveFilters && <span className="filter-active-dot" />}
         </button>
 
+        {/* Sidebar de filtros */}
         <aside className={`loja-filtros ${showFilters ? "loja-filtros--open" : ""}`}>
           <div className="loja-filtros-header">
             <h3>Filtros</h3>
-            {hasActiveFilters && <button className="loja-filtros-clear" onClick={clearFilters}>Limpar</button>}
+            {hasActiveFilters && (
+              <button className="loja-filtros-clear" onClick={clearFilters}>Limpar</button>
+            )}
           </div>
+
           <div className="loja-filtros-group">
             <p className="filtros-label">Estação</p>
             {filtrosEstacao.map((f) => (
-              <button key={f} className={`filtro-btn ${f === filtroEstacao ? "filtro-btn--active" : ""}`} onClick={() => setFiltroEstacao(f)}>
+              <button
+                key={f}
+                className={`filtro-btn ${f === filtroEstacao ? "filtro-btn--active" : ""}`}
+                onClick={() => setFiltroEstacao(f)}
+              >
                 {f}
-                {f !== "Todos" && <span className="filtro-count">{products.filter((p) => p.season === f).length}</span>}
+                {f !== "Todos" && (
+                  <span className="filtro-count">{products.filter((p) => p.season === f).length}</span>
+                )}
               </button>
             ))}
           </div>
+
           <div className="loja-filtros-group">
             <p className="filtros-label">Categoria</p>
             {filtrosCategoria.map((f) => (
-              <button key={f} className={`filtro-btn ${f === filtroCategoria ? "filtro-btn--active" : ""}`} onClick={() => setFiltroCategoria(f)}>
+              <button
+                key={f}
+                className={`filtro-btn ${f === filtroCategoria ? "filtro-btn--active" : ""}`}
+                onClick={() => setFiltroCategoria(f)}
+              >
                 {f}
               </button>
             ))}
           </div>
         </aside>
 
+        {/* Listagem de produtos */}
         <div className="loja-produtos">
+          {/* Barra superior: contagem, busca, ordenação */}
           <div className="loja-top-bar">
             <div className="loja-top-left">
-              {loading ? <div className="skeleton skeleton--count" /> : (
-                <span className="loja-count">{produtosFiltrados.length} {produtosFiltrados.length === 1 ? "produto" : "produtos"}</span>
+              {loading ? (
+                <div className="skeleton skeleton--count" />
+              ) : (
+                <span className="loja-count">
+                  {produtosFiltrados.length} {produtosFiltrados.length === 1 ? "produto" : "produtos"}
+                </span>
               )}
               {hasActiveFilters && (
                 <div className="loja-active-filters">
-                  {filtroEstacao   !== "Todos" && <span className="active-filter-tag">{filtroEstacao}   <button onClick={() => setFiltroEstacao("Todos")}><X size={12} /></button></span>}
-                  {filtroCategoria !== "Todos" && <span className="active-filter-tag">{filtroCategoria} <button onClick={() => setFiltroCategoria("Todos")}><X size={12} /></button></span>}
+                  {filtroEstacao !== "Todos" && (
+                    <span className="active-filter-tag">
+                      {filtroEstacao}
+                      <button onClick={() => setFiltroEstacao("Todos")}><X size={12} /></button>
+                    </span>
+                  )}
+                  {filtroCategoria !== "Todos" && (
+                    <span className="active-filter-tag">
+                      {filtroCategoria}
+                      <button onClick={() => setFiltroCategoria("Todos")}><X size={12} /></button>
+                    </span>
+                  )}
                 </div>
               )}
             </div>
+
             <div className="loja-top-right">
               <div className="loja-sort-wrapper" style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 12, paddingRight: 12 }}>
                 <Search size={18} style={{ color: "var(--loja-text-muted)", flexShrink: 0 }} />
-                <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por nome ou categoria..." aria-label="Buscar produtos" className="loja-sort"
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por nome ou categoria..."
+                  aria-label="Buscar produtos"
+                  className="loja-sort"
                   style={{ border: "none", minWidth: 200, paddingLeft: 0, paddingRight: 0, background: "transparent" }}
                 />
               </div>
+
               <div className="loja-view-toggle">
-                <button className={viewMode === "grid"    ? "active" : ""} onClick={() => setViewMode("grid")}    aria-label="Grade"><LayoutGrid size={18} /></button>
-                <button className={viewMode === "compact" ? "active" : ""} onClick={() => setViewMode("compact")} aria-label="Compacto"><Grid3X3 size={18} /></button>
+                <button
+                  className={viewMode === "grid" ? "active" : ""}
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Grade"
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  className={viewMode === "compact" ? "active" : ""}
+                  onClick={() => setViewMode("compact")}
+                  aria-label="Compacto"
+                >
+                  <Grid3X3 size={18} />
+                </button>
               </div>
+
               <div className="loja-sort-wrapper">
-                <select className="loja-sort" value={ordenacao} onChange={(e) => setOrdenacao(e.target.value)}>
-                  {SORT_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                <select
+                  className="loja-sort"
+                  value={ordenacao}
+                  onChange={(e) => setOrdenacao(e.target.value)}
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
                 <ChevronDown size={16} className="loja-sort-icon" />
               </div>
             </div>
           </div>
 
+          {/* Skeleton de carregamento */}
           {loading && (
             <div className={`produtos-grid ${viewMode === "compact" ? "produtos-grid--compact" : ""}`}>
               {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           )}
+
+          {/* Estado de erro */}
           {!loading && error && <ErrorState message={error} onRetry={fetchProducts} />}
+
+          {/* Estado vazio */}
           {!loading && !error && produtosFiltrados.length === 0 && (
             <div className="loja-empty">
               <Sparkles size={48} strokeWidth={1} />
               <h3>Nenhum produto encontrado</h3>
-              <p>{products.length === 0 ? "Ainda não há produtos cadastrados." : "Tente ajustar os filtros."}</p>
-              {hasActiveFilters && <button className="loja-empty-btn" onClick={clearFilters}>Limpar filtros</button>}
+              <p>
+                {products.length === 0
+                  ? "Ainda não há produtos cadastrados."
+                  : "Tente ajustar os filtros."}
+              </p>
+              {hasActiveFilters && (
+                <button className="loja-empty-btn" onClick={clearFilters}>Limpar filtros</button>
+              )}
             </div>
           )}
+
+          {/* Grid de produtos */}
           {!loading && !error && produtosFiltrados.length > 0 && (
-            <motion.div className={`produtos-grid ${viewMode === "compact" ? "produtos-grid--compact" : ""}`} layout>
+            <motion.div
+              className={`produtos-grid ${viewMode === "compact" ? "produtos-grid--compact" : ""}`}
+              layout
+            >
               <AnimatePresence mode="popLayout">
                 {produtosFiltrados.map((product, index) => (
-                  <motion.article key={product.id} className="produto-card" layout
-                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                  <motion.article
+                    key={product.id}
+                    className="produto-card"
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ delay: index * 0.04 }}
-                    onClick={() => openProductModal(product)} style={{ cursor: "pointer" }}
+                    onClick={() => openProductModal(product)}
+                    style={{ cursor: "pointer" }}
                   >
                     {product.badge && (
                       <span className={`produto-card-badge produto-card-badge--${product.badge.toLowerCase().replace(/\s+/g, "-")}`}>
                         {product.badge}
                       </span>
                     )}
-                    <button className={`produto-card-favorite ${favorites.has(product.id) ? "active" : ""}`}
+
+                    <button
+                      className={`produto-card-favorite ${favorites.has(product.id) ? "active" : ""}`}
                       onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
                       aria-label={favorites.has(product.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                     >
                       <Heart size={18} fill={favorites.has(product.id) ? "currentColor" : "none"} />
                     </button>
+
                     <div className="produto-card-img">
-                      <img src={normalizeImagePath(product.image)} alt={product.name} className="produto-image"
+                      <img
+                        src={normalizeImagePath(product.image)}
+                        alt={product.name}
+                        className="produto-image"
                         style={{ width: "100%", height: "auto", aspectRatio: "1/1", objectFit: "cover" }}
                         onError={(e) => { (e.target as HTMLImageElement).src = "/products/placeholder.png"; }}
                       />
                     </div>
+
                     <div className="produto-card-info">
                       <div className="produto-card-meta">
                         <span className="produto-card-cat">{product.category}</span>
@@ -448,15 +588,20 @@ const handleCheckout = useCallback(async () => {
                         <div className="produto-card-rating">
                           <Star size={14} fill="currentColor" />
                           <span>{product.rating.toFixed(1)}</span>
-                          {product.reviews != null && <span className="produto-card-reviews">({product.reviews})</span>}
+                          {product.reviews != null && (
+                            <span className="produto-card-reviews">({product.reviews})</span>
+                          )}
                         </div>
                       )}
                       <div className="produto-card-footer">
                         <div className="produto-card-preco">
                           <span className="preco-atual">{formatPrice(product.price)}</span>
-                          {product.originalPrice && <span className="preco-original">{formatPrice(product.originalPrice)}</span>}
+                          {product.originalPrice && (
+                            <span className="preco-original">{formatPrice(product.originalPrice)}</span>
+                          )}
                         </div>
-                        <button className="produto-card-btn"
+                        <button
+                          className="produto-card-btn"
                           onClick={(e) => { e.stopPropagation(); addToCart(product); }}
                           disabled={product.stock === 0}
                         >

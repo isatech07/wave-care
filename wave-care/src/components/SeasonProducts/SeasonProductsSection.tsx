@@ -25,7 +25,7 @@ interface SeasonProductsSectionProps {
   seasonData: SeasonProductsData;
   seasonId?: "verao" | "outono" | "inverno" | "primavera";
   onProductClick?: (productId: number) => void;
-  onAddToCart?: (productId: number) => void;      // ← NOVO
+  onAddToCart?: (productId: number) => void;      
 }
 
 function StatusBox({ children }: { children: ReactNode }) {
@@ -96,7 +96,7 @@ export default function SeasonProductsSection({
           visibleCount={4}
           seasonId={seasonId}
           onProductClick={onProductClick}
-          onAddToCart={onAddToCart}               // ← NOVO
+          onAddToCart={onAddToCart}              
           cardIndexOffset={products.length}
         />
       )}

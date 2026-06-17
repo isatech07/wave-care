@@ -15,28 +15,24 @@ import { apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite } from "@/lib/api"
 
 import type { ApiProduct } from "@/lib/api";
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-body",
-});
+// ── Fontes ────────────────────────────────────────────────────────────────────
+const poppins = Poppins({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-body" });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-title" });
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-title",
-});
-
+// ── Tema da estação ──────────────────────────────────────────────────────────
 const theme = seasonThemes.verao;
 
+// ── Palavras para o marquee ──────────────────────────────────────────────────
 const MARQUEE_WORDS = [
   "SUMMER", "PROTEÇÃO UV", "PRAIA", "HIDRATAÇÃO", "SOL",
   "BRILHO", "CUIDADO", "LEVEZA", "FRESCOR", "NUTRIÇÃO",
   "OCEANO", "CABELOS SAUDÁVEIS",
 ];
 
+// ── Tipo auxiliar ────────────────────────────────────────────────────────────
 type ModalProduct = ApiProduct & { stock: number; createdAt: string };
 
+// ── Ícone decorativo de verão ────────────────────────────────────────────────
 const SummerIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="12" r="4" fill="currentColor" />
@@ -51,9 +47,11 @@ const SummerIcon = () => (
   </svg>
 );
 
+// ── Utilitário de formatação ─────────────────────────────────────────────────
 const formatPrice = (price: number) =>
   price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// ── Página principal de Verão ────────────────────────────────────────────────
 export default function Summer() {
   const seasonData = useVeraoProducts();
   const { addItem, openCart } = useCart();
@@ -64,6 +62,7 @@ export default function Summer() {
   const [favorites, setFavorites]             = useState<Set<number>>(new Set());
   const [visible, setVisible]                 = useState(false);
 
+  // ── Efeitos ─────────────────────────────────────────────────────────────────
   useEffect(() => { setVisible(true); }, []);
 
   useEffect(() => {
@@ -82,6 +81,7 @@ export default function Summer() {
     loadFavorites();
   }, [isLoggedIn]);
 
+  // ── Handlers do modal de produto ──────────────────────────────────────────
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
     if (!found) return;
@@ -98,16 +98,13 @@ export default function Summer() {
     setSelectedProduct(null);
   }, []);
 
+  // ── Ações de carrinho ──────────────────────────────────────────────────────
   const addToCart = useCallback((product: ModalProduct) => {
-    addItem({
-      id:    product.id,
-      name:  product.name,
-      price: product.price,
-      image: product.image,
-    });
+    addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
     openCart();
   }, [addItem, openCart]);
 
+  // ── Favoritos (comportamento otimista) ─────────────────────────────────────
   const toggleFavorite = useCallback(async (productId: number) => {
     if (!isLoggedIn) {
       alert("Faça login para favoritar produtos.");
@@ -129,6 +126,7 @@ export default function Summer() {
         await apiAddFavorite(productId);
       }
     } catch {
+      // Reverte em caso de erro
       setFavorites((prev) => {
         const next = new Set(prev);
         isFav ? next.add(productId) : next.delete(productId);
@@ -137,18 +135,13 @@ export default function Summer() {
     }
   }, [favorites, isLoggedIn]);
 
+  // ── Renderização ───────────────────────────────────────────────────────────
   return (
-    <div
-      className={`${styles.container} ${poppins.variable} ${playfair.variable} ${
-        visible ? styles.pageVisible : ""
-      }`}
-    >
+    <div className={`${styles.container} ${poppins.variable} ${playfair.variable} ${visible ? styles.pageVisible : ""}`}>
+
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className={styles.hero}>
-        <img
-          src="/products/verao-produtos/banner-principal-verao.png"
-          alt="Verão"
-          className={styles.heroImg}
-        />
+        <img src="/products/verao-produtos/banner-principal-verao.png" alt="Verão" className={styles.heroImg} />
         <div className={styles.heroGrain}   aria-hidden="true" />
         <div className={styles.heroOverlay} aria-hidden="true" />
         <div className={styles.heroContent}>
@@ -161,14 +154,12 @@ export default function Summer() {
         </div>
       </section>
 
+      {/* ── Marquee ────────────────────────────────────────────────────── */}
       <div className={styles.marqueeSection}>
-        <SeasonMarquee
-          words={MARQUEE_WORDS}
-          highlightColor="#ea580c"
-          icon={<SummerIcon />}
-        />
+        <SeasonMarquee words={MARQUEE_WORDS} highlightColor="#ea580c" icon={<SummerIcon />} />
       </div>
 
+      {/* ── Editorial Luxury ──────────────────────────────────────────── */}
       <section className={styles.editorial}>
         <div className={styles.editorialImg}>
           <img src="/products/verao-produtos/propaganda-verao.jpg" alt="Summer Protection" />
@@ -186,6 +177,7 @@ export default function Summer() {
         </div>
       </section>
 
+      {/* ── Seção de Produtos ─────────────────────────────────────────── */}
       <section className={styles.productsSection}>
         <SeasonProductsSection
           seasonData={seasonData}

@@ -15,17 +15,25 @@ import { apiGetMyFavorites, apiAddFavorite, apiRemoveFavorite } from "@/lib/api"
 
 import type { ApiProduct } from "@/lib/api";
 
+// ── Fontes ────────────────────────────────────────────────────────────────────
 const poppins = Poppins({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--font-body" });
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-title" });
 
+// ── Tema da estação ──────────────────────────────────────────────────────────
 const theme = seasonThemes.primavera;
 
-const MARQUEE_WORDS = ["PRIMAVERA", "HIDRATAÇÃO FLORAL", "ANTIFRIZZ", "RENOVAÇÃO", "BLOOM", "BRILHO", "CUIDADO", "LEVEZA", "FRESCOR", "BOTÂNICO", "FLORES", "CABELOS SAUDÁVEIS"];
+// ── Palavras para o marquee ──────────────────────────────────────────────────
+const MARQUEE_WORDS = [
+  "PRIMAVERA", "HIDRATAÇÃO FLORAL", "ANTIFRIZZ", "RENOVAÇÃO", "BLOOM", "BRILHO",
+  "CUIDADO", "LEVEZA", "FRESCOR", "BOTÂNICO", "FLORES", "CABELOS SAUDÁVEIS"
+];
 
+// ── Tipo auxiliar ────────────────────────────────────────────────────────────
 type ModalProduct = ApiProduct & { stock: number; createdAt: string };
 
+// ── Ícone decorativo de primavera ────────────────────────────────────────────
 const SpringIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M12 2 C10 5, 10 8, 12 9 C14 8, 14 5, 12 2Z" fill="currentColor" opacity="0.9" />
     <path d="M22 12 C19 10, 16 10, 15 12 C16 14, 19 14, 22 12Z" fill="currentColor" opacity="0.9" />
     <path d="M12 22 C14 19, 14 16, 12 15 C10 16, 10 19, 12 22Z" fill="currentColor" opacity="0.9" />
@@ -38,8 +46,11 @@ const SpringIcon = () => (
   </svg>
 );
 
-const formatPrice = (price: number) => price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+// ── Utilitário de formatação ─────────────────────────────────────────────────
+const formatPrice = (price: number) =>
+  price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// ── Página principal de Primavera ────────────────────────────────────────────
 export default function Spring() {
   const seasonData = usePrimaveraProducts();
   const { addItem, openCart } = useCart();
@@ -50,6 +61,7 @@ export default function Spring() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [visible, setVisible] = useState(false);
 
+  // ── Efeitos ─────────────────────────────────────────────────────────────────
   useEffect(() => { setVisible(true); }, []);
 
   useEffect(() => {
@@ -68,20 +80,30 @@ export default function Spring() {
     loadFavorites();
   }, [isLoggedIn]);
 
+  // ── Handlers do modal de produto ──────────────────────────────────────────
   const openProduct = useCallback((productId: number) => {
     const found = seasonData.apiProducts?.find((p) => p.id === productId);
     if (!found) return;
-    setSelectedProduct({ ...found, stock: found.stock ?? 10, createdAt: found.createdAt ?? new Date().toISOString() });
+    setSelectedProduct({
+      ...found,
+      stock: found.stock ?? 10,
+      createdAt: found.createdAt ?? new Date().toISOString(),
+    });
     setIsModalOpen(true);
   }, [seasonData.apiProducts]);
 
-  const closeModal = useCallback(() => { setIsModalOpen(false); setSelectedProduct(null); }, []);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  }, []);
 
+  // ── Ações de carrinho ──────────────────────────────────────────────────────
   const addToCart = useCallback((product: ModalProduct) => {
     addItem({ id: product.id, name: product.name, price: product.price, image: product.image });
     openCart();
   }, [addItem, openCart]);
 
+  // ── Favoritos (comportamento otimista) ─────────────────────────────────────
   const toggleFavorite = useCallback(async (productId: number) => {
     if (!isLoggedIn) {
       alert("Faça login para favoritar produtos.");
@@ -103,6 +125,7 @@ export default function Spring() {
         await apiAddFavorite(productId);
       }
     } catch {
+      // Reverte em caso de erro
       setFavorites((prev) => {
         const next = new Set(prev);
         isFav ? next.add(productId) : next.delete(productId);
@@ -111,9 +134,11 @@ export default function Spring() {
     }
   }, [favorites, isLoggedIn]);
 
+  // ── Renderização ───────────────────────────────────────────────────────────
   return (
     <div className={`${styles.container} ${poppins.variable} ${playfair.variable} ${visible ? styles.pageVisible : ""}`}>
 
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className={styles.hero}>
         <img src="/products/primavera-produtos/banner-principal-primavera.png" alt="Primavera" className={styles.heroImg} />
         <div className={styles.heroGrain} aria-hidden="true" />
@@ -121,14 +146,19 @@ export default function Spring() {
         <div className={styles.heroContent}>
           <span className={styles.heroEyebrow}>Primavera Bloom</span>
           <h1 className={styles.heroTitle}>Primavera</h1>
-          <p className={styles.heroSub}>Desperte seus fios com a leveza e o frescor da nova estação. Hidratação floral e nutrição profunda para cabelos que florescem a cada lavagem.</p>
+          <p className={styles.heroSub}>
+            Desperte seus fios com a leveza e o frescor da nova estação. Hidratação floral
+            e nutrição profunda para cabelos que florescem a cada lavagem.
+          </p>
         </div>
       </section>
 
+      {/* ── Marquee ────────────────────────────────────────────────────── */}
       <div className={styles.marqueeSection}>
         <SeasonMarquee words={MARQUEE_WORDS} highlightColor="#be185d" icon={<SpringIcon />} />
       </div>
 
+      {/* ── Editorial Luxury ──────────────────────────────────────────── */}
       <section className={styles.editorial}>
         <div className={styles.editorialImg}>
           <img src="/products/primavera-produtos/propaganda-primavera.png" alt="Primavera Bloom" />
@@ -137,26 +167,39 @@ export default function Spring() {
         <div className={styles.editorialText}>
           <span className={styles.editorialLabel}>Tecnologia Floral & Antifrizz</span>
           <h2 className={styles.editorialTitle}>Primavera<br />Bloom</h2>
-          <p className={styles.editorialBody}>Extrato de flores, antifrizz e nutrição delicada para os dias de renovação. Seus fios radiantes e hidratados do amanhecer à noite.</p>
+          <p className={styles.editorialBody}>
+            Extrato de flores, antifrizz e nutrição delicada para os dias de renovação.
+            Seus fios radiantes e hidratados do amanhecer à noite.
+          </p>
           <div className={styles.editorialDivider} />
           <p className={styles.editorialNote}>Ideal para a renovação dos fios</p>
         </div>
       </section>
 
+      {/* ── Seção de Produtos ─────────────────────────────────────────── */}
       <section className={styles.productsSection}>
         <SeasonProductsSection
-          seasonData={seasonData} seasonId="primavera" onProductClick={openProduct}
-          lineTitle="Leveza e Movimento" kitsTitle="Vitalidade Natural"
-          lineBannerSrc="/products/primavera-produtos/banner-shampoo-primavera.png" lineBannerAlt="Linha Primavera Bloom"
-          kitsBannerSrc="/products/primavera-produtos/banner-produtos-primavera.png" kitsBannerAlt="Kits de Primavera"
+          seasonData={seasonData}
+          seasonId="primavera"
+          onProductClick={openProduct}
+          lineTitle="Leveza e Movimento"
+          kitsTitle="Vitalidade Natural"
+          lineBannerSrc="/products/primavera-produtos/banner-shampoo-primavera.png"
+          lineBannerAlt="Linha Primavera Bloom"
+          kitsBannerSrc="/products/primavera-produtos/banner-produtos-primavera.png"
+          kitsBannerAlt="Kits de Primavera"
         />
       </section>
 
       <CartFloatingButton seasonColor={theme.primary} />
       <Cart seasonColor={theme.primary} />
+
       <ProductModal
-        product={selectedProduct} isOpen={isModalOpen} onClose={closeModal}
-        onAddToCart={addToCart} onToggleFavorite={toggleFavorite}
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onAddToCart={addToCart}
+        onToggleFavorite={toggleFavorite}
         isFavorite={selectedProduct ? favorites.has(selectedProduct.id) : false}
         seasonTheme={{ primary: theme.primary, background: theme.background }}
       />

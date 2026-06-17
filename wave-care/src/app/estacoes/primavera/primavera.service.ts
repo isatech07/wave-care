@@ -6,9 +6,13 @@ import {
   splitProductsAndKits,
 } from "@/lib/products";
 
+// ── Constantes ────────────────────────────────────────────────────────────────
+
 const SEASON_SLUG = "primavera";
 
-/** Busca produtos no backend e filtra apenas os da estação primavera */
+// ── Funções de obtenção de dados ─────────────────────────────────────────────
+
+/** Retorna os produtos da estação primavera */
 export async function getProdutosPrimavera(): Promise<ApiProduct[]> {
   const res = await fetch(`${API_URL}/products`);
   const data = await res.json();
@@ -16,13 +20,15 @@ export async function getProdutosPrimavera(): Promise<ApiProduct[]> {
   return filterProductsBySeason(data, SEASON_SLUG);
 }
 
-/** Separa linha de produtos e kits no formato dos carrosséis */
+/** Retorna produtos e kits separados para o carrossel */
 export async function getCarrosselPrimavera() {
   const filtered = await getProdutosPrimavera();
   return splitProductsAndKits(filtered);
 }
 
-/** Hook de carregamento — expõe apiProducts para uso no modal */
+// ── Hook de carregamento ─────────────────────────────────────────────────────
+
+/** Hook que gerencia o estado de carregamento dos produtos de primavera */
 export function usePrimaveraProducts() {
   const [products, setProducts] = useState<CarouselProduct[]>([]);
   const [kits, setKits] = useState<CarouselProduct[]>([]);

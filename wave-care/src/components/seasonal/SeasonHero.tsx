@@ -12,7 +12,6 @@ interface SeasonHeroProps {
   children: ReactNode;
 }
 
-/** Hero com gradiente sazonal, decoração SVG e entrada ao entrar na viewport */
 export default function SeasonHero({ seasonId, theme, children }: SeasonHeroProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);

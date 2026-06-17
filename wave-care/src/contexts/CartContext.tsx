@@ -220,7 +220,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const order = await apiCreateOrder(user.id);
       saveOrderLocally(user.id, order);
-      // Limpa o carrinho local e sinaliza re-sync
+      // Limpa o carrinho 
       setItems([]);
       syncedRef.current = null;
       return order;

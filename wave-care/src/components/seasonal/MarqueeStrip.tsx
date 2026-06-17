@@ -9,7 +9,7 @@ interface MarqueeStripProps {
   theme: SeasonTheme;
 }
 
-/** Faixa com palavras em scroll horizontal infinito (array duplicado evita salto) */
+
 export default function MarqueeStrip({ words, separator, theme }: MarqueeStripProps) {
   const loop = [...words, ...words];
 

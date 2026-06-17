@@ -184,10 +184,10 @@
 
 /* ── Stepper de status ── */
 .stepper {
-  padding: 1rem 1.25rem 1.25rem;  /* padding generoso dos dois lados */
+  padding: 1rem 1.25rem 1.25rem;  
   box-sizing: border-box;
   width: 100%;
-  overflow: hidden;               /* garante que nada vaze */
+  overflow: hidden;               
 }
 
 .stepperTrack {
@@ -195,7 +195,6 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  /* recua os pontos das bordas para os labels não serem cortados */
   padding: 0 0.5rem;
   box-sizing: border-box;
 }
@@ -204,9 +203,9 @@
 .stepperTrack::before {
   content: "";
   position: absolute;
-  top: 6px;                       /* alinha ao centro dos pontos (12px / 2 = 6px) */
-  left: calc(0.5rem + 6px);       /* começa no centro do 1º ponto */
-  right: calc(0.5rem + 6px);      /* termina no centro do último ponto */
+  top: 6px;                       
+  left: calc(0.5rem + 6px);       
+  right: calc(0.5rem + 6px);     
   height: 2px;
   background: #e5e7eb;
   z-index: 0;
@@ -222,7 +221,7 @@
   flex: 1;
 }
 
-/* Remove flex do primeiro e último para fixar nas bordas */
+
 .stepperStep:first-child { flex: 0 0 auto; align-items: flex-start; }
 .stepperStep:last-child  { flex: 0 0 auto; align-items: flex-end; }
 

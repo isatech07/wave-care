@@ -6,9 +6,13 @@ import {
   splitProductsAndKits,
 } from "@/lib/products";
 
+// ── Constantes ────────────────────────────────────────────────────────────────
+
 const SEASON_SLUG = "verao";
 
-/* Busca produtos no backend e filtra apenas os da estação verão */
+// ── Funções de obtenção de dados ─────────────────────────────────────────────
+
+/** Retorna os produtos da estação verão */
 export async function getProdutosVerao(): Promise<ApiProduct[]> {
   const res = await fetch(`${API_URL}/products`);
   const data = await res.json();
@@ -16,13 +20,15 @@ export async function getProdutosVerao(): Promise<ApiProduct[]> {
   return filterProductsBySeason(data, SEASON_SLUG);
 }
 
-/* Separa linha de produtos e kits no formato dos carrosséis */
+/** Retorna produtos e kits separados para o carrossel */
 export async function getCarrosselVerao() {
   const filtered = await getProdutosVerao();
   return splitProductsAndKits(filtered);
 }
 
+// ── Hook de carregamento ─────────────────────────────────────────────────────
 
+/** Hook que gerencia o estado de carregamento dos produtos de verão */
 export function useVeraoProducts() {
   const [products, setProducts] = useState<CarouselProduct[]>([]);
   const [kits, setKits] = useState<CarouselProduct[]>([]);
@@ -44,6 +50,7 @@ export function useVeraoProducts() {
       setError(message);
       setProducts([]);
       setKits([]);
+      setApiProducts([]);
     } finally {
       setLoading(false);
     }

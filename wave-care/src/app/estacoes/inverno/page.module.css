@@ -1,15 +1,15 @@
 /* ═══════════════════════════════════════════════════════════
-   Winter Series — Wave Care  |  Redesign Editorial
+   Autumn Series — Wave Care  |  Redesign Editorial
    ═══════════════════════════════════════════════════════════ */
 
 .container {
-  --bg:        #F4F7FA;
-  --fg:        #0C1A28;
-  --accent:    #00305F;
-  --accent2:   #1D4ED8;
-  --muted:     #4A6070;
-  --sand:      #E8EFF7;
-  --warm:      #D6E4F7;
+  --bg:        #F5F0E8;
+  --fg:        #2C2016;
+  --accent:    #78350F;
+  --accent2:   #92400E;
+  --muted:     #7A6A55;
+  --sand:      #EDE5D8;
+  --warm:      #FDE8CC;
 
   min-height: 100vh;
   background-color: var(--bg);
@@ -24,9 +24,7 @@
   opacity: 1;
 }
 
-/* ─────────────────────────────────────────
-   HERO — compacto, banner fixo, sem slide
-───────────────────────────────────────── */
+/* ── Hero ────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
   width: 100%;
@@ -44,7 +42,6 @@
   object-position: center top;
 }
 
-/* grain overlay — sensação editorial */
 .heroGrain {
   position: absolute;
   inset: 0;
@@ -58,13 +55,12 @@
   inset: 0;
   background: linear-gradient(
     110deg,
-    rgba(8, 18, 30, 0.75) 0%,
-    rgba(8, 18, 30, 0.28) 55%,
-    rgba(8, 18, 30, 0.45) 100%
+    rgba(28, 20, 10, 0.75) 0%,
+    rgba(28, 20, 10, 0.28) 55%,
+    rgba(28, 20, 10, 0.45) 100%
   );
 }
 
-/* conteúdo */
 .heroContent {
   position: absolute;
   bottom: 8rem;
@@ -82,7 +78,7 @@
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #60a5fa;
+  color: #fbbf24;
   opacity: 0.9;
 }
 
@@ -105,17 +101,13 @@
   max-width: 36ch;
 }
 
-/* ─────────────────────────────────────────
-   MARQUEE
-───────────────────────────────────────── */
+/* ── Marquee ─────────────────────────────────────────────────────── */
 .marqueeSection {
-  border-top: 3px solid #1d4ed8;
-  border-bottom: 3px solid #1d4ed8;
+  border-top: 3px solid #92400e;
+  border-bottom: 3px solid #92400e;
 }
 
-/* ─────────────────────────────────────────
-   BANNER EDITORIAL LUXURY
-───────────────────────────────────────── */
+/* ── Editorial Luxury ────────────────────────────────────────────── */
 .editorial {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
@@ -125,25 +117,23 @@
   margin: 120px auto 0;
   padding: 0 5rem;
 }
- 
-/* CONTAINER DA IMAGEM */
+
+/* Imagem */
 .editorialImg {
   position: relative;
   width: 95%;
   margin: 0 auto;
 }
- 
-/* MOLDURA */
+
 .editorialImg::before {
   content: "";
   position: absolute;
   inset: -22px;
-  border: 1px solid rgba(0, 48, 95, 0.15);
+  border: 1px solid rgba(120, 53, 15, 0.15);
   border-radius: 50px;
   z-index: 1;
 }
- 
-/* FUNDO DECORATIVO */
+
 .editorialImg::after {
   content: "";
   position: absolute;
@@ -151,12 +141,11 @@
   left: 24px;
   width: 100%;
   height: 100%;
-  background: rgba(0, 48, 95, 0.08);
+  background: rgba(120, 53, 15, 0.08);
   border-radius: 50px;
   z-index: 0;
 }
- 
-/* IMAGEM */
+
 .editorialImg img {
   position: relative;
   z-index: 2;
@@ -173,15 +162,14 @@
     transform 700ms ease,
     box-shadow 700ms ease;
 }
- 
+
 .editorial:hover .editorialImg img {
   transform: translateY(-10px) scale(1.02);
   box-shadow:
     0 45px 120px rgba(0, 0, 0, 0.18),
     0 20px 50px rgba(0, 0, 0, 0.12);
 }
- 
-/* OVERLAY SUAVE */
+
 .editorialImgOverlay {
   position: absolute;
   inset: 0;
@@ -195,8 +183,8 @@
   );
   pointer-events: none;
 }
- 
-/* TEXTO */
+
+/* Texto */
 .editorialText {
   position: relative;
   display: flex;
@@ -204,8 +192,7 @@
   justify-content: center;
   padding-right: 2rem;
 }
- 
-/* DETALHE DECORATIVO */
+
 .editorialText::before {
   content: "";
   position: absolute;
@@ -213,10 +200,10 @@
   right: 0;
   width: 120px;
   height: 120px;
-  border: 1px solid rgba(0, 48, 95, 0.15);
+  border: 1px solid rgba(120, 53, 15, 0.15);
   border-radius: 50%;
 }
- 
+
 .editorialLabel {
   font-size: 0.95rem;
   font-weight: 600;
@@ -225,7 +212,7 @@
   color: var(--fg);
   margin-bottom: 1rem;
 }
- 
+
 .editorialTitle {
   font-family: var(--font-title);
   font-size: clamp(3.2rem, 5vw, 7.5rem);
@@ -235,7 +222,7 @@
   letter-spacing: -0.04em;
   margin: 0 0 1.5rem;
 }
- 
+
 .editorialDivider {
   width: 400px;
   height: 2px;
@@ -243,7 +230,7 @@
   border-radius: 999px;
   margin-bottom: -0.75rem;
 }
- 
+
 .editorialBody {
   font-size: 1.1rem;
   line-height: 1.9;
@@ -251,30 +238,27 @@
   max-width: 42ch;
   margin: 0;
 }
- 
+
 .editorialNote {
   margin-top: 2rem;
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(74, 96, 112, 0.65);
+  color: rgba(122, 106, 85, 0.65);
 }
 
-/* ─────────────────────────────────────────
-   SEÇÃO DE PRODUTOS
-───────────────────────────────────────── */
+/* ── Seção de Produtos ─────────────────────────────────────────── */
 .productsSection {
   padding: 5rem 2rem 6rem;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-/* ═══════════════════════════════════════════════
-   TABLET (1024px)
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   Tablet (1024px)
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-
   .hero {
     height: 650px;
   }
@@ -321,11 +305,10 @@
   }
 }
 
-/* ═══════════════════════════════════════════════
-   MOBILE (768px)
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   Mobile (768px)
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-
   .hero {
     height: 550px;
     margin-top: 60px;
@@ -415,11 +398,10 @@
   }
 }
 
-/* ═══════════════════════════════════════════════
-   MOBILE PEQUENO (480px)
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   Mobile Pequeno (480px)
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-
   .hero {
     height: 500px;
   }

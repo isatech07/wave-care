@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════
    ProductCarousel — tamanhos fixos e uniformes
-   Cores/efeitos ficam no SeasonCard por estação
    ═══════════════════════════════════════════════ */
 
 .carouselWrapper {
@@ -13,7 +12,7 @@
   margin-bottom: 6rem;
 }
 
-/* ── Header ── */
+/* ── Header ─────────────────────────────────────────────────── */
 .carouselHeader {
   display: flex;
   align-items: flex-end;
@@ -78,7 +77,7 @@
 
 .arrowBtn:disabled { opacity: 0.25; cursor: default; }
 
-/* ── Banner faixa wide ── */
+/* ── Banner ─────────────────────────────────────────────────── */
 .carouselBanner {
   width: 100%;
   height: 600px;
@@ -129,12 +128,12 @@
 
 .bannerIcon { font-size: 4rem; }
 
-/* ── Grid 4 colunas — tamanho uniforme ── */
+/* ── Grid de Cards ─────────────────────────────────────────── */
 .carouselCards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
-  align-items: stretch; /* trocar start por stretch */
+  align-items: stretch;
 }
 
 .carouselCardWrap {
@@ -145,7 +144,7 @@
   height: 100%;
 }
 
-/* ── Card — altura fixa para uniformidade ── */
+/* ── Card Individual ───────────────────────────────────────── */
 .carouselCard {
   display: flex;
   flex-direction: column;
@@ -165,11 +164,9 @@
   box-shadow: 0 16px 40px rgba(0,0,0,0.1);
 }
 
-/* ── Imagem — proporção fixa ── */
 .cardImage {
   position: relative;
   overflow: hidden;
-  /* altura fixa para uniformidade */
   aspect-ratio: 3 / 4;
   flex-shrink: 0;
   background: #F3F1EE;
@@ -222,7 +219,7 @@
   background: linear-gradient(145deg, #F3F1EE 0%, #E8E4DF 100%);
 }
 
-/* ── Info — ocupa o espaço restante ── */
+/* ── Informações do Card ──────────────────────────────────── */
 .cardInfo {
   flex: 1;
   display: flex;
@@ -260,8 +257,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex: 1;
-  overflow: hidden;
-  min-height: 75px; /* reserva o mesmo espaço para conteúdo */
+  min-height: 75px;
 }
 
 .kitList { list-style: none; padding: 0; margin: 0; }
@@ -278,7 +274,7 @@
 
 .kitDot { color: var(--c-accent); font-weight: 700; margin-right: 0.2rem; }
 
-/* ── Footer — sempre no fundo ── */
+/* ── Footer do Card ───────────────────────────────────────── */
 .cardFooter {
   display: flex;
   justify-content: space-between;
@@ -327,7 +323,7 @@
   transform: translateY(-1px);
 }
 
-/* ── Dots ── */
+/* ── Dots de Navegação ────────────────────────────────────── */
 .dots {
   display: flex;
   justify-content: center;
@@ -349,11 +345,10 @@
 .dot:hover { background: rgba(28,25,23,0.35); }
 .dotActive { width: 32px; background: var(--c-accent); }
 
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    TABLET GRANDE (1200px)
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 1200px) {
-
   .carouselBanner {
     height: 500px;
   }
@@ -371,12 +366,10 @@
   }
 }
 
-
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    TABLET (1024px)
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-
   .carouselWrapper {
     margin-bottom: 5rem;
   }
@@ -414,12 +407,10 @@
   }
 }
 
-
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    MOBILE / TABLET PEQUENO (768px)
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-
   .carouselHeader {
     flex-direction: column;
     align-items: flex-start;
@@ -474,12 +465,10 @@
   }
 }
 
-
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    MOBILE (480px)
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-
   .carouselWrapper {
     margin-bottom: 4rem;
   }
@@ -543,12 +532,10 @@
   }
 }
 
-
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    MOBILE PEQUENO (360px)
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 360px) {
-
   .carouselCards {
     grid-template-columns: 1fr;
   }

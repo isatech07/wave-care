@@ -12,7 +12,7 @@ interface SeasonCardProps {
   className?: string;
 }
 
-/** Wrapper dos cards — hover sazonal + scroll reveal com delay incremental */
+
 export default function SeasonCard({ seasonId, index, children, className = "" }: SeasonCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);

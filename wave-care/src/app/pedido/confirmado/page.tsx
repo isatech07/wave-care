@@ -27,7 +27,6 @@ export default function PedidoConfirmado() {
         sessionStorage.removeItem("wc_last_order");
       }
     } catch {
-      // ignora erro de parse
     } finally {
       setChecked(true);
     }

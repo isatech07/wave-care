@@ -34,7 +34,6 @@ interface SearchResult {
 export default function Navbar() {
   const { user, isLoggedIn } = useUser();
 
-  // Fix de hydration — só renderiza estado real após montagem no cliente
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -283,9 +282,7 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* ─── Botão de perfil ──────────────────────────────────────
-                Antes: mostrava letra inicial (userInitial)
-                Agora: usa <AvatarDisplay> — foto ou initials automático  */}
+            {/* ─── Botão de perfil ────────────────────────────────────── */}
             <button
               className="navbar-action navbar-profile-btn"
               onClick={handleProfileClick}

@@ -238,9 +238,7 @@ const DIAGNOSIS_LABELS: Record<string, string> = {
 const STORAGE_KEY = "wavecare_quiz_v1"
 
 // ─── Monta payload para o backend ─────────────────────────────────────────────
-// Índices das respostas:
-// 0=ambiente, 1=hairType, 2=beachFrequency, 3=sunProtection,
-// 4=wetHair,  5=hairState, 6=chemicalProcess, 7=queixa, 8=season, 9=dificuldade
+
 function montarPayload(respostas: string[], cidade: string) {
   return {
     city:            cidade || "caraguatatuba",
@@ -254,7 +252,7 @@ function montarPayload(respostas: string[], cidade: string) {
   }
 }
 
-// ─── Lógica de resultado (frontend) ───────────────────────────────────────────
+// ─── Lógica de resultado 
 function calcularResultado(respostas: string[], pontos: Record<string, number>) {
   const estacao    = (respostas[8] ?? "verao") as EstacaoKey
   const condicao   = respostas[5]
@@ -297,7 +295,7 @@ function calcularResultado(respostas: string[], pontos: Record<string, number>) 
   }
 }
 
-// ─── Componente principal ──────────────────────────────────────────────────────
+// ─── Componente principal
 export default function QuizCapilar() {
   const { user, isLoggedIn, updateCapilar } = useUser()
 
@@ -314,13 +312,12 @@ export default function QuizCapilar() {
   // Resultado do backend (diagnosis + recommendedKit)
   const [backResult, setBackResult] = useState<QuizApiResult | null>(null)
 
-  // ── resultado (useMemo) ───────────────────────────────────────────────────
+  // ── resultado 
   const resultado = useMemo(() => {
     if (!concluido || respostas.length < 9) return null
     return calcularResultado(respostas, pontos)
   }, [concluido, respostas, pontos])
 
-  // ── Carrega localStorage ──────────────────────────────────────────────────
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -334,7 +331,6 @@ export default function QuizCapilar() {
     } catch { /* ignora */ }
   }, [])
 
-  // ── Persiste no localStorage ──────────────────────────────────────────────
   useEffect(() => {
     if (passo === -1) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ passo, respostas, pontos, concluido }))
@@ -362,8 +358,6 @@ export default function QuizCapilar() {
   const salvarNoPerfil = useCallback(() => {
     if (!resultado || !isLoggedIn) return
 
-    // O POST /quiz já salvou no banco ao concluir.
-    // Aqui apenas atualiza o contexto local com os dados já retornados.
     updateCapilar({
       tipo:            resultado.tipoCabelo,
       preocupacao:     resultado.condicao,
@@ -374,7 +368,6 @@ export default function QuizCapilar() {
     })
     setSavedPerfil(true)
 
-    // Confirma com o banco (garante consistência para o mobile também)
     apiGetMyProfile()
       .then(profile => {
         if (profile?.capilar) updateCapilar(profile.capilar)
@@ -382,7 +375,6 @@ export default function QuizCapilar() {
       .catch(() => {/* silencioso — o contexto local já foi atualizado */})
   }, [resultado, isLoggedIn, updateCapilar, backResult])
 
-  // ── Transição animada ─────────────────────────────────────────────────────
   const transitar = useCallback((fn: () => void) => {
     setSaindo(true)
     setTimeout(() => { fn(); setSaindo(false); setOpcaoSel(null) }, 320)
@@ -487,7 +479,6 @@ export default function QuizCapilar() {
             <div className="res-kit-info">
               <span className="res-kit-label">Kit recomendado · {est.nome}</span>
               <h2 className="res-kit-nome">Kit {est.kitNome}</h2>
-              {/* Se o back retornou um kit específico, mostra abaixo */}
               {backResult?.recommendedKit && (
                 <p style={{ fontSize: "0.78rem", color: "#6b7280", marginBottom: "0.25rem" }}>
                   Kit personalizado: <strong>{backResult.recommendedKit}</strong>

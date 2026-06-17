@@ -24,9 +24,7 @@
   opacity: 1;
 }
 
-/* ─────────────────────────────────────────
-   HERO — banner fixo, sem slide
-───────────────────────────────────────── */
+/* ── Hero ────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
   width: 100%;
@@ -103,17 +101,13 @@
   max-width: 36ch;
 }
 
-/* ─────────────────────────────────────────
-   MARQUEE
-───────────────────────────────────────── */
+/* ── Marquee ─────────────────────────────────────────────────────── */
 .marqueeSection {
   border-top: 3px solid #be185d;
   border-bottom: 3px solid #be185d;
 }
 
-/* ─────────────────────────────────────────
-   BANNER EDITORIAL — moldura floral única
-───────────────────────────────────────── */
+/* ── Editorial Luxury ────────────────────────────────────────────── */
 .editorial {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
@@ -124,18 +118,14 @@
   padding: 0 5rem;
 }
 
-/* CONTAINER DA IMAGEM */
+/* Imagem */
 .editorialImg {
   position: relative;
   width: 95%;
   margin: 0 auto;
 }
 
-/*
-  MOLDURA DIFERENTE: dois arcos opostos em gradiente rosa
-  — superior-esquerdo e inferior-direito —
-  criando uma forma de "petala dupla" ao redor da imagem.
-*/
+/* Moldura: dois arcos opostos em gradiente rosa */
 .editorialImg::before {
   content: "";
   position: absolute;
@@ -166,12 +156,6 @@
   pointer-events: none;
 }
 
-/* Arcos internos em rosa claro — segunda camada de profundidade */
-.editorialImg img + .editorialImgOverlay::before {
-  display: none; /* não usado */
-}
-
-/* IMAGEM — forma orgânica com bordas assimétricas suaves */
 .editorialImg img {
   position: relative;
   z-index: 2;
@@ -180,7 +164,6 @@
   object-fit: cover;
   object-position: center;
   display: block;
-  /* Formato orgânico diferente das outras estações: "pétala" com dois lados curvados */
   border-radius: 38% 62% 62% 38% / 42% 42% 58% 58%;
   box-shadow:
     0 30px 80px rgba(157, 26, 82, 0.18),
@@ -197,8 +180,7 @@
     0 20px 50px rgba(157, 26, 82, 0.14);
 }
 
-/* Decoração extra: ponto de flor no canto superior direito */
-.editorialImg .editorialImgOverlay {
+.editorialImgOverlay {
   position: absolute;
   inset: 0;
   z-index: 3;
@@ -212,7 +194,7 @@
   pointer-events: none;
 }
 
-/* TEXTO */
+/* Texto */
 .editorialText {
   position: relative;
   display: flex;
@@ -221,7 +203,6 @@
   padding-right: 2rem;
 }
 
-/* Detalhe decorativo: meia-lua à direita */
 .editorialText::before {
   content: "";
   position: absolute;
@@ -288,20 +269,17 @@
   color: rgba(140, 90, 110, 0.65);
 }
 
-/* ─────────────────────────────────────────
-   SEÇÃO DE PRODUTOS
-───────────────────────────────────────── */
+/* ── Seção de Produtos ─────────────────────────────────────────── */
 .productsSection {
   padding: 5rem 2rem 6rem;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-/* ═══════════════════════════════════════════════
-   TABLET (1024px)
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   Tablet (1024px)
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-
   .hero {
     height: 650px;
   }
@@ -348,11 +326,10 @@
   }
 }
 
-/* ═══════════════════════════════════════════════
-   MOBILE (768px)
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   Mobile (768px)
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-
   .hero {
     height: 550px;
     margin-top: 60px;
@@ -443,11 +420,10 @@
   }
 }
 
-/* ═══════════════════════════════════════════════
-   MOBILE PEQUENO (480px)
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   Mobile Pequeno (480px)
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-
   .hero {
     height: 500px;
   }

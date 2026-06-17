@@ -89,7 +89,6 @@ const AVATARS_KEY  = "wavecare_avatars";
 
 type AvatarStore = Record<string, string>;
 
-// ── helpers de localStorage ───────────────────────────────────────────────────
 
 function loadUser(): UserData | null {
   if (typeof window === "undefined") return null;
@@ -146,13 +145,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user,         setUser]         = useState<UserData | null>(null);
   const [initializing, setInitializing] = useState(true);
 
-  // ── Inicialização: localStorage → banco ──────────────────────────────────
   useEffect(() => {
     const stored = loadUser();
     const token  = getToken();
 
     if (!token) {
-      // sem sessão ativa: apenas o que tiver em cache local
       if (stored) {
         setUser({ ...stored, avatar: stored.avatar ?? loadAvatarForEmail(stored.email) });
       }
@@ -160,18 +157,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // tem token: valida e sincroniza com o banco
     apiGetMyProfile()
       .then(profile => {
         if (!profile) {
-          // token expirado ou inválido — limpa tudo
           removeUser();
           clearToken();
           setUser(null);
           return;
         }
 
-        // base: o que estava em cache (preserva favorites, orders, avatar)
         const base = stored ?? {
           id: profile.id, nome: profile.name, email: profile.email,
           telefone: profile.telefone ?? "", cidade: profile.cidade ?? "",
@@ -189,7 +183,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
           cidade:   profile.cidade   ?? base.cidade,
           role:     profile.role,
           isAdmin:  profile.role === "admin",
-          // capilar: banco tem precedência; fallback para cache local
           capilar:  profile.capilar
             ? {
                 tipo:            profile.capilar.tipo,
@@ -210,7 +203,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         saveUser(merged);
       })
       .catch(() => {
-        // rede offline ou erro inesperado: usa cache sem deslogar
         if (stored) {
           setUser({ ...stored, avatar: stored.avatar ?? loadAvatarForEmail(stored.email) });
         }

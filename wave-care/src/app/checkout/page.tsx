@@ -12,21 +12,19 @@ import type { CartLineItem } from "@/contexts/CartContext";
 const formatPrice = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-type PaymentMethod = "credit" | "pix" | "boleto";
-
+type PaymentMethod = "card" | "pix" | "boleto";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, cartTotal, loading } = useCart();
   const { user, isLoggedIn, initializing } = useUser();
 
-  const [method, setMethod] = useState<PaymentMethod>("credit");
+  const [method, setMethod] = useState<PaymentMethod>("card");
   const [card, setCard] = useState({ number: "", name: "", expiry: "", cvv: "" });
   const [ready, setReady] = useState(false);
   const [snapshotItems, setSnapshotItems] = useState<CartLineItem[]>([]);
   const [pendingOrderId, setPendingOrderId] = useState<number | null>(null);
 
-  // estados locais de pagamento (separados do CartContext)
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
@@ -38,11 +36,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    const storedItems  = sessionStorage.getItem("wc_checkout_items");
+    const storedItems = sessionStorage.getItem("wc_checkout_items");
     const storedOrderId = sessionStorage.getItem("wc_pending_order_id");
-
-    console.log("storedOrderId:", storedOrderId);
-    console.log("storedItems:", storedItems);
 
     if (!storedItems && items.length === 0) {
       router.replace("/");
@@ -53,7 +48,6 @@ export default function CheckoutPage() {
       try { setSnapshotItems(JSON.parse(storedItems)); } catch { /* ignora */ }
     }
 
-    // ← lê direto da variável local, não depende do estado
     const orderId = storedOrderId ? Number(storedOrderId) : null;
     setPendingOrderId(orderId);
     setReady(true);
@@ -75,15 +69,20 @@ export default function CheckoutPage() {
     ? cartTotal
     : snapshotItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
-    const handlePagar = async () => {
+  const handlePagar = async () => {
     const orderIdToUse = pendingOrderId ?? Number(sessionStorage.getItem("wc_pending_order_id"));
-
-    console.log("pendingOrderId estado:", pendingOrderId);
-    console.log("orderIdToUse:", orderIdToUse);
 
     if (!orderIdToUse) {
       setPayError("Pedido não encontrado. Volte ao carrinho e tente novamente.");
       return;
+    }
+
+    if (method === "card") {
+      const { number, name, expiry, cvv } = card;
+      if (!number.trim() || !name.trim() || !expiry.trim() || !cvv.trim()) {
+        setPayError("Preencha todos os dados do cartão.");
+        return;
+      }
     }
 
     setPayLoading(true);
@@ -126,8 +125,6 @@ export default function CheckoutPage() {
       sessionStorage.removeItem("wc_checkout_items");
       sessionStorage.removeItem("wc_pending_order_id");
 
-      console.log("método escolhido:", method);
-      console.log("orderIdToUse:", orderIdToUse);
       router.push("/pedido/confirmado");
     } catch (err) {
       setPayError(err instanceof Error ? err.message : "Erro ao processar pagamento");
@@ -145,14 +142,12 @@ export default function CheckoutPage() {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
-
         <button type="button" className={styles.backBtn} onClick={() => router.back()}>
           <ChevronLeft size={18} />
           Voltar
         </button>
 
         <div className={styles.grid}>
-
           {/* ─── Formulário de pagamento ─── */}
           <section className={styles.formSection}>
             <h1 className={styles.title}>Pagamento</h1>
@@ -164,28 +159,30 @@ export default function CheckoutPage() {
             )}
 
             <div className={styles.methods}>
-              {([
-                { id: "credit", label: "Cartão de Crédito" },
-                { id: "pix",    label: "PIX" },
+              {[
+                { id: "card", label: "Cartão de Crédito" },
+                { id: "pix", label: "PIX" },
                 { id: "boleto", label: "Boleto" },
-              ] as { id: PaymentMethod; label: string }[]).map((m) => (
+              ].map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   className={`${styles.methodBtn} ${method === m.id ? styles.methodActive : ""}`}
-                  onClick={() => setMethod(m.id)}
+                  onClick={() => setMethod(m.id as PaymentMethod)}
                 >
                   {m.label}
                 </button>
               ))}
             </div>
 
-            {method === "credit" && (
+            {method === "card" && (
               <div className={styles.cardForm}>
                 <div className={styles.field}>
                   <label>Número do cartão</label>
                   <input
-                    type="text" inputMode="numeric" placeholder="0000 0000 0000 0000"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="0000 0000 0000 0000"
                     value={card.number}
                     onChange={(e) => setCard((c) => ({ ...c, number: maskCard(e.target.value) }))}
                     maxLength={19}
@@ -194,7 +191,8 @@ export default function CheckoutPage() {
                 <div className={styles.field}>
                   <label>Nome no cartão</label>
                   <input
-                    type="text" placeholder="Como está no cartão"
+                    type="text"
+                    placeholder="Como está no cartão"
                     value={card.name}
                     onChange={(e) => setCard((c) => ({ ...c, name: e.target.value.toUpperCase() }))}
                   />
@@ -203,7 +201,9 @@ export default function CheckoutPage() {
                   <div className={styles.field}>
                     <label>Validade</label>
                     <input
-                      type="text" inputMode="numeric" placeholder="MM/AA"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="MM/AA"
                       value={card.expiry}
                       onChange={(e) => setCard((c) => ({ ...c, expiry: maskExpiry(e.target.value) }))}
                       maxLength={5}
@@ -212,7 +212,9 @@ export default function CheckoutPage() {
                   <div className={styles.field}>
                     <label>CVV</label>
                     <input
-                      type="text" inputMode="numeric" placeholder="000"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="000"
                       value={card.cvv}
                       onChange={(e) => setCard((c) => ({ ...c, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) }))}
                       maxLength={4}
@@ -295,7 +297,6 @@ export default function CheckoutPage() {
               <strong>{formatPrice(displayTotal)}</strong>
             </div>
           </aside>
-
         </div>
       </div>
     </main>

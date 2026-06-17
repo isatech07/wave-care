@@ -1,9 +1,3 @@
-/* ============================================================
-   Wave Care — Quiz Capilar
-   Cormorant Garamond (display) + Jost (body)
-   ============================================================ */
-
-/* ── Variáveis ─────────────────────────────────────────────── */
 :root {
   --q-bg:          #f8f4ef;
   --q-green:       #2d6a5a;
@@ -18,16 +12,12 @@
   --q-card-bg:     rgba(255, 255, 255, 0.72);
 }
 
-/* ── Reset mínimo ──────────────────────────────────────────── */
 .quiz-page *, .quiz-page *::before, .quiz-page *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ══════════════════════════════════════════════════════════
-   QUIZ — FUNDO E ESTRUTURA
-══════════════════════════════════════════════════════════ */
 .quiz-page {
   min-height: 100vh;
   display: flex;
@@ -39,7 +29,6 @@
   background: var(--q-bg);
 }
 
-/* Fundo orgânico — textura de areia com mancha verde suave */
 .quiz-bg {
   position: fixed;
   inset: 0;
@@ -51,7 +40,6 @@
     #f8f4ef;
 }
 
-/* Linhas decorativas sutis */
 .quiz-bg::before {
   content: '';
   position: absolute;
@@ -78,7 +66,6 @@
   gap: 1.75rem;
 }
 
-/* ── Logo ──────────────────────────────────────────────────── */
 .quiz-logo {
   font-family: 'Cormorant Garamond', serif;
   font-size: 2rem;
@@ -87,12 +74,12 @@
   text-decoration: none;
   letter-spacing: -0.02em;
 }
+
 .quiz-logo em {
   color: var(--q-green);
   font-style: normal;
 }
 
-/* ── Barra de progresso ────────────────────────────────────── */
 .quiz-progress {
   width: 100%;
   height: 2px;
@@ -100,6 +87,7 @@
   border-radius: 2px;
   overflow: hidden;
 }
+
 .quiz-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--q-green-light), var(--q-green));
@@ -107,7 +95,6 @@
   transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Card principal ────────────────────────────────────────── */
 .quiz-card {
   width: 100%;
   background: var(--q-card-bg);
@@ -119,22 +106,22 @@
     0 2px 8px rgba(45, 106, 90, 0.06),
     0 20px 60px rgba(45, 106, 90, 0.08);
 }
+
 .quiz-card-enter {
   animation: cardEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
 .quiz-card-exit {
   opacity: 0;
   transform: translateY(12px);
   transition: all 0.3s ease;
 }
+
 @keyframes cardEnter {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ══════════════════════════════════════════════════════════
-   TELA INICIAL
-══════════════════════════════════════════════════════════ */
 .quiz-start { text-align: center; }
 
 .quiz-start-eyebrow {
@@ -155,6 +142,7 @@
   line-height: 1.2;
   margin-bottom: 0.875rem;
 }
+
 .quiz-start-title em {
   color: var(--q-green);
   font-style: italic;
@@ -170,7 +158,6 @@
   margin-right: auto;
 }
 
-/* Separador decorativo */
 .quiz-start-divider {
   width: 40px;
   height: 1px;
@@ -179,7 +166,6 @@
   opacity: 0.6;
 }
 
-/* Pills de features */
 .quiz-start-pills {
   display: flex;
   flex-wrap: wrap;
@@ -187,6 +173,7 @@
   justify-content: center;
   margin-bottom: 2rem;
 }
+
 .quiz-start-pills span {
   padding: 0.35rem 0.875rem;
   background: rgba(45, 106, 90, 0.07);
@@ -216,6 +203,7 @@
   justify-content: center;
   gap: 0.5rem;
 }
+
 .quiz-start-cta:hover {
   background: var(--q-green-dark);
   transform: translateY(-2px);
@@ -229,7 +217,6 @@
   letter-spacing: 0.06em;
 }
 
-/* Banner de quiz salvo */
 .quiz-saved-banner {
   width: 100%;
   padding: 0.875rem 1.25rem;
@@ -241,20 +228,24 @@
   justify-content: space-between;
   gap: 1rem;
 }
+
 .quiz-saved-banner p {
   font-size: 0.85rem;
   color: var(--q-green);
   font-weight: 500;
 }
+
 .quiz-saved-banner span {
   font-size: 0.78rem;
   color: var(--q-muted);
 }
+
 .quiz-saved-actions {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
 }
+
 .quiz-saved-continue {
   padding: 0.4rem 1rem;
   background: var(--q-green);
@@ -267,7 +258,9 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .quiz-saved-continue:hover { background: var(--q-green-dark); }
+
 .quiz-saved-reset {
   padding: 0.4rem 0.875rem;
   background: transparent;
@@ -279,17 +272,16 @@
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .quiz-saved-reset:hover { border-color: var(--q-green); color: var(--q-green); }
 
-/* ══════════════════════════════════════════════════════════
-   PERGUNTA
-══════════════════════════════════════════════════════════ */
 .quiz-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.75rem;
 }
+
 .quiz-categoria {
   font-size: 0.68rem;
   font-weight: 600;
@@ -297,6 +289,7 @@
   letter-spacing: 0.14em;
   color: var(--q-green);
 }
+
 .quiz-counter {
   font-size: 0.78rem;
   color: #b0a898;
@@ -312,7 +305,6 @@
   text-align: center;
 }
 
-/* ── Opções ────────────────────────────────────────────────── */
 .quiz-opcoes {
   display: flex;
   flex-direction: column;
@@ -337,24 +329,27 @@
   transition: all 0.22s ease;
   animation: optEnter 0.3s ease both;
 }
+
 @keyframes optEnter {
   from { opacity: 0; transform: translateX(-10px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
 .quiz-opcao:hover {
   border-color: var(--q-green);
   background: rgba(45, 106, 90, 0.04);
   transform: translateX(4px);
 }
+
 .quiz-opcao--selecionada {
   border-color: var(--q-green) !important;
   background: rgba(45, 106, 90, 0.07) !important;
 }
+
 .quiz-opcao:disabled {
   cursor: default;
 }
 
-/* Radio visual */
 .quiz-radio {
   width: 18px;
   height: 18px;
@@ -364,13 +359,16 @@
   transition: all 0.2s ease;
   position: relative;
 }
+
 .quiz-opcao:hover .quiz-radio {
   border-color: var(--q-green);
 }
+
 .quiz-opcao--selecionada .quiz-radio {
   border-color: var(--q-green);
   background: var(--q-green);
 }
+
 .quiz-opcao--selecionada .quiz-radio::after {
   content: '';
   position: absolute;
@@ -387,12 +385,12 @@
   font-size: 0.85rem;
   transition: opacity 0.2s, transform 0.2s;
 }
+
 .quiz-opcao:hover .quiz-opcao-arrow {
   opacity: 1;
   transform: translateX(2px);
 }
 
-/* ── Botão voltar ───────────────────────────────────────────── */
 .quiz-voltar {
   background: none;
   border: none;
@@ -404,13 +402,11 @@
   transition: color 0.2s;
   letter-spacing: 0.03em;
 }
+
 .quiz-voltar:hover {
   color: var(--q-muted);
 }
 
-/* ══════════════════════════════════════════════════════════
-   BANNER — SUGESTÃO DE LOGIN
-══════════════════════════════════════════════════════════ */
 .quiz-login-banner {
   width: 100%;
   padding: 1rem 1.5rem;
@@ -423,16 +419,19 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
+
 .quiz-login-banner-text p {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--q-text);
   margin-bottom: 0.2rem;
 }
+
 .quiz-login-banner-text span {
   font-size: 0.78rem;
   color: var(--q-muted);
 }
+
 .quiz-login-btn {
   padding: 0.5rem 1.25rem;
   background: var(--q-gold);
@@ -448,14 +447,12 @@
   transition: all 0.2s;
   white-space: nowrap;
 }
+
 .quiz-login-btn:hover {
   background: #b8924f;
   transform: translateY(-1px);
 }
 
-/* ══════════════════════════════════════════════════════════
-   RESULTADO — estrutura base
-══════════════════════════════════════════════════════════ */
 .res-page {
   min-height: 100vh;
   position: relative;
@@ -464,6 +461,7 @@
   opacity: 0;
   transition: opacity 0.5s ease;
 }
+
 .res-page--visible { opacity: 1; }
 
 .res-blob {
@@ -473,6 +471,7 @@
   pointer-events: none;
   z-index: 0;
 }
+
 .res-blob--1 { width: 520px; height: 520px; top: -160px; right: -120px; opacity: 0.16; }
 .res-blob--2 { width: 420px; height: 420px; bottom: -120px; left: -100px; opacity: 0.2; }
 
@@ -487,12 +486,12 @@
   gap: 2.5rem;
 }
 
-/* Nav */
 .res-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
 .res-logo {
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.75rem;
@@ -500,7 +499,9 @@
   text-decoration: none;
   letter-spacing: -0.02em;
 }
+
 .res-logo em { font-style: italic; }
+
 .res-season-badge {
   font-size: 0.72rem;
   font-weight: 600;
@@ -511,8 +512,8 @@
   border: 1px solid transparent;
 }
 
-/* Hero */
 .res-hero { text-align: center; }
+
 .res-label {
   font-size: 0.68rem;
   font-weight: 600;
@@ -521,6 +522,7 @@
   margin-bottom: 0.875rem;
   display: block;
 }
+
 .res-titulo {
   font-family: 'Cormorant Garamond', serif;
   font-size: clamp(1.75rem, 5vw, 2.75rem);
@@ -528,6 +530,7 @@
   line-height: 1.18;
   margin-bottom: 1rem;
 }
+
 .res-desc {
   font-size: 0.97rem;
   line-height: 1.72;
@@ -535,13 +538,13 @@
   margin: 0 auto;
 }
 
-/* Tags */
 .res-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
 }
+
 .res-tag {
   padding: 0.38rem 1rem;
   border-radius: 50px;
@@ -550,7 +553,6 @@
   border: 1px solid transparent;
 }
 
-/* Kit card */
 .res-kit {
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(18px);
@@ -562,16 +564,20 @@
   align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.7);
 }
+
 @media (min-width: 640px) {
   .res-kit { flex-direction: row; align-items: flex-start; }
 }
+
 .res-kit-img {
   width: 100%;
   max-width: 220px;
   height: auto;
   flex-shrink: 0;
 }
+
 .res-kit-info { flex: 1; width: 100%; }
+
 .res-kit-label {
   font-size: 0.66rem;
   font-weight: 600;
@@ -580,6 +586,7 @@
   margin-bottom: 0.35rem;
   display: block;
 }
+
 .res-kit-nome {
   font-family: 'Cormorant Garamond', serif;
   font-size: 2rem;
@@ -588,12 +595,14 @@
   margin-bottom: 0.25rem;
   line-height: 1.1;
 }
+
 .res-kit-tagline {
   font-size: 0.88rem;
   font-style: italic;
   margin-bottom: 1.5rem;
   color: #6b6b6b;
 }
+
 .res-kit-lista {
   list-style: none;
   display: flex;
@@ -601,20 +610,24 @@
   gap: 0.65rem;
   margin-bottom: 1.75rem;
 }
+
 .res-kit-lista li {
   padding-left: 1rem;
   border-left: 2px solid transparent;
 }
+
 .res-kit-lista li strong {
   display: block;
   font-size: 0.87rem;
   font-weight: 600;
   color: #1a1a1a;
 }
+
 .res-kit-lista li span {
   font-size: 0.79rem;
   color: #6b6b6b;
 }
+
 .res-cta {
   display: inline-flex;
   align-items: center;
@@ -628,12 +641,12 @@
   color: #fff;
   transition: all 0.25s ease;
 }
+
 .res-cta:hover {
   opacity: 0.88;
   transform: translateY(-2px);
 }
 
-/* ── Blog card (links simples) ──────────────────────────────── */
 .res-blog {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(14px);
@@ -641,9 +654,11 @@
   padding: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
+
 .res-blog-header {
   margin-bottom: 1.25rem;
 }
+
 .res-blog-pre {
   font-size: 0.66rem;
   font-weight: 600;
@@ -652,17 +667,20 @@
   display: block;
   margin-bottom: 0.4rem;
 }
+
 .res-blog-header h3 {
   font-family: 'Cormorant Garamond', serif;
   font-size: 1.2rem;
   font-weight: 500;
   color: #1a1a1a;
 }
+
 .res-blog-links {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .res-blog-link {
   display: flex;
   align-items: center;
@@ -677,10 +695,12 @@
   font-weight: 500;
   transition: all 0.2s ease;
 }
+
 .res-blog-link:hover {
   border-color: transparent;
   transform: translateX(4px);
 }
+
 .res-blog-link span:last-child {
   font-size: 0.8rem;
   opacity: 0.5;
@@ -688,7 +708,6 @@
   margin-left: 0.5rem;
 }
 
-/* Banner salvo no perfil */
 .res-save-banner {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(14px);
@@ -701,16 +720,19 @@
   flex-wrap: wrap;
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
+
 .res-save-banner-text p {
   font-size: 0.88rem;
   font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 0.2rem;
 }
+
 .res-save-banner-text span {
   font-size: 0.78rem;
   color: #6b6b6b;
 }
+
 .res-save-btn {
   padding: 0.55rem 1.25rem;
   border: none;
@@ -727,22 +749,24 @@
   white-space: nowrap;
   color: #fff;
 }
+
 .res-save-btn:hover {
   opacity: 0.88;
   transform: translateY(-1px);
 }
+
 .res-save-btn--saved {
   background: #4caf87 !important;
   cursor: default;
 }
 
-/* Ações */
 .res-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: center;
 }
+
 .res-btn-ghost {
   display: inline-flex;
   align-items: center;
@@ -758,11 +782,6 @@
   transition: all 0.2s ease;
 }
 
-/* ══════════════════════════════════════════════════════════
-   CORES POR ESTAÇÃO (classes CSS — sem JS)
-══════════════════════════════════════════════════════════ */
-
-/* ── Verão ──────────────────────────────────────────────────── */
 .est-verao .res-blob--1 { background: #FF9B5E; }
 .est-verao .res-blob--2 { background: #FFD4A0; }
 .est-verao .res-logo    { color: #6B2A05; }
@@ -784,7 +803,6 @@
 .est-verao .res-btn-ghost { color: #8B4A1E; border-color: rgba(217,94,16,0.3); }
 .est-verao .res-btn-ghost:hover { background: rgba(217,94,16,0.08); color: #D95E10; border-color: rgba(217,94,16,0.5); }
 
-/* ── Outono ─────────────────────────────────────────────────── */
 .est-outono .res-blob--1 { background: #8B9E5A; }
 .est-outono .res-blob--2 { background: #C8D4A0; }
 .est-outono .res-logo    { color: #283810; }
@@ -806,7 +824,6 @@
 .est-outono .res-btn-ghost { color: #3A5020; border-color: rgba(90,120,32,0.3); }
 .est-outono .res-btn-ghost:hover { background: rgba(90,120,32,0.08); color: #5A7820; border-color: rgba(90,120,32,0.5); }
 
-/* ── Inverno ────────────────────────────────────────────────── */
 .est-inverno .res-blob--1 { background: #4A6FA5; }
 .est-inverno .res-blob--2 { background: #A8C4E0; }
 .est-inverno .res-logo    { color: #081830; }
@@ -828,7 +845,6 @@
 .est-inverno .res-btn-ghost { color: #1A3058; border-color: rgba(30,74,133,0.3); }
 .est-inverno .res-btn-ghost:hover { background: rgba(30,74,133,0.08); color: #1E4A85; border-color: rgba(30,74,133,0.5); }
 
-/* ── Primavera ──────────────────────────────────────────────── */
 .est-primavera .res-blob--1 { background: #C06090; }
 .est-primavera .res-blob--2 { background: #E8B0CC; }
 .est-primavera .res-logo    { color: #4A0E28; }
@@ -850,7 +866,6 @@
 .est-primavera .res-btn-ghost { color: #6A2040; border-color: rgba(158,46,96,0.3); }
 .est-primavera .res-btn-ghost:hover { background: rgba(158,46,96,0.08); color: #9E2E60; border-color: rgba(158,46,96,0.5); }
 
-/* ── Responsivo ─────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .quiz-card { padding: 2rem 1.25rem; }
   .res-inner { padding: 1.75rem 1rem 4rem; gap: 2rem; }

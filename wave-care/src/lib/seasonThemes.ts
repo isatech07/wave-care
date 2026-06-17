@@ -1,4 +1,3 @@
-/** Cores sazonais já definidas nos page.module.css de cada estação */
 export interface SeasonTheme {
   primary: string;
   background: string;

@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * components/OrderStatus/OrderStatus.tsx
- */
-
 import { useEffect, useState } from "react";
 import {
   Package,
@@ -53,7 +49,6 @@ const STATUS_META: Record<OrderStatus, { label: string; color: string; bg: strin
   CANCELLED: { label: "Cancelado",     color: "#991b1b", bg: "#fee2e2" },
 };
 
-// Passos do stepper — exclui CANCELLED (não é uma progressão linear)
 const STEPPER_STEPS: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 const STEPPER_LABELS: Record<string, string> = {
   PENDING:   "Aguardando",
@@ -116,7 +111,6 @@ export default function OrderStatus() {
     const data = isAdmin
       ? await apiGetAllOrders()
       : await apiGetUserOrders(user.id);
-    // Normaliza status para maiúsculo
     setOrders(data.map(o => ({ ...o, status: o.status.toUpperCase() as any })));
   } catch (err) {
     setError(err instanceof Error ? err.message : "Erro ao carregar pedidos");
